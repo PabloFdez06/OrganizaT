@@ -37,12 +37,24 @@ type CacheConfig = {
     tareasMinutes: number;
 };
 
+type QuickSubject = {
+    id: number;
+    title: string;
+};
+
+type QuickSubjects = {
+    available: QuickSubject[];
+    selected: number[];
+    selectionLimit: number;
+};
+
 type Props = {
     moodleConnected: boolean;
     profile: UserProfile;
     syncStatus: SyncStatus;
     preferences: Preferences;
     cacheConfig: CacheConfig;
+    quickSubjects: QuickSubjects;
     canManageTwoFactor?: boolean;
     twoFactorEnabled?: boolean;
 };
@@ -118,15 +130,22 @@ export default function Security({
     syncStatus,
     preferences,
     cacheConfig,
+    quickSubjects,
     canManageTwoFactor = false,
     twoFactorEnabled = false,
 }: Props) {
     const [showReconnectForm, setShowReconnectForm] = useState(false);
-    const flash = (usePage().props.flash ?? {}) as { success?: string; error?: string };
+    const pageProps = usePage().props as {
+        flash?: { success?: string; error?: string };
+        errors?: Record<string, string>;
+    };
+    const flash = pageProps.flash ?? {};
     const { appearance, updateAppearance } = useAppearance();
 
     const [preferencesData, setPreferencesData] = useState<Preferences>(preferences);
     const [processing, setProcessing] = useState(false);
+    const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
+    const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
 
     const getSectionFromHash = (): SettingsSection => {
         if (typeof window === 'undefined') {
@@ -213,6 +232,42 @@ export default function Security({
             replace: true,
             onFinish: () => setProcessing(false),
         });
+    };
+
+    const quickSubjectsLimit = Math.max(1, quickSubjects.selectionLimit);
+    const quickSubjectsSelectedCount = selectedQuickSubjects.length;
+    const canSelectMoreQuickSubjects = quickSubjectsSelectedCount < quickSubjectsLimit;
+    const quickSubjectsError = pageProps.errors?.subject_ids;
+
+    const handleQuickSubjectToggle = (subjectId: number, isChecked: boolean) => {
+        setSelectedQuickSubjects((current) => {
+            if (isChecked) {
+                if (current.includes(subjectId) || current.length >= quickSubjectsLimit) {
+                    return current;
+                }
+
+                return [...current, subjectId];
+            }
+
+            return current.filter((id) => id !== subjectId);
+        });
+    };
+
+    const submitQuickSubjects = () => {
+        setQuickSubjectsProcessing(true);
+
+        router.post(
+            '/settings/security/quick-subjects',
+            {
+                subject_ids: selectedQuickSubjects,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onFinish: () => setQuickSubjectsProcessing(false),
+            },
+        );
     };
 
     const closeSettings = () => {
@@ -572,6 +627,68 @@ export default function Security({
                                                 </button>
                                             ))}
                                         </nav>
+                                    </section>
+                                </article>
+
+                                <article className="p-settings__section">
+                                    <header className="p-settings__section-header">
+                                        <h2>Asignaturas</h2>
+                                        <span aria-hidden="true" />
+                                    </header>
+
+                                    <section className="p-settings__subjects-card" aria-label="Asignaturas para vista rápida">
+                                        <p className="p-settings__subjects-title">Configuración de asignaturas en vista rápida</p>
+                                        <p className="p-settings__subjects-description">
+                                            Esta sección es para elegir las 4 asignaturas que aparecerán en la vista rápida de la página de dashboard.
+                                        </p>
+                                        <p className="p-settings__subjects-description">
+                                            Deben seleccionarse exactamente 4 asignaturas. Si aplicas con una cantidad distinta, se usará la lógica automática actual.
+                                        </p>
+
+                                        {quickSubjects.available.length > 0 ? (
+                                            <>
+                                                <fieldset className="p-settings__subjects-fieldset">
+                                                    <legend className="p-settings__subjects-legend">Listado de asignaturas disponibles</legend>
+
+                                                    <ul className="p-settings__subjects-list">
+                                                        {quickSubjects.available.map((subject) => {
+                                                            const isChecked = selectedQuickSubjects.includes(subject.id);
+                                                            const isDisabled = !isChecked && !canSelectMoreQuickSubjects;
+
+                                                            return (
+                                                                <li key={subject.id}>
+                                                                    <label className={['p-settings__subject-option', isDisabled ? 'is-disabled' : ''].filter(Boolean).join(' ')}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isChecked}
+                                                                            disabled={isDisabled || quickSubjectsProcessing}
+                                                                            onChange={(event) => handleQuickSubjectToggle(subject.id, event.target.checked)}
+                                                                        />
+                                                                        <span>{subject.title}</span>
+                                                                    </label>
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                </fieldset>
+
+                                                <footer className="p-settings__subjects-footer">
+                                                    <p className="p-settings__subjects-counter">
+                                                        Seleccionadas: <b>{quickSubjectsSelectedCount}</b>/{quickSubjectsLimit}
+                                                    </p>
+
+                                                    <Button type="button" onClick={submitQuickSubjects} disabled={quickSubjectsProcessing}>
+                                                        {quickSubjectsProcessing ? 'Aplicando...' : 'Aplicar selección'}
+                                                    </Button>
+                                                </footer>
+                                            </>
+                                        ) : (
+                                            <p className="p-settings__subjects-empty">
+                                                No hay asignaturas disponibles. Conecta Moodle para poder configurar esta sección.
+                                            </p>
+                                        )}
+
+                                        {quickSubjectsError && <InputError message={quickSubjectsError} />}
                                     </section>
                                 </article>
                             </section>

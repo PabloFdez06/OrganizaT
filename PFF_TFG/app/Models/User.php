@@ -26,6 +26,7 @@ class User extends Authenticatable
         'moodle_username',
         'moodle_password',
         'moodle_notification_preferences',
+        'dashboard_quick_subject_ids',
     ];
 
     /**
@@ -53,6 +54,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'moodle_password' => 'encrypted',
             'moodle_notification_preferences' => 'array',
+            'dashboard_quick_subject_ids' => 'array',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

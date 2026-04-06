@@ -245,8 +245,8 @@ export default function Dashboard({
                                         <p className="p-dashboard__quick-subtitle">Progreso del semestre actual</p>
                                     </section>
                                     <section className="p-dashboard__quick-actions" aria-label="Acciones de asignaturas">
-                                        <Link className="p-dashboard__quick-link" href="/asignaturas">
-                                            Ver asignaturas
+                                        <Link className="p-dashboard__quick-link" href="/settings/security#apariencia">
+                                            Editar asignaturas
                                         </Link>
                                     </section>
                                 </header>

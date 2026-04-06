@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import AcademiaHeader from '@/components/academia-header';
 
 type TaskItem = {
@@ -60,12 +60,29 @@ type CalendarCell = {
     taskCount: number;
 };
 
-const SUBJECT_BATCH_SIZE = 4;
 const TASK_BATCH_SIZE = 5;
-const INITIAL_VISIBLE_SUBJECTS = 2;
+const SIDE_CARD_MIN_WIDTH_REM = 15;
+const SIDE_GRID_GAP_REM = 1;
+const FALLBACK_ROOT_FONT_SIZE_PX = 16;
+
+function calculateSubjectsPerRow(containerWidthPx: number, rootFontSizePx: number): number {
+    const minCardWidthPx = SIDE_CARD_MIN_WIDTH_REM * rootFontSizePx;
+    const gapPx = SIDE_GRID_GAP_REM * rootFontSizePx;
+    const raw = Math.floor((containerWidthPx + gapPx) / (minCardWidthPx + gapPx));
+
+    return Math.max(1, raw);
+}
 
 function parseIsoDate(value: string): Date {
     return new Date(`${value}T00:00:00`);
+}
+
+function formatLocalIsoDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
 }
 
 function formatMonthLabel(date: Date): string {
@@ -110,7 +127,7 @@ function buildCalendarCells(monthDate: Date, tasksByDate: Record<string, TaskIte
         const current = new Date(gridStart);
         current.setDate(gridStart.getDate() + index);
 
-        const iso = current.toISOString().slice(0, 10);
+        const iso = formatLocalIsoDate(current);
         const dayTasks = tasksByDate[iso] ?? [];
 
         let markerTone: CalendarCell['markerTone'] = null;
@@ -151,7 +168,7 @@ function pickMonthDateSelection(monthDate: Date, tasksByDate: Record<string, Tas
 
     const fallback = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
 
-    return fallback.toISOString().slice(0, 10);
+    return formatLocalIsoDate(fallback);
 }
 
 function flattenSubjectTasks(subject: SubjectCard | null): TaskItem[] {
@@ -182,6 +199,18 @@ function buildBadgeClass(statusKey: TaskItem['statusKey'], statusTone: TaskItem[
     return 'is-pending';
 }
 
+function buildSubjectMediaStyle(subject: SubjectCard): React.CSSProperties {
+    if (subject.image) {
+        const safeUrl = subject.image.replace(/'/g, "\\'");
+
+        return {
+            backgroundImage: `linear-gradient(160deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.55)), url('${safeUrl}')`,
+        };
+    }
+
+    return {};
+}
+
 export default function Tareas({
     moodleConnected,
     studentName,
@@ -193,10 +222,12 @@ export default function Tareas({
     calendar,
     pageError,
 }: TareasProps) {
+    const sideGridRef = useRef<HTMLElement | null>(null);
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(initialSubjectId ?? subjectCards[0]?.id ?? null);
     const [selectedDate, setSelectedDate] = useState<string>(calendar.selectedDate);
     const [calendarMonth, setCalendarMonth] = useState<Date>(buildMonthDate(calendar.initialMonth));
-    const [visibleSubjectCount, setVisibleSubjectCount] = useState<number>(INITIAL_VISIBLE_SUBJECTS);
+    const [subjectsPerRow, setSubjectsPerRow] = useState<number>(1);
+    const [visibleSubjectCount, setVisibleSubjectCount] = useState<number>(1);
     const [visibleTaskCountBySubject, setVisibleTaskCountBySubject] = useState<Record<number, number>>(() =>
         subjectCards.reduce<Record<number, number>>((acc, subject) => {
             acc[subject.id] = TASK_BATCH_SIZE;
@@ -218,7 +249,42 @@ export default function Tareas({
         [featuredSubject, subjectCards],
     );
 
-    const minimumVisibleSubjects = Math.min(INITIAL_VISIBLE_SUBJECTS, sideSubjects.length);
+    useEffect(() => {
+        const updateSubjectsPerRow = () => {
+            const sideGrid = sideGridRef.current;
+
+            if (!sideGrid) {
+                return;
+            }
+
+            const computedRootFont = window.getComputedStyle(document.documentElement).fontSize;
+            const parsedRootFont = Number.parseFloat(computedRootFont);
+            const rootFontSizePx = Number.isFinite(parsedRootFont) && parsedRootFont > 0
+                ? parsedRootFont
+                : FALLBACK_ROOT_FONT_SIZE_PX;
+            const perRow = calculateSubjectsPerRow(sideGrid.clientWidth, rootFontSizePx);
+
+            setSubjectsPerRow(perRow);
+            setVisibleSubjectCount((previous) => {
+                const firstRowCount = Math.min(perRow, sideSubjects.length);
+
+                if (previous < firstRowCount) {
+                    return firstRowCount;
+                }
+
+                return Math.min(previous, sideSubjects.length);
+            });
+        };
+
+        updateSubjectsPerRow();
+        window.addEventListener('resize', updateSubjectsPerRow);
+
+        return () => {
+            window.removeEventListener('resize', updateSubjectsPerRow);
+        };
+    }, [sideSubjects.length]);
+
+    const minimumVisibleSubjects = Math.min(subjectsPerRow, sideSubjects.length);
     const visibleSideSubjects = sideSubjects.slice(0, visibleSubjectCount);
     const canLoadMoreSubjects = visibleSideSubjects.length < sideSubjects.length;
     const canLoadLessSubjects = visibleSideSubjects.length > minimumVisibleSubjects;
@@ -497,19 +563,22 @@ export default function Tareas({
                             </aside>
 
                             {sideSubjects.length > 0 && (
-                                <section className="p-tareas__side-grid" aria-label="Asignaturas contraidas">
+                                <section className="p-tareas__side-grid" aria-label="Asignaturas contraidas" ref={sideGridRef}>
                                     {visibleSideSubjects.map((subject) => (
                                         <article key={subject.id} className="p-tareas__side-card">
                                             <button type="button" onClick={() => handleSelectSubject(subject.id)}>
-                                                <small>{subject.code}</small>
-                                                <h3>{subject.subject}</h3>
-                                                <footer>
-                                                    <p>
-                                                        <strong>{subject.totalTasks.toString().padStart(2, '0')}</strong>
-                                                        <span>TAREAS</span>
-                                                    </p>
-                                                    <span className="p-tareas__side-plus" aria-hidden="true">+</span>
-                                                </footer>
+                                                <figure className="p-tareas__side-media" style={buildSubjectMediaStyle(subject)} aria-hidden="true" />
+                                                <section className="p-tareas__side-body">
+                                                    <small>{subject.code}</small>
+                                                    <h3>{subject.subject}</h3>
+                                                    <footer>
+                                                        <p>
+                                                            <strong>{subject.totalTasks.toString().padStart(2, '0')}</strong>
+                                                            <span>TAREAS</span>
+                                                        </p>
+                                                        <span className="p-tareas__side-plus" aria-hidden="true">+</span>
+                                                    </footer>
+                                                </section>
                                             </button>
                                         </article>
                                     ))}
@@ -521,16 +590,16 @@ export default function Tareas({
                                                     type="button"
                                                     onClick={() =>
                                                         setVisibleSubjectCount((previous) =>
-                                                            Math.max(minimumVisibleSubjects, previous - SUBJECT_BATCH_SIZE),
+                                                            Math.max(minimumVisibleSubjects, previous - subjectsPerRow),
                                                         )
                                                     }
                                                 >
-                                                    VER MENOS ASIGNATURAS
+                                                    Ver menos
                                                 </button>
                                             )}
                                             {canLoadMoreSubjects && (
-                                                <button type="button" onClick={() => setVisibleSubjectCount((previous) => previous + SUBJECT_BATCH_SIZE)}>
-                                                    VER MAS ASIGNATURAS
+                                                <button type="button" onClick={() => setVisibleSubjectCount((previous) => previous + subjectsPerRow)}>
+                                                    Ver mas
                                                 </button>
                                             )}
                                         </section>

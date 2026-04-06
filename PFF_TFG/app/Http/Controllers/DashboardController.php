@@ -63,12 +63,21 @@ class DashboardController extends Controller
                 $payload = $this->cache->getForUser($user);
                 $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
                 $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+                $selectedQuickSubjectIds = collect(is_array($user?->dashboard_quick_subject_ids) ? $user->dashboard_quick_subject_ids : [])
+                    ->map(fn (mixed $value): int => (int) $value)
+                    ->filter(fn (int $value): bool => $value > 0)
+                    ->unique()
+                    ->values();
+
+                $selectedQuickSubjectIds = $selectedQuickSubjectIds->count() === 4
+                    ? $selectedQuickSubjectIds->all()
+                    : [];
                 $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null) ? $payload['profileAvatarUrl'] : null;
                 $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
                     ? (string) $payload['studentName']
                     : $studentName;
 
-                $quickCards = $this->buildQuickCards($courses, $tasks);
+                $quickCards = $this->buildQuickCards($courses, $tasks, $selectedQuickSubjectIds);
                 $timeline = $this->buildTimeline($tasks);
                 $hero = $this->buildHero($tasks);
 
@@ -177,9 +186,10 @@ class DashboardController extends Controller
     /**
      * @param  array<int, array<string, mixed>>  $courses
      * @param  array<int, array<string, mixed>>  $tasks
+     * @param  array<int, int>  $selectedQuickSubjectIds
      * @return array<int, array<string, mixed>>
      */
-    private function buildQuickCards(array $courses, array $tasks): array
+    private function buildQuickCards(array $courses, array $tasks, array $selectedQuickSubjectIds = []): array
     {
         $statsByCourse = [];
 
@@ -205,12 +215,35 @@ class DashboardController extends Controller
             }
         }
 
+        $orderedCourses = array_values($courses);
+
+        if (count($selectedQuickSubjectIds) === 4) {
+            $coursesById = [];
+            foreach ($orderedCourses as $course) {
+                $courseId = (int) ($course['id'] ?? 0);
+                if ($courseId > 0) {
+                    $coursesById[$courseId] = $course;
+                }
+            }
+
+            $selectedCourses = [];
+            foreach ($selectedQuickSubjectIds as $subjectId) {
+                if (! isset($coursesById[$subjectId])) {
+                    $selectedCourses = [];
+                    break;
+                }
+
+                $selectedCourses[] = $coursesById[$subjectId];
+            }
+
+            if (count($selectedCourses) === 4) {
+                $orderedCourses = $selectedCourses;
+            }
+        }
+
         $cards = [];
 
-        foreach (array_values($courses) as $index => $course) {
-            if ($index >= 4) {
-                break;
-            }
+        foreach (array_slice($orderedCourses, 0, 4) as $index => $course) {
 
             $courseId = (int) ($course['id'] ?? 0);
             $courseStats = $statsByCourse[$courseId] ?? ['pending' => 0, 'done' => 0];

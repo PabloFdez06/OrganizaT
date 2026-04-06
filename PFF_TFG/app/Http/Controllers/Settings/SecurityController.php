@@ -28,6 +28,7 @@ class SecurityController extends Controller
     {
         $user = $request->user();
         $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $courses = [];
 
         $profile = [
             'fullName' => $user?->name,
@@ -61,6 +62,7 @@ class SecurityController extends Controller
                 $profile['avatarUrl'] = is_string($payload['profileAvatarUrl'] ?? null) && trim((string) $payload['profileAvatarUrl']) !== ''
                     ? (string) $payload['profileAvatarUrl']
                     : null;
+                $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
                 $syncStatus['lastSyncLabel'] = now()->format('H:i');
             } catch (MoodleAuthenticationException|MoodleRequestException $exception) {
                 $syncStatus['message'] = $exception->getMessage();
@@ -78,6 +80,28 @@ class SecurityController extends Controller
         $cacheFreshMinutes = max(1, (int) ceil(max(60, (int) config('services.moodle.cache_ttl_seconds', 300)) / 60));
         $cacheStaleMinutes = max($cacheFreshMinutes, (int) ceil(max(60, (int) config('services.moodle.cache_stale_ttl_seconds', 900)) / 60));
 
+        $availableQuickSubjects = collect($courses)
+            ->map(function (array $course): array {
+                return [
+                    'id' => (int) ($course['id'] ?? 0),
+                    'title' => trim((string) ($course['nombre'] ?? 'Asignatura')),
+                ];
+            })
+            ->filter(fn (array $course): bool => $course['id'] > 0 && $course['title'] !== '')
+            ->values()
+            ->all();
+
+        $selectedQuickSubjects = collect(is_array($user?->dashboard_quick_subject_ids) ? $user->dashboard_quick_subject_ids : [])
+            ->map(fn (mixed $value): int => (int) $value)
+            ->filter(fn (int $value): bool => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (count($selectedQuickSubjects) !== 4) {
+            $selectedQuickSubjects = [];
+        }
+
         return Inertia::render('settings/security', [
             'moodleConnected' => $moodleConnected,
             'profile' => $profile,
@@ -89,6 +113,11 @@ class SecurityController extends Controller
                 'asignaturasMinutes' => $cacheFreshMinutes,
                 'tareasMinutes' => $cacheFreshMinutes,
                 'staleMinutes' => $cacheStaleMinutes,
+            ],
+            'quickSubjects' => [
+                'available' => $availableQuickSubjects,
+                'selected' => $selectedQuickSubjects,
+                'selectionLimit' => 4,
             ],
         ]);
     }
@@ -128,6 +157,64 @@ class SecurityController extends Controller
         ]);
 
         return back()->with('success', 'Preferencias actualizadas.');
+    }
+
+    public function updateQuickSubjects(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'subject_ids' => ['nullable', 'array', 'max:4'],
+            'subject_ids.*' => ['integer', 'distinct', 'min:1'],
+        ]);
+
+        $subjectIds = collect($validated['subject_ids'] ?? [])
+            ->map(fn (mixed $value): int => (int) $value)
+            ->filter(fn (int $value): bool => $value > 0)
+            ->unique()
+            ->values();
+
+        if ($subjectIds->count() !== 4) {
+            $request->user()->update([
+                'dashboard_quick_subject_ids' => null,
+            ]);
+
+            return back()->with('success', 'Vista rápida en modo automático: se mostrarán 4 asignaturas por defecto.');
+        }
+
+        $user = $request->user();
+        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+
+        if (! $moodleConnected) {
+            return back()->withErrors([
+                'subject_ids' => 'Conecta Moodle para configurar las asignaturas de la vista rápida.',
+            ]);
+        }
+
+        try {
+            $payload = $this->cache->getForUser($user);
+        } catch (\Throwable) {
+            return back()->withErrors([
+                'subject_ids' => 'No se pudieron validar las asignaturas en este momento. Inténtalo de nuevo.',
+            ]);
+        }
+
+        $availableIds = collect(is_array($payload['courses'] ?? null) ? $payload['courses'] : [])
+            ->map(fn (array $course): int => (int) ($course['id'] ?? 0))
+            ->filter(fn (int $value): bool => $value > 0)
+            ->all();
+
+        $invalidSelection = $subjectIds->first(fn (int $subjectId): bool => ! in_array($subjectId, $availableIds, true));
+
+        if ($invalidSelection !== null) {
+            return back()->withErrors([
+                'subject_ids' => 'La selección contiene asignaturas no disponibles para tu cuenta.',
+            ]);
+        }
+
+        $user->update([
+            'dashboard_quick_subject_ids' => $subjectIds->all(),
+        ]);
+
+        return back()->with('success', 'Asignaturas de vista rápida actualizadas correctamente.');
     }
 
     public function disconnectMoodle(Request $request): RedirectResponse
