@@ -33,6 +33,54 @@
     color: var(--color-brand);
 }
 
+.p-tareas__head-main {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.p-tareas__export-block {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.p-tareas__export-button {
+    width: max-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid color-mix(in srgb, var(--color-brand) 50%, transparent);
+    background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface) 90%);
+    color: var(--color-brand);
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.65rem 0.9rem;
+    cursor: pointer;
+}
+
+.p-tareas__export-button:hover {
+    border-color: color-mix(in srgb, var(--color-brand) 66%, transparent);
+    background: color-mix(in srgb, var(--color-brand) 16%, var(--color-surface) 84%);
+}
+
+.p-tareas__export-button.is-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.p-tareas__export-help,
+.p-tareas__export-note {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    max-width: 34rem;
+}
+
+.p-tareas__export-note {
+    font-size: 0.72rem;
+}
+
 .p-tareas__summary {
     border-left: 1px solid color-mix(in srgb, var(--color-text-muted) 34%, transparent);
     padding-left: 0;

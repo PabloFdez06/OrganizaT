@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Services\Moodle\AcademicCalendarExportService;
 use App\Services\Moodle\MoodleAcademicRules;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use App\Services\Moodle\SpanishDateParser;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
 
 class TareasController extends Controller
 {
@@ -18,10 +20,11 @@ class TareasController extends Controller
         private readonly MoodleUserAcademicCache $cache,
         private readonly SpanishDateParser $dateParser,
         private readonly MoodleAcademicRules $rules,
+        private readonly AcademicCalendarExportService $calendarExportService,
     ) {
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): InertiaResponse
     {
         $user = $request->user();
         $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
@@ -81,6 +84,33 @@ class TareasController extends Controller
             'initialSubjectId' => $initialSubjectId,
             'calendar' => $calendar,
             'pageError' => $pageError,
+        ]);
+    }
+
+    public function exportAllIcs(Request $request): Response
+    {
+        $user = $request->user();
+        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+
+        if (! $moodleConnected) {
+            abort(403, 'Debes conectar tu cuenta de Moodle para exportar el calendario.');
+        }
+
+        try {
+            $payload = $this->cache->getForUser($user);
+        } catch (MoodleAuthenticationException) {
+            abort(403, 'No se pudo autenticar la cuenta Moodle para exportar el calendario.');
+        } catch (MoodleRequestException) {
+            abort(503, 'No se pudieron obtener las tareas en este momento.');
+        }
+
+        $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+        $calendar = $this->calendarExportService->buildCalendar($tasks, (int) $user->id);
+        $filename = 'organizt-tareas-'.CarbonImmutable::now()->format('Y-m-d').'.ics';
+
+        return response($calendar, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 

@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('asignaturas', [AsignaturasController::class, 'index'])->name('asignaturas.index');
     Route::get('calificaciones', [CalificacionesController::class, 'index'])->name('calificaciones.index');
     Route::get('tareas', [TareasController::class, 'index'])->name('tareas.index');
+    Route::get('tareas/export-all.ics', [TareasController::class, 'exportAllIcs'])->name('tareas.export_all_ics');
     Route::get('moodle-console', [MoodleConsoleController::class, 'index'])->name('moodle.console');
     Route::post('moodle-console/preferences', [MoodleConsoleController::class, 'updatePreferences'])->name('moodle.console.preferences.update');
     Route::get('moodle/media', [MoodleMediaController::class, 'show'])->name('moodle.media');

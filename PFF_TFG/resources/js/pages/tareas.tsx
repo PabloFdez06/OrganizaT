@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import AcademiaHeader from '@/components/academia-header';
 
@@ -360,11 +360,32 @@ export default function Tareas({
 
                 <main className="p-tareas__container p-tareas__main">
                     <header className="p-tareas__head">
-                        <section>
+                        <section className="p-tareas__head-main">
                             <h1>
                                 GESTION DE TAREAS
                                 <span>.</span>
                             </h1>
+
+                            <section className="p-tareas__export-block" aria-label="Exportacion de calendario academico">
+                                {moodleConnected ? (
+                                    <a className="p-tareas__export-button" href="/tareas/export-all.ics">
+                                        <Download size={16} aria-hidden="true" />
+                                        <span>DESCARGAR CALENDARIO (.ICS)</span>
+                                    </a>
+                                ) : (
+                                    <button type="button" className="p-tareas__export-button is-disabled" disabled>
+                                        <Download size={16} aria-hidden="true" />
+                                        <span>DESCARGAR CALENDARIO (.ICS)</span>
+                                    </button>
+                                )}
+
+                                <p className="p-tareas__export-help">
+                                    Compatible con Google Calendar, Apple Calendar y Outlook.
+                                </p>
+                                <p className="p-tareas__export-note">
+                                    En Google Calendar: configura e importa el archivo .ics para cargar todas tus tareas.
+                                </p>
+                            </section>
                         </section>
 
                         <section className="p-tareas__summary c-stats-strip c-stats-strip--3" aria-label="Resumen de tareas">
