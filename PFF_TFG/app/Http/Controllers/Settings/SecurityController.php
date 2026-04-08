@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleUserAcademicCache;
@@ -16,8 +17,11 @@ use Laravel\Fortify\Features;
 
 class SecurityController extends Controller
 {
+    private const MOODLE_SESSION_EXPIRED_MESSAGE = 'Tu sesión de Moodle se cerró por inactividad. Debes volver a iniciar sesión porque los datos temporales se han eliminado.';
+
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
+        private readonly MoodleEphemeralSessionService $sessionService,
     ) {
     }
 
@@ -27,7 +31,7 @@ class SecurityController extends Controller
     public function edit(Request $request): Response
     {
         $user = $request->user();
-        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
         $courses = [];
 
         $profile = [
@@ -42,6 +46,10 @@ class SecurityController extends Controller
             'lastSyncLabel' => null,
             'message' => null,
         ];
+
+        if (! $moodleConnected && is_string($user?->moodle_username) && trim((string) $user->moodle_username) !== '') {
+            $syncStatus['message'] = self::MOODLE_SESSION_EXPIRED_MESSAGE;
+        }
 
         if ($moodleConnected) {
             try {
@@ -181,7 +189,7 @@ class SecurityController extends Controller
         }
 
         $user = $request->user();
-        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
 
         if (! $moodleConnected) {
             return back()->withErrors([
@@ -219,11 +227,11 @@ class SecurityController extends Controller
 
     public function disconnectMoodle(Request $request): RedirectResponse
     {
+        $this->sessionService->clearForUser($request->user());
         $this->cache->clearForUser($request->user());
 
         $request->user()->update([
             'moodle_username' => null,
-            'moodle_password' => null,
         ]);
 
         return back()->with('success', 'Sesión de Moodle cerrada correctamente.');

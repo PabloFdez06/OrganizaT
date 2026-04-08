@@ -5,6 +5,7 @@ import { toMoodleMediaUrl } from '@/lib/moodle-media';
 type AcademiaHeaderProps = {
     containerClassName: string;
     activePath: '/dashboard' | '/asignaturas' | '/calificaciones' | '/tareas';
+    moodleConnected: boolean;
     profileAvatarUrl: string | null;
     studentName: string | null;
 };
@@ -24,6 +25,7 @@ const NAV_ITEMS: HeaderNavItem[] = [
 export default function AcademiaHeader({
     containerClassName,
     activePath,
+    moodleConnected,
     profileAvatarUrl,
     studentName,
 }: AcademiaHeaderProps) {
@@ -32,33 +34,44 @@ export default function AcademiaHeader({
     const avatarUrl = toMoodleMediaUrl(profileAvatarUrl);
 
     return (
-        <header className="c-academia-header">
-            <section className={`c-academia-header__inner ${containerClassName}`}>
-                <section className="c-academia-header__left">
-                    <Link className="c-academia-header__brand" href="/dashboard">
-                        <strong>Organiza<span>T</span></strong>
-                    </Link>
+        <>
+            <header className="c-academia-header">
+                <section className={`c-academia-header__inner ${containerClassName}`}>
+                    <section className="c-academia-header__left">
+                        <Link className="c-academia-header__brand" href="/dashboard">
+                            <strong>Organiza<span>T</span></strong>
+                        </Link>
 
-                    <nav className="c-academia-header__nav" aria-label="Secciones principales">
-                        {NAV_ITEMS.map((item) => (
-                            <Link key={item.href} href={item.href} className={item.href === activePath ? 'is-active' : ''}>
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
-                </section>
+                        <nav className="c-academia-header__nav" aria-label="Secciones principales">
+                            {NAV_ITEMS.map((item) => (
+                                <Link key={item.href} href={item.href} className={item.href === activePath ? 'is-active' : ''}>
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </nav>
+                    </section>
 
-                <section className="c-academia-header__toolbar" aria-label="Herramientas">
-                    <button className="c-academia-header__icon-btn" type="button" aria-label="Notificaciones">
-                        <Bell size={16} />
-                    </button>
-                    <span className="c-academia-header__toolbar-divider" aria-hidden="true" />
-                    {displayName !== '' && <span className="c-academia-header__student">{displayName}</span>}
-                    <Link className="c-academia-header__avatar" href="/settings/security" aria-label="Abrir configuracion">
-                        {avatarUrl ? <img src={avatarUrl} alt="Avatar Moodle" /> : <span>{avatarFallback}</span>}
-                    </Link>
+                    <section className="c-academia-header__toolbar" aria-label="Herramientas">
+                        <button className="c-academia-header__icon-btn" type="button" aria-label="Notificaciones">
+                            <Bell size={16} />
+                        </button>
+                        <span className="c-academia-header__toolbar-divider" aria-hidden="true" />
+                        {displayName !== '' && <span className="c-academia-header__student">{displayName}</span>}
+                        <Link className="c-academia-header__avatar" href="/settings/security" aria-label="Abrir configuracion">
+                            {avatarUrl ? <img src={avatarUrl} alt="Avatar Moodle" /> : <span>{avatarFallback}</span>}
+                        </Link>
+                    </section>
                 </section>
-            </section>
-        </header>
+            </header>
+
+            {!moodleConnected && (
+                <section className="c-academia-header__moodle-warning" role="alert" aria-live="assertive">
+                    <p>
+                        Tu sesión de Moodle no está activa. Inicia sesión para cargar tus datos académicos.
+                    </p>
+                    <Link href="/settings/security#usuario">Iniciar sesión ahora</Link>
+                </section>
+            )}
+        </>
     );
 }

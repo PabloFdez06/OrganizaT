@@ -56,6 +56,57 @@ class MoodleCasClient
     }
 
     /**
+     * @param  array<int, string>  $cookies
+     */
+    public function resume(array $cookies, ?string $fallbackSesskey = null, ?int $fallbackUserid = null, bool $withTrace = false): MoodleSession
+    {
+        $baseUrl = $this->resolveBaseUrl();
+        if ($baseUrl === '') {
+            throw new MoodleRequestException('Missing Moodle/CAS configuration.');
+        }
+
+        $trace = [];
+        $curl = $this->initCurl();
+
+        foreach ($cookies as $cookie) {
+            if (! is_string($cookie) || trim($cookie) === '') {
+                continue;
+            }
+
+            curl_setopt($curl, CURLOPT_COOKIELIST, $cookie);
+        }
+
+        try {
+            $homeHtml = $this->request($curl, 'GET', $baseUrl.'/my/', null, $trace, 'moodle_resume_home');
+            $sesskey = $this->parser->extractSesskey($homeHtml) ?? $fallbackSesskey;
+            $userid = $this->parser->extractUserid($homeHtml) ?? $fallbackUserid;
+
+            if (! is_string($sesskey) || trim($sesskey) === '') {
+                throw new MoodleAuthenticationException('La sesión Moodle ha expirado. Reconecta tu cuenta.');
+            }
+
+            return new MoodleSession($curl, $sesskey, $userid, $withTrace ? $trace : []);
+        } catch (MoodleAuthenticationException|MoodleRequestException $exception) {
+            curl_close($curl);
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function exportCookies(MoodleSession $session): array
+    {
+        $cookieList = curl_getinfo($session->handle, CURLINFO_COOKIELIST);
+        if (! is_array($cookieList)) {
+            return [];
+        }
+
+        return array_values(array_filter($cookieList, static fn (mixed $cookie): bool => is_string($cookie) && trim($cookie) !== ''));
+    }
+
+    /**
      * @param  array<string, scalar|null>  $query
      */
     public function get(MoodleSession $session, string $path, array $query = [], ?array &$trace = null, string $traceStep = 'get'): string

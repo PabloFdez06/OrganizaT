@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAcademicRules;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\SpanishDateParser;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use Carbon\CarbonImmutable;
@@ -14,17 +15,20 @@ use Inertia\Response;
 
 class CalificacionesController extends Controller
 {
+    private const MOODLE_SESSION_EXPIRED_MESSAGE = 'Tu sesión de Moodle se cerró por inactividad. Debes volver a iniciar sesión porque los datos temporales se han eliminado.';
+
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
         private readonly SpanishDateParser $dateParser,
         private readonly MoodleAcademicRules $rules,
+        private readonly MoodleEphemeralSessionService $sessionService,
     ) {
     }
 
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
 
         $subjectCards = [];
         $summary = [
@@ -36,6 +40,10 @@ class CalificacionesController extends Controller
         $pageError = null;
         $milestones = [];
         $studentName = $user?->name;
+
+        if (! $moodleConnected && is_string($user?->moodle_username) && trim((string) $user->moodle_username) !== '') {
+            $pageError = self::MOODLE_SESSION_EXPIRED_MESSAGE;
+        }
 
         if ($moodleConnected) {
             try {

@@ -90,11 +90,7 @@ function buildColumnSpans(total: number): ColumnSpan[] {
 export default function Asignaturas({ moodleConnected, studentName, courseCards, summary, profileAvatarUrl, pageError }: AsignaturasProps) {
     const variantSequence = buildLayoutSequence(courseCards.length);
     const columnSpans = buildColumnSpans(courseCards.length);
-    const rawEvaluationDate = new Intl.DateTimeFormat('es-ES', {
-        month: 'long',
-        year: 'numeric',
-    }).format(new Date());
-    const evaluationDate = rawEvaluationDate.charAt(0).toUpperCase() + rawEvaluationDate.slice(1);
+    
 
     return (
         <>
@@ -104,6 +100,7 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
                 <AcademiaHeader
                     containerClassName="p-asignaturas__container"
                     activePath="/asignaturas"
+                    moodleConnected={moodleConnected}
                     profileAvatarUrl={profileAvatarUrl}
                     studentName={studentName}
                 />
@@ -115,10 +112,6 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
                                 ASIGNATURAS
                                 <span>.</span>
                             </h1>
-                        </section>
-                        <section className="p-asignaturas__period">
-                            <p>Evaluacion actual</p>
-                            <small>{evaluationDate}</small>
                         </section>
                     </header>
 

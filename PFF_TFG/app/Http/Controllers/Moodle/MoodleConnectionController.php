@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleCasClient;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,7 @@ class MoodleConnectionController extends Controller
 {
     public function __construct(
         private readonly MoodleCasClient $client,
+        private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleUserAcademicCache $cache,
     ) {
     }
@@ -28,6 +30,7 @@ class MoodleConnectionController extends Controller
 
         try {
             $session = $this->client->login($data['moodle_username'], $data['moodle_password']);
+            $this->sessionService->storeForUser($request->user(), $data['moodle_username'], $session);
             $session->close();
         } catch (MoodleAuthenticationException) {
             return $this->respond(
@@ -51,7 +54,6 @@ class MoodleConnectionController extends Controller
 
         $request->user()->update([
             'moodle_username' => $data['moodle_username'],
-            'moodle_password' => $data['moodle_password'],
         ]);
 
         $this->cache->clearForUser($request->user());

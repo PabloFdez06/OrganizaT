@@ -20,6 +20,7 @@ class MoodleUserAcademicCache
         private readonly MoodleAcademicService $academicService,
         private readonly SpanishDateParser $dateParser,
         private readonly MoodleAcademicRules $rules,
+        private readonly MoodleEphemeralSessionService $sessionService,
     ) {
     }
 
@@ -78,7 +79,7 @@ class MoodleUserAcademicCache
 
         @ini_set('max_execution_time', '300');
 
-        $session = $this->client->login((string) $user->moodle_username, (string) $user->moodle_password);
+        $session = $this->sessionService->reopenForUser($user);
 
         try {
             $courses = $this->academicService->getCourses($session, includeTutor: true);
@@ -180,7 +181,7 @@ class MoodleUserAcademicCache
      */
     private function buildGradesPayload(User $user): array
     {
-        $session = $this->client->login((string) $user->moodle_username, (string) $user->moodle_password);
+        $session = $this->sessionService->reopenForUser($user);
 
         try {
             return $this->academicService->getGrades($session);

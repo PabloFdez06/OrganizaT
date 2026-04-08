@@ -6,23 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAcademicService;
-use App\Services\Moodle\MoodleCasClient;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MoodleDataController extends Controller
 {
     public function __construct(
-        private readonly MoodleCasClient $client,
         private readonly MoodleAcademicService $academicService,
+        private readonly MoodleEphemeralSessionService $sessionService,
     ) {
     }
 
     public function asignaturas(Request $request): JsonResponse
     {
         try {
-            [$username, $password] = $this->resolveCredentials($request);
-            $session = $this->client->login($username, $password);
+            $session = $this->sessionService->reopenForUser($request->user());
 
             $courses = $this->academicService->getCourses($session, includeTutor: true);
 
@@ -43,8 +42,7 @@ class MoodleDataController extends Controller
     public function tareas(Request $request, int $courseId): JsonResponse
     {
         try {
-            [$username, $password] = $this->resolveCredentials($request);
-            $session = $this->client->login($username, $password);
+            $session = $this->sessionService->reopenForUser($request->user());
 
             $tasks = $this->academicService->getAssignmentsByCourse($session, $courseId);
 
@@ -65,8 +63,7 @@ class MoodleDataController extends Controller
     public function allTareas(Request $request): JsonResponse
     {
         try {
-            [$username, $password] = $this->resolveCredentials($request);
-            $session = $this->client->login($username, $password);
+            $session = $this->sessionService->reopenForUser($request->user());
 
             $payload = $this->academicService->getAllAssignments($session);
 
@@ -87,8 +84,7 @@ class MoodleDataController extends Controller
     public function calificaciones(Request $request): JsonResponse
     {
         try {
-            [$username, $password] = $this->resolveCredentials($request);
-            $session = $this->client->login($username, $password);
+            $session = $this->sessionService->reopenForUser($request->user());
 
             $grades = $this->academicService->getGrades($session);
 
@@ -106,17 +102,4 @@ class MoodleDataController extends Controller
         }
     }
 
-    /**
-     * @return array{0: string, 1: string}
-     */
-    private function resolveCredentials(Request $request): array
-    {
-        $user = $request->user();
-
-        if (! $user || ! $user->moodle_username || ! $user->moodle_password) {
-            throw new MoodleAuthenticationException('La cuenta Moodle no esta conectada.');
-        }
-
-        return [$user->moodle_username, $user->moodle_password];
-    }
 }

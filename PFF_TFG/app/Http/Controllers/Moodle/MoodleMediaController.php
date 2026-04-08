@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleCasClient;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -13,6 +14,7 @@ class MoodleMediaController extends Controller
 {
     public function __construct(
         private readonly MoodleCasClient $client,
+        private readonly MoodleEphemeralSessionService $sessionService,
     ) {
     }
 
@@ -23,7 +25,7 @@ class MoodleMediaController extends Controller
         ]);
 
         $user = $request->user();
-        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
 
         if (! $moodleConnected) {
             abort(403, 'Moodle no conectado.');
@@ -36,7 +38,7 @@ class MoodleMediaController extends Controller
         }
 
         try {
-            $session = $this->client->login((string) $user->moodle_username, (string) $user->moodle_password);
+            $session = $this->sessionService->reopenForUser($user);
             $binary = $this->client->getBinary($session, $target);
         } catch (MoodleAuthenticationException|MoodleRequestException) {
             abort(404, 'No se pudo recuperar el recurso solicitado.');

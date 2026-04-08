@@ -6,6 +6,7 @@ use App\Services\EisenhowerMatrixService;
 use App\Services\Ai\EisenhowerMatrixAiService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\SpanishDateParser;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use Carbon\CarbonImmutable;
@@ -16,8 +17,11 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    private const MOODLE_SESSION_EXPIRED_MESSAGE = 'Tu sesión de Moodle se cerró por inactividad. Debes volver a iniciar sesión porque los datos temporales se han eliminado.';
+
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
+        private readonly MoodleEphemeralSessionService $sessionService,
         private readonly SpanishDateParser $dateParser,
         private readonly EisenhowerMatrixService $matrixResolver,
         private readonly EisenhowerMatrixAiService $matrixAi,
@@ -27,7 +31,7 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
 
         $quickCards = [];
         $timeline = [];
@@ -57,6 +61,10 @@ class DashboardController extends Controller
             ? (bool) session('matrix_include_explanation', true)
             : false;
         $matrixApiKey = $matrixMode === 'ai' ? trim((string) session('matrix_ai_api_key', '')) : '';
+
+        if (! $moodleConnected && is_string($user?->moodle_username) && trim((string) $user->moodle_username) !== '') {
+            $dashboardError = self::MOODLE_SESSION_EXPIRED_MESSAGE;
+        }
 
         if ($moodleConnected) {
             try {

@@ -51,6 +51,8 @@ return [
         'cache_lock_poll_ms' => (int) env('MOODLE_CACHE_LOCK_POLL_MS', 200),
         'cache_task_course_limit' => (int) env('MOODLE_CACHE_TASK_COURSE_LIMIT', 50),
         'cache_task_budget_seconds' => (float) env('MOODLE_CACHE_TASK_BUDGET_SECONDS', 22),
+        'session_ttl_seconds' => (int) env('MOODLE_SESSION_TTL_SECONDS', 1800),
+        'session_absolute_ttl_seconds' => (int) env('MOODLE_SESSION_ABSOLUTE_TTL_SECONDS', 28800),
     ],
 
     'ai' => [

@@ -6,6 +6,7 @@ use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\AcademicCalendarExportService;
 use App\Services\Moodle\MoodleAcademicRules;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use App\Services\Moodle\SpanishDateParser;
 use Carbon\CarbonImmutable;
@@ -16,18 +17,21 @@ use Inertia\Response as InertiaResponse;
 
 class TareasController extends Controller
 {
+    private const MOODLE_SESSION_EXPIRED_MESSAGE = 'Tu sesión de Moodle se cerró por inactividad. Debes volver a iniciar sesión porque los datos temporales se han eliminado.';
+
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
         private readonly SpanishDateParser $dateParser,
         private readonly MoodleAcademicRules $rules,
         private readonly AcademicCalendarExportService $calendarExportService,
+        private readonly MoodleEphemeralSessionService $sessionService,
     ) {
     }
 
     public function index(Request $request): InertiaResponse
     {
         $user = $request->user();
-        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
 
         $studentName = $user?->name;
         $profileAvatarUrl = null;
@@ -45,6 +49,10 @@ class TareasController extends Controller
             'initialMonth' => CarbonImmutable::now()->startOfMonth()->format('Y-m'),
             'selectedDate' => CarbonImmutable::now()->format('Y-m-d'),
         ];
+
+        if (! $moodleConnected && is_string($user?->moodle_username) && trim((string) $user->moodle_username) !== '') {
+            $pageError = self::MOODLE_SESSION_EXPIRED_MESSAGE;
+        }
 
         if ($moodleConnected) {
             try {
@@ -90,7 +98,7 @@ class TareasController extends Controller
     public function exportAllIcs(Request $request): Response
     {
         $user = $request->user();
-        $moodleConnected = (bool) ($user?->moodle_username && $user?->moodle_password);
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
 
         if (! $moodleConnected) {
             abort(403, 'Debes conectar tu cuenta de Moodle para exportar el calendario.');

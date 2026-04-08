@@ -130,6 +130,46 @@
     object-fit: cover;
 }
 
+.c-academia-header__moodle-warning {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 1200;
+    max-width: min(31rem, calc(100% - 2.5rem));
+    padding: 0.9rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-danger) 28%, transparent);
+    background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface) 90%);
+    box-shadow: 0 1rem 2rem -1.25rem color-mix(in srgb, var(--color-danger) 35%, transparent);
+    display: grid;
+    gap: 0.55rem;
+}
+
+.c-academia-header__moodle-warning p {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 0.83rem;
+    line-height: 1.35;
+}
+
+.c-academia-header__moodle-warning a {
+    justify-self: start;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--font-sans);
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: var(--color-danger);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 40%, transparent);
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    padding: 0.45rem 0.65rem;
+}
+
+.c-academia-header__moodle-warning a:hover {
+    border-color: color-mix(in srgb, var(--color-danger) 56%, transparent);
+    background: color-mix(in srgb, var(--color-danger) 18%, transparent);
+}
+
 .dark .c-academia-header {
     border-bottom-color: var(--color-border);
     background: color-mix(in srgb, var(--color-surface) 76%, transparent);
@@ -157,6 +197,21 @@
     color: var(--color-brand);
 }
 
+.dark .c-academia-header__moodle-warning {
+    border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border) 55%);
+    background: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface) 84%);
+}
+
+.dark .c-academia-header__moodle-warning p {
+    color: var(--color-text);
+}
+
+.dark .c-academia-header__moodle-warning a {
+    color: var(--color-danger);
+    border-color: color-mix(in srgb, var(--color-danger) 48%, transparent);
+    background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+}
+
 @media (max-width: 1024px) {
     .c-academia-header__nav {
         display: none;
@@ -178,5 +233,11 @@
 
     .c-academia-header__student {
         display: none;
+    }
+
+    .c-academia-header__moodle-warning {
+        right: 0.75rem;
+        bottom: 0.75rem;
+        max-width: calc(100% - 1.5rem);
     }
 }

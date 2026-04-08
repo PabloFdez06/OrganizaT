@@ -46,7 +46,7 @@ const features: FeatureItem[] = [
         id: '001',
         title: 'Inicio de sesión unificado con tu cuenta Moodle',
         description:
-            'Conecta directamente con tu instancia Moodle institucional. Tus credenciales nunca abandonan tu dispositivo. Sin cuentas intermedias, sin configuración adicional en el servidor.',
+            'Conecta directamente con tu instancia Moodle institucional. Validamos acceso por CAS y mantenemos una sesión temporal segura, sin almacenar tu contraseña de forma persistente.',
         highlighted: true,
         icon: <LockIcon />,
     },
@@ -93,7 +93,7 @@ const steps: StepItem[] = [
         id: '02',
         title: 'Inicia sesión con tu cuenta',
         description:
-            'Las mismas credenciales que usas en Moodle. Acceso directo, seguro y completamente privado; ni siquiera nuestros administradores tendrán acceso a tus credenciales.',
+            'Las mismas credenciales que usas en Moodle. Acceso directo y seguro mediante sesión temporal, con controles para minimizar exposición y sin conservar la contraseña en base de datos.',
     },
     {
         id: '03',

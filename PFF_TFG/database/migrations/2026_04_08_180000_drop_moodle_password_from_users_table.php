@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasColumn('users', 'moodle_password')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table): void {
-            $table->string('moodle_username')->nullable()->after('email');
-            $table->json('moodle_notification_preferences')->nullable()->after('password');
+            $table->dropColumn('moodle_password');
         });
     }
 
@@ -22,11 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (Schema::hasColumn('users', 'moodle_password')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table): void {
-            $table->dropColumn([
-                'moodle_username',
-                'moodle_notification_preferences',
-            ]);
+            $table->text('moodle_password')->nullable()->after('password');
         });
     }
 };

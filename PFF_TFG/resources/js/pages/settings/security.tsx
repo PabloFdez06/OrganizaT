@@ -271,13 +271,35 @@ export default function Security({
     };
 
     const closeSettings = () => {
-        if (typeof window !== 'undefined' && window.history.length > 1) {
-            window.history.back();
+        if (typeof window !== 'undefined') {
+            const referrer = window.document.referrer;
+            const currentPath = `${window.location.pathname}${window.location.search}`;
 
-            return;
+            if (referrer !== '') {
+                try {
+                    const target = new URL(referrer);
+                    const targetPath = `${target.pathname}${target.search}`;
+                    const isSamePage = targetPath === currentPath;
+                    const isSettingsRoute = target.pathname.startsWith('/settings');
+
+                    if (target.origin === window.location.origin && !isSamePage && !isSettingsRoute) {
+                        router.visit(`${target.pathname}${target.search}${target.hash}`, {
+                            preserveState: false,
+                            preserveScroll: false,
+                        });
+
+                        return;
+                    }
+                } catch {
+                    // Ignore malformed referrer and fallback to dashboard.
+                }
+            }
         }
 
-        router.visit('/dashboard');
+        router.visit('/dashboard', {
+            preserveState: false,
+            preserveScroll: false,
+        });
     };
 
     return (
@@ -433,7 +455,15 @@ export default function Security({
                                     </section>
 
                                     {(showReconnectForm || !moodleConnected) && (
-                                        <Form method="post" action={connect().url} className="p-settings__connect-form">
+                                        <Form
+                                            method="post"
+                                            action={connect().url}
+                                            className="p-settings__connect-form"
+                                            onSuccess={() => {
+                                                setShowReconnectForm(false);
+                                                router.reload();
+                                            }}
+                                        >
                                             {({ errors, processing: connectProcessing }) => (
                                                 <>
                                                     <section className="p-settings__field">
@@ -468,7 +498,7 @@ export default function Security({
                                     )}
 
                                     <p className="p-settings__caption">
-                                        Las credenciales están cifradas y almacenadas de forma segura. La sesión se renueva automáticamente.
+                                        Usamos una sesión temporal segura para Moodle y no conservamos tu contraseña de forma persistente en base de datos.
                                     </p>
                                 </article>
 

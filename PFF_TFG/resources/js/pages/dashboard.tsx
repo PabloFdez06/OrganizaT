@@ -190,6 +190,7 @@ export default function Dashboard({
                 <AcademiaHeader
                     containerClassName="p-dashboard__container"
                     activePath="/dashboard"
+                    moodleConnected={moodleConnected}
                     profileAvatarUrl={profileAvatarUrl}
                     studentName={studentName}
                 />

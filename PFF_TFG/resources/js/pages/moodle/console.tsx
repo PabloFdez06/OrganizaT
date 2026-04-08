@@ -84,7 +84,7 @@ export default function MoodleConsole({
                             <CardHeader>
                                 <CardTitle>1) Conectar cuenta Moodle</CardTitle>
                                 <CardDescription>
-                                    Verifica credenciales CAS y guarda usuario/password Moodle cifrada.
+                                    Verifica credenciales CAS e inicia una sesión Moodle temporal segura.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>

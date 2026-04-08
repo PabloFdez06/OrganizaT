@@ -33,14 +33,12 @@
     color: var(--color-brand);
 }
 
-.p-tareas__head-main {
-    display: grid;
-    gap: 0.75rem;
-}
-
 .p-tareas__export-block {
     display: grid;
     gap: 0.25rem;
+    background: var(--color-surface);
+    border: 1px solid color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+    padding: 1.1rem;
 }
 
 .p-tareas__export-button {
@@ -81,50 +79,6 @@
     font-size: 0.72rem;
 }
 
-.p-tareas__summary {
-    border-left: 1px solid color-mix(in srgb, var(--color-text-muted) 34%, transparent);
-    padding-left: 0;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.15rem;
-    width: var(--tareas-side-width);
-    flex: 0 0 var(--tareas-side-width);
-    justify-items: stretch;
-    align-items: stretch;
-}
-
-.p-tareas__metric {
-    display: grid;
-    gap: 0.2rem;
-    width: 100%;
-    place-content: center;
-    justify-items: center;
-    text-align: center;
-}
-
-.p-tareas__metric strong {
-    font-family: var(--font-sans);
-    font-size: clamp(2rem, 2.8vw, 2.9rem);
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: var(--color-text);
-}
-
-.p-tareas__metric:nth-child(1) strong {
-    color: var(--color-brand);
-}
-
-.p-tareas__metric:nth-child(3) strong {
-    color: var(--color-token-334155);
-}
-
-.p-tareas__metric small {
-    font-family: var(--font-sans);
-    font-size: 0.63rem;
-    letter-spacing: 0.12em;
-    color: var(--color-text-muted);
-}
-
 .p-tareas__error {
     margin-bottom: 1rem;
     color: var(--color-danger);
@@ -158,14 +112,6 @@
     min-height: 8rem;
     isolation: isolate;
     background: linear-gradient(140deg, var(--color-token-6526ff) 0%, var(--color-token-4f06f9) 42%, var(--color-token-3600c9) 100%);
-}
-
-.p-tareas__featured-overlay {
-    position: absolute;
-    inset: 0;
-    opacity: 0.2;
-    background-size: cover;
-    background-position: center;
 }
 
 .p-tareas__featured-content {
@@ -698,28 +644,6 @@
     background: color-mix(in srgb, var(--color-danger) 18%, transparent);
 }
 
-.p-tareas__day-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-}
-
-.p-tareas__day-actions button {
-    border: 1px solid color-mix(in srgb, var(--color-text-muted) 36%, transparent);
-    background: transparent;
-    font-family: var(--font-sans);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    color: var(--color-text-muted);
-    padding: 0.65rem 1rem;
-    cursor: pointer;
-}
-
-.p-tareas__day-actions button:hover {
-    border-color: color-mix(in srgb, var(--color-brand) 36%, transparent);
-    color: var(--color-brand);
-}
-
 .p-tareas__day-list small {
     font-family: var(--font-sans);
     font-size: 0.67rem;
@@ -809,13 +733,6 @@
     .p-tareas__head {
         flex-direction: column;
         align-items: flex-start;
-    }
-
-    .p-tareas__summary {
-        border-left: 0;
-        padding-left: 0;
-        width: 100%;
-        flex: 1 1 auto;
     }
 
     .p-tareas__table-head,

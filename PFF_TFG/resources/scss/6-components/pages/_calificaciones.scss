@@ -119,12 +119,14 @@
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
     gap: 24px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .p-calificaciones__featured {
     background: #ebe7f2;
     border: 1px solid rgba(79, 6, 249, 0.08);
+    display: flex;
+    flex-direction: column;
 }
 
 .p-calificaciones__featured-trigger {
@@ -140,6 +142,7 @@
     background-repeat: no-repeat;
     background-position: center;
     position: relative;
+    flex: 1;
 }
 
 .p-calificaciones__featured-trigger::before {
@@ -586,7 +589,7 @@ a.p-calificaciones__task-name {
 }
 
 .p-calificaciones__milestones {
-    margin-top: 42px;
+    margin-top: 10rem;
     border-top: 1px solid rgba(135, 141, 149, 0.3);
     padding-top: 24px;
 }
@@ -871,6 +874,7 @@ a.p-calificaciones__task-name {
 @media (max-width: 1120px) {
     .p-calificaciones__workspace {
         grid-template-columns: 1fr;
+        align-items: start;
     }
 
     .p-calificaciones__subject-menu {

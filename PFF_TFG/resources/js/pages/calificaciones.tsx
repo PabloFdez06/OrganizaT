@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import AcademiaHeader from '@/components/academia-header';
 import FeedbackContent from '@/components/feedback-content';
 import { formatFeedbackToBlocks } from '@/lib/feedback-parser';
-import { toMoodleMediaUrl } from '@/lib/moodle-media';
 
 type SubjectTask = {
     name: string;
@@ -25,7 +24,6 @@ type SubjectCard = {
     code: string;
     subject: string;
     teacher: string;
-    image: string | null;
     gradedCount: number;
     units: SubjectUnit[];
     variant: 'large' | 'small' | 'wide' | 'compact' | 'accent';
@@ -133,19 +131,6 @@ function formatOneDecimal(value: number): string {
     return value.toFixed(1);
 }
 
-function buildBackgroundImageStyle(imageUrl: string | null): { backgroundImage: string } | undefined {
-    const resolvedImageUrl = toMoodleMediaUrl(imageUrl);
-
-    if (! resolvedImageUrl) {
-        return undefined;
-    }
-
-    const sanitized = resolvedImageUrl.replace(/"/g, '\\"');
-
-    return {
-        backgroundImage: `url("${sanitized}")`,
-    };
-}
 
 export default function Calificaciones({ moodleConnected, studentName, profileAvatarUrl, subjectCards, summary, milestones, pageError }: CalificacionesProps) {
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(subjectCards[0]?.id ?? null);
@@ -238,6 +223,7 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                 <AcademiaHeader
                     containerClassName="p-calificaciones__container"
                     activePath="/calificaciones"
+                    moodleConnected={moodleConnected}
                     profileAvatarUrl={profileAvatarUrl}
                     studentName={studentName}
                 />
@@ -250,7 +236,6 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                                 <span>.</span>
                             </h1>
                         </section>
-                        <p>{moodleConnected ? 'Datos sincronizados desde Moodle' : 'Conecta Moodle para ver tus calificaciones'}</p>
                     </header>
 
                     {pageError && <p className="p-calificaciones__error">{pageError}</p>}
@@ -287,7 +272,6 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                                     type="button"
                                     onClick={() => setIsFeaturedExpanded((prev) => ! prev)}
                                     aria-expanded={isFeaturedExpanded}
-                                    style={buildBackgroundImageStyle(featuredSubject.image)}
                                 >
                                     <header className="p-calificaciones__featured-head">
                                         <section>

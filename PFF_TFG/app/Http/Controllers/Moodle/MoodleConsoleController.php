@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAcademicService;
-use App\Services\Moodle\MoodleCasClient;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,8 +15,8 @@ use Inertia\Response;
 class MoodleConsoleController extends Controller
 {
     public function __construct(
-        private readonly MoodleCasClient $client,
         private readonly MoodleAcademicService $academicService,
+        private readonly MoodleEphemeralSessionService $sessionService,
     ) {
     }
 
@@ -65,7 +65,7 @@ class MoodleConsoleController extends Controller
             'endpointResponse' => $endpointResponse,
             'endpointError' => $endpointError,
             'preferences' => $preferences,
-            'moodleConnected' => (bool) ($request->user()->moodle_username && $request->user()->moodle_password),
+            'moodleConnected' => $this->sessionService->hasActiveSession($request->user()),
             'moodleUsername' => $request->user()->moodle_username,
             'endpoints' => [
                 ['key' => 'asignaturas', 'method' => 'GET', 'path' => '/api/asignaturas'],
@@ -108,14 +108,11 @@ class MoodleConsoleController extends Controller
             return $request->user()->moodle_notification_preferences ?? [];
         }
 
-        $moodleUsername = $request->user()->moodle_username;
-        $moodlePassword = $request->user()->moodle_password;
-
-        if (! $moodleUsername || ! $moodlePassword) {
+        if (! $this->sessionService->hasActiveSession($request->user())) {
             throw new MoodleAuthenticationException('La cuenta Moodle no esta conectada.');
         }
 
-        $session = $this->client->login($moodleUsername, $moodlePassword);
+        $session = $this->sessionService->reopenForUser($request->user());
 
         try {
             return match ($endpoint) {
