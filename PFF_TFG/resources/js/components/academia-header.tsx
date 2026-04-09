@@ -4,7 +4,7 @@ import { toMoodleMediaUrl } from '@/lib/moodle-media';
 
 type AcademiaHeaderProps = {
     containerClassName: string;
-    activePath: '/dashboard' | '/asignaturas' | '/calificaciones' | '/tareas';
+    activePath: '/dashboard' | '/asignaturas' | '/calificaciones' | '/tareas' | '/recursos';
     moodleConnected: boolean;
     profileAvatarUrl: string | null;
     studentName: string | null;
@@ -12,7 +12,7 @@ type AcademiaHeaderProps = {
 
 type HeaderNavItem = {
     label: string;
-    href: '/dashboard' | '/asignaturas' | '/calificaciones' | '/tareas';
+    href: '/dashboard' | '/asignaturas' | '/calificaciones' | '/tareas' | '/recursos';
 };
 
 const NAV_ITEMS: HeaderNavItem[] = [
@@ -20,6 +20,7 @@ const NAV_ITEMS: HeaderNavItem[] = [
     { label: 'Asignaturas', href: '/asignaturas' },
     { label: 'Calificaciones', href: '/calificaciones' },
     { label: 'Tareas', href: '/tareas' },
+    { label: 'Recursos', href: '/recursos' },
 ];
 
 export default function AcademiaHeader({

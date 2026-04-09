@@ -102,4 +102,46 @@ class MoodleDataController extends Controller
         }
     }
 
+    public function recursos(Request $request, int $courseId): JsonResponse
+    {
+        try {
+            $session = $this->sessionService->reopenForUser($request->user());
+
+            $resources = $this->academicService->getResourcesByCourse($session, $courseId);
+
+            return response()->json($resources);
+        } catch (MoodleAuthenticationException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 401);
+        } catch (MoodleRequestException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 502);
+        } catch (\Throwable) {
+            return response()->json(['message' => 'Error inesperado al obtener recursos.'], 500);
+        } finally {
+            if (isset($session)) {
+                $session->close();
+            }
+        }
+    }
+
+    public function allRecursos(Request $request): JsonResponse
+    {
+        try {
+            $session = $this->sessionService->reopenForUser($request->user());
+
+            $payload = $this->academicService->getAllResources($session);
+
+            return response()->json($payload);
+        } catch (MoodleAuthenticationException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 401);
+        } catch (MoodleRequestException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 502);
+        } catch (\Throwable) {
+            return response()->json(['message' => 'Error inesperado al obtener recursos agregados.'], 500);
+        } finally {
+            if (isset($session)) {
+                $session->close();
+            }
+        }
+    }
+
 }

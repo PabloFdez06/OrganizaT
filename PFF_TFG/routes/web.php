@@ -3,6 +3,7 @@
 use App\Http\Controllers\AsignaturasController;
 use App\Http\Controllers\CalificacionesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RecursosController;
 use App\Http\Controllers\TareasController;
 use App\Http\Controllers\Moodle\MoodleConnectionController;
 use App\Http\Controllers\Moodle\MoodleConsoleController;
@@ -29,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('asignaturas', [AsignaturasController::class, 'index'])->name('asignaturas.index');
     Route::get('calificaciones', [CalificacionesController::class, 'index'])->name('calificaciones.index');
     Route::get('tareas', [TareasController::class, 'index'])->name('tareas.index');
+    Route::get('recursos', [RecursosController::class, 'index'])->name('recursos.index');
     Route::get('tareas/export-all.ics', [TareasController::class, 'exportAllIcs'])->name('tareas.export_all_ics');
     Route::get('moodle-console', [MoodleConsoleController::class, 'index'])->name('moodle.console');
     Route::post('moodle-console/preferences', [MoodleConsoleController::class, 'updatePreferences'])->name('moodle.console.preferences.update');
@@ -42,6 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tareas/{courseId}', [MoodleDataController::class, 'tareas'])->name('moodle.tareas');
         Route::get('all-tareas', [MoodleDataController::class, 'allTareas'])->name('moodle.all_tareas');
         Route::get('calificaciones', [MoodleDataController::class, 'calificaciones'])->name('moodle.calificaciones');
+        Route::get('recursos/{courseId}', [MoodleDataController::class, 'recursos'])->name('moodle.recursos');
+        Route::get('all-recursos', [MoodleDataController::class, 'allRecursos'])->name('moodle.all_recursos');
 
         Route::get('configuracion', [MoodlePreferencesController::class, 'show'])->name('moodle.configuracion.show');
         Route::post('configuracion', [MoodlePreferencesController::class, 'update'])->name('moodle.configuracion.update');
