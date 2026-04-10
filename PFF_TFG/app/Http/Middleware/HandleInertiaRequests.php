@@ -2,11 +2,21 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Moodle\MoodleEphemeralSessionService;
+use App\Services\Moodle\MoodleNotificationCenter;
+use App\Services\Moodle\MoodleUserAcademicCache;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(
+        private readonly MoodleEphemeralSessionService $sessionService,
+        private readonly MoodleUserAcademicCache $cache,
+        private readonly MoodleNotificationCenter $notificationCenter,
+    ) {
+    }
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -45,6 +55,35 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'moodleNotifications' => function () use ($request): array {
+                $user = $request->user();
+
+                if (! $user) {
+                    return [
+                        'unreadCount' => 0,
+                        'items' => [],
+                    ];
+                }
+
+                if (! $this->sessionService->hasActiveSession($user)) {
+                    return [
+                        'unreadCount' => 0,
+                        'items' => [],
+                    ];
+                }
+
+                try {
+                    $payload = $this->cache->getForUser($user);
+                    $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+
+                    return $this->notificationCenter->buildForUser($user, $tasks);
+                } catch (\Throwable) {
+                    return [
+                        'unreadCount' => 0,
+                        'items' => [],
+                    ];
+                }
+            },
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Moodle\MoodleConnectionController;
 use App\Http\Controllers\Moodle\MoodleConsoleController;
 use App\Http\Controllers\Moodle\MoodleDataController;
 use App\Http\Controllers\Moodle\MoodleMediaController;
+use App\Http\Controllers\Moodle\MoodleNotificationsController;
 use App\Http\Controllers\Moodle\MoodlePreferencesController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +35,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tareas/export-all.ics', [TareasController::class, 'exportAllIcs'])->name('tareas.export_all_ics');
     Route::get('moodle-console', [MoodleConsoleController::class, 'index'])->name('moodle.console');
     Route::post('moodle-console/preferences', [MoodleConsoleController::class, 'updatePreferences'])->name('moodle.console.preferences.update');
+    Route::post('moodle-notifications/read-all', [MoodleNotificationsController::class, 'markAllAsRead'])->name('moodle.notifications.read_all');
     Route::get('moodle/media', [MoodleMediaController::class, 'show'])->name('moodle.media');
 
     Route::post('moodle-connect', [MoodleConnectionController::class, 'connect'])->name('moodle.connect');

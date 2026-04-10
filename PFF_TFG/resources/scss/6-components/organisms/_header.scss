@@ -91,6 +91,182 @@
     display: grid;
     place-items: center;
     cursor: pointer;
+    position: relative;
+}
+
+.c-academia-header__badge {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    min-width: 1rem;
+    height: 1rem;
+    border-radius: 999rem;
+    padding: 0 0.25rem;
+    background: var(--color-danger);
+    color: var(--color-brand-contrast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.c-academia-header__notifications-panel {
+    width: min(20rem, calc(100vw - 2rem));
+    border: 1px solid color-mix(in srgb, var(--color-brand) 10%, transparent);
+    background: color-mix(in srgb, var(--color-surface) 98%, var(--color-bg) 2%);
+    padding: 0;
+    box-shadow: 0 1.5rem 2.5rem -1rem color-mix(in srgb, var(--color-text) 20%, transparent);
+}
+
+.c-academia-header__notifications-head {
+    padding: 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-brand) 8%, var(--color-border) 92%);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.c-academia-header__notifications-head h3 {
+    margin: 0;
+    font-size: 0.625rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.c-academia-header__notifications-head p {
+    margin: 0;
+    font-size: 0.625rem;
+    color: var(--color-brand);
+    background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+    border-radius: 999rem;
+    padding: 0.125rem 0.5rem;
+}
+
+.c-academia-header__notifications-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0;
+    max-height: 22rem;
+    overflow: auto;
+}
+
+.c-academia-header__notification {
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-brand) 8%, var(--color-border) 92%);
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    align-items: start;
+    color: var(--color-text);
+}
+
+.c-academia-header__notification-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999rem;
+    margin-top: 0.35rem;
+    background: color-mix(in srgb, var(--color-muted) 55%, transparent);
+}
+
+.c-academia-header__notification-copy h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.35;
+}
+
+.c-academia-header__notification-copy p {
+    margin: 0.25rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+    line-height: 1.35;
+}
+
+.c-academia-header__notification-copy small {
+    display: inline-block;
+    margin-top: 0.25rem;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+}
+
+.c-academia-header__notification-category {
+    margin-top: 0;
+    margin-bottom: 0.1rem;
+    font-weight: 700;
+}
+
+.c-academia-header__notification-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.c-academia-header__notification time {
+    font-size: 0.6875rem;
+    color: var(--color-muted);
+    justify-self: end;
+    align-self: end;
+    white-space: nowrap;
+}
+
+.c-academia-header__notification.is-warning {
+    border-color: color-mix(in srgb, var(--color-brand) 44%, var(--color-border) 56%);
+}
+
+.c-academia-header__notification.is-critical {
+    background: color-mix(in srgb, var(--color-brand) 5%, transparent);
+}
+
+.c-academia-header__notification.is-critical .c-academia-header__notification-dot {
+    background: var(--color-brand);
+}
+
+.c-academia-header__notification.is-critical .c-academia-header__notification-category {
+    color: var(--color-brand);
+}
+
+.c-academia-header__notification.is-read .c-academia-header__notification-dot {
+    background: color-mix(in srgb, var(--color-muted) 45%, transparent);
+}
+
+.c-academia-header__notifications-empty {
+    padding: 1rem;
+}
+
+.c-academia-header__notifications-empty p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+}
+
+.c-academia-header__notifications-footer {
+    border-top: 1px solid color-mix(in srgb, var(--color-brand) 8%, var(--color-border) 92%);
+    background: var(--color-surface);
+    padding: 0.75rem;
+    display: grid;
+    place-items: center;
+}
+
+.c-academia-header__notifications-footer button {
+    border: 0;
+    background: transparent;
+    color: var(--color-muted);
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.c-academia-header__notifications-footer button:hover {
+    color: var(--color-brand);
 }
 
 .c-academia-header__toolbar-divider {
@@ -210,6 +386,19 @@
     color: var(--color-danger);
     border-color: color-mix(in srgb, var(--color-danger) 48%, transparent);
     background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+}
+
+.dark .c-academia-header__badge {
+    color: var(--color-brand-contrast);
+}
+
+.dark .c-academia-header__notifications-panel {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+}
+
+.dark .c-academia-header__notification {
+    border-color: var(--color-border);
 }
 
 @media (max-width: 1024px) {
