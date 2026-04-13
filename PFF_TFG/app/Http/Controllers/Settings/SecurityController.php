@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
+use App\Mail\MoodleNotificationMail;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
@@ -11,6 +12,7 @@ use App\Services\Moodle\MoodleUserAcademicCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
@@ -165,6 +167,45 @@ class SecurityController extends Controller
         ]);
 
         return back()->with('success', 'Preferencias actualizadas.');
+    }
+
+    public function sendTestEmail(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $recipient = trim((string) ($user?->email ?? ''));
+
+        if ($recipient === '') {
+            return back()->with('error', 'No se pudo enviar el test: el usuario no tiene correo configurado.');
+        }
+
+        $now = now();
+        $dueAt = $now->copy()->addDays(2)->setHour(23)->setMinute(59);
+
+        $notification = [
+            'id' => 'test-mail-'.(string) $user->id.'-'.$now->timestamp,
+            'title' => 'Tarea simulada: Entrega de práctica',
+            'message' => 'Esto es una simulación de nueva tarea creada por el profesor para validar tus notificaciones por correo.',
+            'course' => 'Desarrollo de Aplicaciones Web',
+            'level' => 'info',
+            'dueLabel' => $dueAt->locale('es')->translatedFormat('D, d M · H:i'),
+            'url' => '/tareas',
+            'trigger' => 'new_task',
+            'category' => 'SIMULACIÓN · NUEVA TAREA',
+            'meta' => 'PRUEBA DE EMAIL',
+            'isRead' => false,
+        ];
+
+        try {
+            Mail::to($recipient)->send(new MoodleNotificationMail($notification, $user));
+
+            return back()->with('success', 'Correo de simulación enviado correctamente a '.$recipient.'.');
+        } catch (\Throwable $exception) {
+            if ((bool) config('app.debug', false)) {
+                return back()->with('error', 'No se pudo enviar el correo de prueba. Detalle SMTP: '.$exception->getMessage());
+            }
+
+            return back()->with('error', 'No se pudo enviar el correo de prueba. Revisa la configuración SMTP de Gmail.');
+        }
     }
 
     public function updateQuickSubjects(Request $request): RedirectResponse

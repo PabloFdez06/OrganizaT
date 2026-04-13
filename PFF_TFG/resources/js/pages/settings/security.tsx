@@ -144,6 +144,7 @@ export default function Security({
 
     const [preferencesData, setPreferencesData] = useState<Preferences>(preferences);
     const [processing, setProcessing] = useState(false);
+    const [testingEmail, setTestingEmail] = useState(false);
     const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
 
@@ -266,6 +267,21 @@ export default function Security({
                 preserveState: true,
                 replace: true,
                 onFinish: () => setQuickSubjectsProcessing(false),
+            },
+        );
+    };
+
+    const sendTestNotificationEmail = () => {
+        setTestingEmail(true);
+
+        router.post(
+            '/settings/security/preferences/test-email',
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onFinish: () => setTestingEmail(false),
             },
         );
     };
@@ -489,7 +505,12 @@ export default function Security({
                                                         <InputError message={errors.moodle_password} />
                                                     </section>
 
-                                                    <Button type="submit" disabled={connectProcessing}>
+                                                    <Button
+                                                        type="submit"
+                                                        variant="outline"
+                                                        className="p-settings__outline-button"
+                                                        disabled={connectProcessing}
+                                                    >
                                                         {connectProcessing ? 'Conectando...' : 'Guardar conexión'}
                                                     </Button>
                                                 </>
@@ -610,6 +631,20 @@ export default function Security({
                                             icon="mail"
                                             onToggle={(value) => persistPreference('email', value)}
                                         />
+                                        <section className="p-settings__email-test">
+                                            <p>
+                                                ¿Quieres probarlo ahora? Envía una simulación de "nueva tarea" al correo configurado.
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="p-settings__outline-button"
+                                                disabled={processing || testingEmail || !profile.email}
+                                                onClick={sendTestNotificationEmail}
+                                            >
+                                                {testingEmail ? 'Enviando prueba...' : 'Probar correo'}
+                                            </Button>
+                                        </section>
                                         <PreferenceToggle
                                             id="channel-push"
                                             label="Notificaciones push"
@@ -707,7 +742,13 @@ export default function Security({
                                                         Seleccionadas: <b>{quickSubjectsSelectedCount}</b>/{quickSubjectsLimit}
                                                     </p>
 
-                                                    <Button type="button" onClick={submitQuickSubjects} disabled={quickSubjectsProcessing}>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="p-settings__outline-button"
+                                                        onClick={submitQuickSubjects}
+                                                        disabled={quickSubjectsProcessing}
+                                                    >
                                                         {quickSubjectsProcessing ? 'Aplicando...' : 'Aplicar selección'}
                                                     </Button>
                                                 </footer>

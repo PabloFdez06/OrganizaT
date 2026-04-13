@@ -2,9 +2,12 @@
 
 namespace App\Services\Moodle;
 
+use App\Mail\MoodleNotificationMail;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class MoodleNotificationCenter
 {
@@ -12,6 +15,7 @@ class MoodleNotificationCenter
     private const EVENTS_TTL_SECONDS = 1209600;
     private const SNAPSHOT_TTL_SECONDS = 1209600;
     private const DISMISSED_TTL_SECONDS = 1209600;
+    private const EMAILED_TTL_SECONDS = 1209600;
 
     public function markAllAsRead(User $user): void
     {
@@ -154,6 +158,8 @@ class MoodleNotificationCenter
         }, $items);
 
         $unreadCount = count(array_filter($mapped, static fn (array $item): bool => ! (bool) ($item['isRead'] ?? false)));
+
+        $this->dispatchEmailNotifications($user, $mapped, $preferences);
 
         return [
             'unreadCount' => $unreadCount,
@@ -466,6 +472,11 @@ class MoodleNotificationCenter
         return 'moodle:notifications:dismissed:'.$user->id;
     }
 
+    private function emailedKey(User $user): string
+    {
+        return 'moodle:notifications:emailed:'.$user->id;
+    }
+
     /**
      * @return array<string, bool|int>
      */
@@ -483,7 +494,16 @@ class MoodleNotificationCenter
 
         $saved = is_array($user->moodle_notification_preferences) ? $user->moodle_notification_preferences : [];
 
-        return array_merge($defaults, $saved);
+        $merged = array_merge($defaults, $saved);
+        $merged['48h_antes'] = (bool) ($merged['48h_antes'] ?? true);
+        $merged['24h_antes'] = (bool) ($merged['24h_antes'] ?? true);
+        $merged['mismo_dia'] = (bool) ($merged['mismo_dia'] ?? true);
+        $merged['recordatorio_personalizado'] = (bool) ($merged['recordatorio_personalizado'] ?? false);
+        $merged['recordatorio_personalizado_minutos'] = max(1, (int) ($merged['recordatorio_personalizado_minutos'] ?? 180));
+        $merged['email'] = (bool) ($merged['email'] ?? true);
+        $merged['push'] = (bool) ($merged['push'] ?? false);
+
+        return $merged;
     }
 
     /**
@@ -516,6 +536,10 @@ class MoodleNotificationCenter
         array $preferences,
         CarbonImmutable $now,
     ): ?array {
+        if ($this->isCustomReminderInWindow($remainingMinutes, $preferences)) {
+            return null;
+        }
+
         $trigger = null;
         $level = 'info';
         $category = 'RECORDATORIO';
@@ -621,16 +645,108 @@ class MoodleNotificationCenter
         return [
             'id' => md5($course.'|'.$title.'|'.$dueAt->toIso8601String().'|custom'),
             'title' => $title,
-            'message' => 'Recordatorio personalizado activo para esta entrega.',
+            'message' => 'Quedan '.$customMinutes.' minutos o menos para la entrega configurada en tu recordatorio personalizado.',
             'course' => $course,
             'level' => 'info',
             'dueLabel' => $dueAt->locale('es')->translatedFormat('D, d M · H:i'),
             'url' => $taskUrl !== '' ? $taskUrl : '/tareas',
             'trigger' => 'custom',
             'category' => 'RECORDATORIO PERSONALIZADO',
-            'meta' => 'UMBRAL PERSONALIZADO',
+            'meta' => 'VENTANA DE '.$customMinutes.' MIN',
             'remainingMinutes' => $remainingMinutes,
             'createdAt' => $dueAt->subMinutes($customMinutes)->toIso8601String(),
         ];
+    }
+
+    /**
+     * @param  array<string, bool|int>  $preferences
+     */
+    private function isCustomReminderInWindow(int $remainingMinutes, array $preferences): bool
+    {
+        $customEnabled = (bool) ($preferences['recordatorio_personalizado'] ?? false);
+
+        if (! $customEnabled || $remainingMinutes < 0) {
+            return false;
+        }
+
+        $customMinutes = max(1, (int) ($preferences['recordatorio_personalizado_minutos'] ?? 180));
+
+        return $remainingMinutes <= $customMinutes;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @param  array<string, bool|int>  $preferences
+     */
+    private function dispatchEmailNotifications(User $user, array $items, array $preferences): void
+    {
+        if (! (bool) ($preferences['email'] ?? true)) {
+            return;
+        }
+
+        $recipient = trim((string) ($user->email ?? ''));
+
+        if ($recipient === '') {
+            return;
+        }
+
+        $emailed = $this->getEmailedIds($user);
+        $nowIso = CarbonImmutable::now()->toIso8601String();
+        $hasNewDelivery = false;
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $id = trim((string) ($item['id'] ?? ''));
+            $isRead = (bool) ($item['isRead'] ?? false);
+
+            if ($id === '' || $isRead || isset($emailed[$id])) {
+                continue;
+            }
+
+            try {
+                Mail::to($recipient)->send(new MoodleNotificationMail($item, $user));
+                $emailed[$id] = $nowIso;
+                $hasNewDelivery = true;
+            } catch (\Throwable $exception) {
+                Log::warning('No se pudo enviar notificacion Moodle por email.', [
+                    'user_id' => $user->id,
+                    'notification_id' => $id,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        if (! $hasNewDelivery) {
+            return;
+        }
+
+        Cache::put($this->emailedKey($user), $emailed, now()->addSeconds(self::EMAILED_TTL_SECONDS));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getEmailedIds(User $user): array
+    {
+        $cached = Cache::get($this->emailedKey($user));
+
+        if (! is_array($cached)) {
+            return [];
+        }
+
+        $filtered = [];
+
+        foreach ($cached as $id => $value) {
+            if (! is_string($id) || $id === '') {
+                continue;
+            }
+
+            $filtered[$id] = is_string($value) ? $value : CarbonImmutable::now()->toIso8601String();
+        }
+
+        return $filtered;
     }
 }

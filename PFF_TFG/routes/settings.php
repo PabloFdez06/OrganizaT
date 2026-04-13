@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/security', [SecurityController::class, 'edit'])->name('security.edit');
     Route::redirect('settings/configuracion', '/settings/security');
     Route::post('settings/security/preferences', [SecurityController::class, 'updatePreferences'])->name('security.preferences.update');
+    Route::post('settings/security/preferences/test-email', [SecurityController::class, 'sendTestEmail'])->name('security.preferences.test-email');
     Route::post('settings/security/quick-subjects', [SecurityController::class, 'updateQuickSubjects'])->name('security.quick-subjects.update');
     Route::post('settings/security/moodle/disconnect', [SecurityController::class, 'disconnectMoodle'])->name('security.moodle.disconnect');
     Route::delete('settings/security/account', [SecurityController::class, 'destroyAccount'])->name('security.account.destroy');

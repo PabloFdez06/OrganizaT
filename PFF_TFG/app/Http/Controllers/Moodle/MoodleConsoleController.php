@@ -54,6 +54,8 @@ class MoodleConsoleController extends Controller
                 '48h_antes' => true,
                 '24h_antes' => true,
                 'mismo_dia' => true,
+                'recordatorio_personalizado' => false,
+                'recordatorio_personalizado_minutos' => 180,
                 'email' => true,
                 'push' => false,
             ];
@@ -83,6 +85,8 @@ class MoodleConsoleController extends Controller
             '48h_antes' => ['sometimes', 'boolean'],
             '24h_antes' => ['sometimes', 'boolean'],
             'mismo_dia' => ['sometimes', 'boolean'],
+            'recordatorio_personalizado' => ['sometimes', 'boolean'],
+            'recordatorio_personalizado_minutos' => ['sometimes', 'integer', 'min:1', 'max:10080'],
             'email' => ['sometimes', 'boolean'],
             'push' => ['sometimes', 'boolean'],
         ]);
@@ -91,12 +95,20 @@ class MoodleConsoleController extends Controller
             '48h_antes' => true,
             '24h_antes' => true,
             'mismo_dia' => true,
+            'recordatorio_personalizado' => false,
+            'recordatorio_personalizado_minutos' => 180,
             'email' => true,
             'push' => false,
         ];
 
+        $merged = array_merge($defaults, $data);
+
+        if (! $merged['recordatorio_personalizado']) {
+            $merged['recordatorio_personalizado_minutos'] = $defaults['recordatorio_personalizado_minutos'];
+        }
+
         $request->user()->update([
-            'moodle_notification_preferences' => array_merge($defaults, $data),
+            'moodle_notification_preferences' => $merged,
         ]);
 
         return back()->with('success', 'Preferencias de Moodle actualizadas.');
