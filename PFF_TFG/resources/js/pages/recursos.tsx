@@ -1,11 +1,13 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    BarChart3,
     ChevronDown,
     ChevronUp,
     Download,
     ExternalLink,
     FileArchive,
     FileText,
+    Filter,
     Folder,
     Image,
     Link as LinkIcon,
@@ -90,6 +92,13 @@ function formatPercent(value: number, total: number): number {
     return Math.round((value / total) * 100);
 }
 
+function getModuleLabel(code: string, index: number): string {
+    const numericMatch = code.match(/(\d+)/);
+    const moduleNumber = numericMatch ? Number.parseInt(numericMatch[1], 10) : index + 1;
+
+    return `MODULO ${moduleNumber.toString().padStart(2, '0')}`;
+}
+
 function kindIcon(kind: ResourceItem['kind']) {
     switch (kind) {
         case 'document':
@@ -138,7 +147,6 @@ export default function Recursos({
     summary,
     pageError,
 }: RecursosProps) {
-    const [isSelectedExpanded, setIsSelectedExpanded] = useState(true);
     const [selectedBuckets, setSelectedBuckets] = useState<MetadataBucket[]>(['links', 'images', 'files', 'folders', 'others']);
     const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 
@@ -160,11 +168,6 @@ export default function Recursos({
             filteredResourceCount: units.reduce((acc, unit) => acc + unit.resources.length, 0),
         };
     }, [selectedBuckets, selectedSubject]);
-
-    const sideSubjects = useMemo(
-        () => subjects.filter((subject) => subject.id !== selectedSubjectId),
-        [selectedSubjectId, subjects],
-    );
 
     const filteredTotals = useMemo(() => {
         const resources = filteredSelectedSubject?.units.flatMap((unit) => unit.resources) ?? [];
@@ -258,242 +261,254 @@ export default function Recursos({
                 <main className="p-recursos__container p-recursos__main">
                     <header className="p-recursos__head">
                         <h1>RECURSOS</h1>
-                        <section className="p-recursos__total" aria-label="Total de recursos disponibles">
-                            <strong>{summary.totalResources}</strong>
-                            <span>Recursos totales</span>
+
+                        <section className="p-recursos__head-tools" aria-label="Herramientas de recursos">
+                            <section className="p-recursos__total" aria-label="Total de recursos disponibles">
+                                <strong>{summary.totalResources}</strong>
+                                <span>Recursos totales</span>
+                            </section>
                         </section>
                     </header>
 
                     {pageError && <p className="p-recursos__error">{pageError}</p>}
 
                     <section className="p-recursos__workspace" aria-label="Panel de recursos">
-                        <aside className="p-recursos__sidebar">
-                            <article className="p-recursos__analysis" aria-label="Analisis de formato">
-                                <h2>ANALISIS DE FORMATO</h2>
+                        <aside className="p-recursos__left-rail" aria-label="Listado de asignaturas">
+                            <header className="p-recursos__rail-head">
+                                <h2>ASIGNATURAS</h2>
 
-                                <section className="p-recursos__analysis-item">
-                                    <header>
-                                        <span>Documentos</span>
-                                        <strong>{formatDistribution.documents}%</strong>
-                                    </header>
-                                    <progress max={100} value={formatDistribution.documents} aria-label="Porcentaje de documentos" />
+                                <section className="p-recursos__dropdowns" aria-label="Paneles de analisis y filtros">
+                                    <details className="p-recursos__dropdown p-recursos__dropdown--icon">
+                                        <summary aria-label="Analisis de formato" title="Analisis de formato">
+                                            <BarChart3 size={15} aria-hidden="true" />
+                                        </summary>
+
+                                        <article className="p-recursos__analysis" aria-label="Analisis de formato">
+                                            <section className="p-recursos__analysis-item">
+                                                <header>
+                                                    <span>Documentos</span>
+                                                    <strong>{formatDistribution.documents}%</strong>
+                                                </header>
+                                                <progress max={100} value={formatDistribution.documents} aria-label="Porcentaje de documentos" />
+                                            </section>
+
+                                            <section className="p-recursos__analysis-item">
+                                                <header>
+                                                    <span>Multimedia</span>
+                                                    <strong>{formatDistribution.multimedia}%</strong>
+                                                </header>
+                                                <progress max={100} value={formatDistribution.multimedia} aria-label="Porcentaje de multimedia" />
+                                            </section>
+
+                                            <section className="p-recursos__analysis-item">
+                                                <header>
+                                                    <span>Enlaces externos</span>
+                                                    <strong>{formatDistribution.links}%</strong>
+                                                </header>
+                                                <progress max={100} value={formatDistribution.links} aria-label="Porcentaje de enlaces" />
+                                            </section>
+                                        </article>
+                                    </details>
+
+                                    <details className="p-recursos__dropdown p-recursos__dropdown--icon">
+                                        <summary aria-label="Filtro por metadatos" title="Filtro por metadatos">
+                                            <Filter size={15} aria-hidden="true" />
+                                        </summary>
+
+                                        <article className="p-recursos__filters" aria-label="Filtro por metadatos">
+                                            <ul>
+                                                {METADATA_FILTERS.map((item) => {
+                                                    const isActive = selectedBuckets.includes(item.bucket);
+                                                    const count = metadataCounts[item.bucket];
+
+                                                    return (
+                                                        <li key={item.bucket}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleBucket(item.bucket)}
+                                                                aria-pressed={isActive}
+                                                                className={isActive ? 'is-active' : ''}
+                                                            >
+                                                                {item.label}
+                                                                <span>{count}</span>
+                                                            </button>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </article>
+                                    </details>
                                 </section>
+                            </header>
 
-                                <section className="p-recursos__analysis-item">
-                                    <header>
-                                        <span>Multimedia</span>
-                                        <strong>{formatDistribution.multimedia}%</strong>
-                                    </header>
-                                    <progress max={100} value={formatDistribution.multimedia} aria-label="Porcentaje de multimedia" />
-                                </section>
+                            <section className="p-recursos__subject-scroll">
+                                {subjects.map((subject, index) => {
+                                    const isActive = subject.id === selectedSubjectId;
 
-                                <section className="p-recursos__analysis-item">
-                                    <header>
-                                        <span>Enlaces externos</span>
-                                        <strong>{formatDistribution.links}%</strong>
-                                    </header>
-                                    <progress max={100} value={formatDistribution.links} aria-label="Porcentaje de enlaces" />
-                                </section>
-                            </article>
-
-                            <article className="p-recursos__filters" aria-label="Filtro por metadatos">
-                                <h2>METADATA FILTER</h2>
-                                <ul>
-                                    {METADATA_FILTERS.map((item) => {
-                                        const isActive = selectedBuckets.includes(item.bucket);
-                                        const count = metadataCounts[item.bucket];
-
-                                        return (
-                                            <li key={item.bucket}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleToggleBucket(item.bucket)}
-                                                    aria-pressed={isActive}
-                                                    className={isActive ? 'is-active' : ''}
-                                                >
-                                                    {item.label}
-                                                    <span>{count}</span>
-                                                </button>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            </article>
+                                    return (
+                                        <button
+                                            key={subject.id}
+                                            type="button"
+                                            className={`p-recursos__subject-item ${isActive ? 'is-active' : ''}`}
+                                            onClick={() => {
+                                                handleSelectSubject(subject.id);
+                                            }}
+                                            aria-current={isActive ? 'page' : undefined}
+                                        >
+                                            <section>
+                                                <small>{getModuleLabel(subject.code, index)}</small>
+                                                <h3>{subject.subject}</h3>
+                                            </section>
+                                        </button>
+                                    );
+                                })}
+                            </section>
                         </aside>
 
                         <section className="p-recursos__content" aria-label="Recursos por asignatura">
                             {filteredSelectedSubject && (
                                 <article className="p-recursos__subject is-featured">
-                                    <button
-                                        type="button"
-                                        className="p-recursos__subject-head"
-                                        onClick={() => {
-                                            setIsSelectedExpanded((previous) => ! previous);
-                                        }}
-                                        aria-expanded={isSelectedExpanded}
-                                    >
+                                    <header className="p-recursos__subject-head">
                                         <section>
                                             <small>{filteredSelectedSubject.code}</small>
                                             <h2>{filteredSelectedSubject.subject}</h2>
                                         </section>
-                                        {isSelectedExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                    </button>
+                                    </header>
 
-                                    {isSelectedExpanded && (
-                                        <section className="p-recursos__subject-body">
-                                            {filteredSelectedSubject.units.map((unit, unitIndex) => (
-                                                <section key={`${filteredSelectedSubject.id}-${unit.name}`} className="p-recursos__unit">
-                                                    <header>
-                                                        <span>{`${`${unitIndex + 1}`.padStart(2, '0')}`}</span>
-                                                        <h3>{unit.name}</h3>
-                                                    </header>
+                                    <section className="p-recursos__subject-body">
+                                        {filteredSelectedSubject.units.length > 0 ? filteredSelectedSubject.units.map((unit, unitIndex) => (
+                                            <section key={`${filteredSelectedSubject.id}-${unit.name}`} className="p-recursos__unit">
+                                                <header>
+                                                    <span>{`${`${unitIndex + 1}`.padStart(2, '0')}`}</span>
+                                                    <h3>{unit.name}</h3>
+                                                </header>
 
-                                                    <ul>
-                                                        {unit.resources.map((resource) => (
-                                                            <li key={resource.id}>
-                                                                {resource.kind === 'folder' ? (
-                                                                    <article className="p-recursos__folder-card">
-                                                                        <button
-                                                                            type="button"
-                                                                            className="p-recursos__folder-head"
-                                                                            onClick={() => {
-                                                                                handleToggleFolder(resource.id);
-                                                                            }}
-                                                                            aria-expanded={Boolean(expandedFolders[resource.id])}
+                                                <ul>
+                                                    {unit.resources.map((resource) => (
+                                                        <li key={resource.id}>
+                                                            {resource.kind === 'folder' ? (
+                                                                <article className="p-recursos__folder-card">
+                                                                    <button
+                                                                        type="button"
+                                                                        className="p-recursos__folder-head"
+                                                                        onClick={() => {
+                                                                            handleToggleFolder(resource.id);
+                                                                        }}
+                                                                        aria-expanded={Boolean(expandedFolders[resource.id])}
+                                                                    >
+                                                                        <section className="p-recursos__folder-main">
+                                                                            <section className={`p-recursos__resource-icon ${kindToneClass(resource.kind)}`} aria-hidden="true">
+                                                                                {kindIcon(resource.kind)}
+                                                                            </section>
+                                                                            <section className="p-recursos__resource-content">
+                                                                                <p>{resource.name}</p>
+                                                                                <small>
+                                                                                    {resource.children && resource.children.length > 0
+                                                                                        ? `${resource.children.length} archivos`
+                                                                                        : resource.kindLabel}
+                                                                                </small>
+                                                                            </section>
+                                                                        </section>
+
+                                                                        <section className="p-recursos__folder-actions">
+                                                                            {resource.url && (
+                                                                                <a
+                                                                                    href={resource.url}
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    aria-label={openResourceLabel(resource)}
+                                                                                    onClick={(event) => {
+                                                                                        event.stopPropagation();
+                                                                                    }}
+                                                                                >
+                                                                                    <ExternalLink size={16} />
+                                                                                </a>
+                                                                            )}
+                                                                            {expandedFolders[resource.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                                        </section>
+                                                                    </button>
+
+                                                                    {expandedFolders[resource.id] && resource.children && resource.children.length > 0 && (
+                                                                        <ul className="p-recursos__folder-list">
+                                                                            {resource.children.map((child) => (
+                                                                                <li key={child.id}>
+                                                                                    <article className="p-recursos__resource-card p-recursos__resource-card--child">
+                                                                                        <section className={`p-recursos__resource-icon ${kindToneClass(child.kind)}`} aria-hidden="true">
+                                                                                            {kindIcon(child.kind)}
+                                                                                        </section>
+
+                                                                                        <section className="p-recursos__resource-content">
+                                                                                            <p>{child.name}</p>
+                                                                                            <small>
+                                                                                                {child.sizeLabel ? `${child.sizeLabel} / ${child.kindLabel}` : child.kindLabel}
+                                                                                            </small>
+                                                                                        </section>
+
+                                                                                        {child.downloadUrl ? (
+                                                                                            <a href={child.downloadUrl} aria-label={downloadResourceLabel(child)} download>
+                                                                                                <Download size={16} />
+                                                                                            </a>
+                                                                                        ) : child.url ? (
+                                                                                            <a href={child.url} target="_blank" rel="noreferrer" aria-label={openResourceLabel(child)}>
+                                                                                                <ExternalLink size={16} />
+                                                                                            </a>
+                                                                                        ) : (
+                                                                                            <span className="p-recursos__resource-disabled" aria-hidden="true">
+                                                                                                <Folder size={16} />
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </article>
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    )}
+                                                                </article>
+                                                            ) : (
+                                                                <article className="p-recursos__resource-card">
+                                                                    <section className={`p-recursos__resource-icon ${kindToneClass(resource.kind)}`} aria-hidden="true">
+                                                                        {kindIcon(resource.kind)}
+                                                                    </section>
+
+                                                                    <section className="p-recursos__resource-content">
+                                                                        <p>{resource.name}</p>
+                                                                        <small>
+                                                                            {resource.sizeLabel ? `${resource.sizeLabel} / ${resource.kindLabel}` : resource.kindLabel}
+                                                                        </small>
+                                                                    </section>
+
+                                                                    {resource.downloadUrl ? (
+                                                                        <a href={resource.downloadUrl} aria-label={downloadResourceLabel(resource)} download>
+                                                                            <Download size={16} />
+                                                                        </a>
+                                                                    ) : resource.url ? (
+                                                                        <a
+                                                                            href={resource.url}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            aria-label={openResourceLabel(resource)}
                                                                         >
-                                                                            <section className="p-recursos__folder-main">
-                                                                                <section className={`p-recursos__resource-icon ${kindToneClass(resource.kind)}`} aria-hidden="true">
-                                                                                    {kindIcon(resource.kind)}
-                                                                                </section>
-                                                                                <section className="p-recursos__resource-content">
-                                                                                    <p>{resource.name}</p>
-                                                                                    <small>
-                                                                                        {resource.children && resource.children.length > 0
-                                                                                            ? `${resource.children.length} archivos`
-                                                                                            : resource.kindLabel}
-                                                                                    </small>
-                                                                                </section>
-                                                                            </section>
-
-                                                                            <section className="p-recursos__folder-actions">
-                                                                                {resource.url && (
-                                                                                    <a
-                                                                                        href={resource.url}
-                                                                                        target="_blank"
-                                                                                        rel="noreferrer"
-                                                                                        aria-label={openResourceLabel(resource)}
-                                                                                        onClick={(event) => {
-                                                                                            event.stopPropagation();
-                                                                                        }}
-                                                                                    >
-                                                                                        <ExternalLink size={16} />
-                                                                                    </a>
-                                                                                )}
-                                                                                {expandedFolders[resource.id] ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                                            </section>
-                                                                        </button>
-
-                                                                        {expandedFolders[resource.id] && resource.children && resource.children.length > 0 && (
-                                                                            <ul className="p-recursos__folder-list">
-                                                                                {resource.children.map((child) => (
-                                                                                    <li key={child.id}>
-                                                                                        <article className="p-recursos__resource-card p-recursos__resource-card--child">
-                                                                                            <section className={`p-recursos__resource-icon ${kindToneClass(child.kind)}`} aria-hidden="true">
-                                                                                                {kindIcon(child.kind)}
-                                                                                            </section>
-
-                                                                                            <section className="p-recursos__resource-content">
-                                                                                                <p>{child.name}</p>
-                                                                                                <small>
-                                                                                                    {child.sizeLabel ? `${child.sizeLabel} / ${child.kindLabel}` : child.kindLabel}
-                                                                                                </small>
-                                                                                            </section>
-
-                                                                                            {child.downloadUrl ? (
-                                                                                                <a href={child.downloadUrl} aria-label={downloadResourceLabel(child)} download>
-                                                                                                    <Download size={16} />
-                                                                                                </a>
-                                                                                            ) : child.url ? (
-                                                                                                <a href={child.url} target="_blank" rel="noreferrer" aria-label={openResourceLabel(child)}>
-                                                                                                    <ExternalLink size={16} />
-                                                                                                </a>
-                                                                                            ) : (
-                                                                                                <span className="p-recursos__resource-disabled" aria-hidden="true">
-                                                                                                    <Folder size={16} />
-                                                                                                </span>
-                                                                                            )}
-                                                                                        </article>
-                                                                                    </li>
-                                                                                ))}
-                                                                            </ul>
-                                                                        )}
-                                                                    </article>
-                                                                ) : (
-                                                                    <article className="p-recursos__resource-card">
-                                                                        <section className={`p-recursos__resource-icon ${kindToneClass(resource.kind)}`} aria-hidden="true">
-                                                                            {kindIcon(resource.kind)}
-                                                                        </section>
-
-                                                                        <section className="p-recursos__resource-content">
-                                                                            <p>{resource.name}</p>
-                                                                            <small>
-                                                                                {resource.sizeLabel ? `${resource.sizeLabel} / ${resource.kindLabel}` : resource.kindLabel}
-                                                                            </small>
-                                                                        </section>
-
-                                                                        {resource.downloadUrl ? (
-                                                                            <a href={resource.downloadUrl} aria-label={downloadResourceLabel(resource)} download>
-                                                                                <Download size={16} />
-                                                                            </a>
-                                                                        ) : resource.url ? (
-                                                                            <a
-                                                                                href={resource.url}
-                                                                                target="_blank"
-                                                                                rel="noreferrer"
-                                                                                aria-label={openResourceLabel(resource)}
-                                                                            >
-                                                                                <ExternalLink size={16} />
-                                                                            </a>
-                                                                        ) : (
-                                                                            <span className="p-recursos__resource-disabled" aria-hidden="true">
-                                                                                <Folder size={16} />
-                                                                            </span>
-                                                                        )}
-                                                                    </article>
-                                                                )}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </section>
-                                            ))}
-                                        </section>
-                                    )}
+                                                                            <ExternalLink size={16} />
+                                                                        </a>
+                                                                    ) : (
+                                                                        <span className="p-recursos__resource-disabled" aria-hidden="true">
+                                                                            <Folder size={16} />
+                                                                        </span>
+                                                                    )}
+                                                                </article>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </section>
+                                        )) : (
+                                            <article className="p-recursos__empty p-recursos__empty--inline">
+                                                <h3>No hay recursos para esta seleccion</h3>
+                                                <p>Puede deberse a que los filtros estan ocultando el contenido o a que esta asignatura aun no tiene material publicado.</p>
+                                            </article>
+                                        )}
+                                    </section>
                                 </article>
                             )}
-
-                            {sideSubjects.map((subject) => {
-                                return (
-                                    <article key={subject.id} className="p-recursos__subject">
-                                        <button
-                                            type="button"
-                                            className="p-recursos__subject-head"
-                                            onClick={() => {
-                                                handleSelectSubject(subject.id);
-                                            }}
-                                            aria-expanded={false}
-                                        >
-                                            <section>
-                                                <small>{subject.code}</small>
-                                                <h2>{subject.subject}</h2>
-                                            </section>
-                                            <section className="p-recursos__subject-meta">
-                                                <span>Ver recursos</span>
-                                                <ChevronDown size={16} />
-                                            </section>
-                                        </button>
-                                    </article>
-                                );
-                            })}
 
                             {subjects.length === 0 && (
                                 <article className="p-recursos__empty">
@@ -503,6 +518,12 @@ export default function Recursos({
                                             ? 'No se encontraron recursos en las asignaturas con los filtros actuales.'
                                             : 'Conecta Moodle para cargar recursos compartidos por tus docentes.'}
                                     </p>
+                                    <ul className="p-recursos__empty-reasons">
+                                        <li>Moodle no esta conectado o la sesion ha caducado.</li>
+                                        <li>La asignatura todavia no tiene archivos, enlaces o carpetas compartidas.</li>
+                                        <li>Los filtros de metadatos estan ocultando todos los tipos de recurso disponibles.</li>
+                                        <li>Puede haber restricciones de permisos o una sincronizacion pendiente en Moodle.</li>
+                                    </ul>
                                 </article>
                             )}
                         </section>

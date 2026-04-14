@@ -235,6 +235,36 @@ export default function Dashboard({
                                 </section>
 
                                 <aside className="p-dashboard__hero-side" aria-hidden="true">
+                                    <svg
+                                        className="p-dashboard__hero-art"
+                                        viewBox="0 0 220 220"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        role="presentation"
+                                    >
+                                        <defs>
+                                            <radialGradient id="dashboardHeroCoreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(110 110) rotate(90) scale(86)">
+                                                <stop stopColor="currentColor" stopOpacity="0.36" />
+                                                <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+                                            </radialGradient>
+                                        </defs>
+
+                                        <circle cx="110" cy="110" r="86" fill="url(#dashboardHeroCoreGlow)" />
+                                        <circle className="p-dashboard__hero-art-core-ring" cx="110" cy="110" r="52" />
+                                        <circle className="p-dashboard__hero-art-core-ring p-dashboard__hero-art-core-ring--inner" cx="110" cy="110" r="34" />
+                                        <circle className="p-dashboard__hero-art-core" cx="110" cy="110" r="14" />
+
+                                        <g className="p-dashboard__hero-art-orbit">
+                                            <circle className="p-dashboard__hero-art-orb" cx="162" cy="110" r="7" />
+                                        </g>
+
+                                        <g className="p-dashboard__hero-art-sparkles">
+                                            <circle className="p-dashboard__hero-art-sparkle" cx="70" cy="76" r="1.8" />
+                                            <circle className="p-dashboard__hero-art-sparkle" cx="148" cy="62" r="1.6" />
+                                            <circle className="p-dashboard__hero-art-sparkle" cx="162" cy="144" r="1.8" />
+                                            <circle className="p-dashboard__hero-art-sparkle" cx="82" cy="154" r="1.6" />
+                                        </g>
+                                    </svg>
                                     <span className="p-dashboard__hero-index">01</span>
                                 </aside>
                             </article>

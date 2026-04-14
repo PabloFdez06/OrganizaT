@@ -162,6 +162,7 @@
     background:
     linear-gradient(180deg, rgba(172, 142, 255, 0.28) 0%, rgba(172, 142, 255, 0.1) 100%),
     linear-gradient(150deg, #ede8fb 0%, #ddd5f7 60%, #cbc0ef 100%);
+    color: #4f06f9;
 }
 
 .p-dashboard__hero-side::before {
@@ -169,6 +170,63 @@
     position: absolute;
     inset: 0;
     background: radial-gradient(circle at 80% 92%, rgba(79, 6, 249, 0.2) 0%, rgba(79, 6, 249, 0) 62%);
+}
+
+.p-dashboard__hero-art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: scale(1.04);
+    transform-origin: center;
+    opacity: 0.96;
+    animation: dashboard-hero-art-float 8s ease-in-out infinite alternate;
+}
+
+.p-dashboard__hero-art-core-ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    opacity: 0.2;
+}
+
+.p-dashboard__hero-art-core-ring--inner {
+    opacity: 0.34;
+    stroke-dasharray: 4 6;
+}
+
+.p-dashboard__hero-art-core {
+    fill: currentColor;
+    opacity: 0.52;
+}
+
+.p-dashboard__hero-art-orbit {
+    transform-origin: 110px 110px;
+    animation: dashboard-hero-art-orbit 5.6s linear infinite;
+}
+
+.p-dashboard__hero-art-orb {
+    fill: currentColor;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 8px rgba(79, 6, 249, 0.44));
+}
+
+.p-dashboard__hero-art-sparkle {
+    fill: currentColor;
+    opacity: 0;
+    animation: dashboard-hero-art-sparkle 3.2s ease-in-out infinite;
+}
+
+.p-dashboard__hero-art-sparkle:nth-child(2) {
+    animation-delay: 0.65s;
+}
+
+.p-dashboard__hero-art-sparkle:nth-child(3) {
+    animation-delay: 1.35s;
+}
+
+.p-dashboard__hero-art-sparkle:nth-child(4) {
+    animation-delay: 2.1s;
 }
 
 .p-dashboard__hero-index {
@@ -180,6 +238,52 @@
     font-weight: 700;
     letter-spacing: -2px;
     color: rgba(79, 6, 249, 0.42);
+}
+
+@keyframes dashboard-hero-art-float {
+    from {
+        transform: scale(1.04) translate(-2%, -1%);
+    }
+
+    to {
+        transform: scale(1.07) translate(2%, 2%);
+    }
+}
+
+@keyframes dashboard-hero-art-orbit {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes dashboard-hero-art-sparkle {
+    0%,
+    100% {
+        opacity: 0;
+        transform: scale(0.75);
+    }
+
+    45% {
+        opacity: 0.72;
+        transform: scale(1.06);
+    }
+
+    60% {
+        opacity: 0.24;
+        transform: scale(0.9);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .p-dashboard__hero-art,
+    .p-dashboard__hero-art-orbit,
+    .p-dashboard__hero-art-sparkle {
+        animation: none;
+    }
 }
 
 .p-dashboard__quick {
@@ -777,6 +881,7 @@
     background:
         linear-gradient(180deg, rgba(172, 142, 255, 0.18) 0%, rgba(172, 142, 255, 0.08) 100%),
         linear-gradient(150deg, #3f3b56 0%, #2f2d3f 60%, #252433 100%);
+    color: #ac8eff;
 }
 
 .dark .p-dashboard__hero-side::before {
@@ -1040,6 +1145,10 @@
 
     .p-dashboard__hero-side {
         min-height: 110px;
+    }
+
+    .p-dashboard__hero-art {
+        transform: scale(1.02);
     }
 
     .p-dashboard__hero-index {

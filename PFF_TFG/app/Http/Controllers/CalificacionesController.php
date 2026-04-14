@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAcademicRules;
@@ -12,6 +13,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class CalificacionesController extends Controller
 {
@@ -82,6 +84,69 @@ class CalificacionesController extends Controller
             'milestones' => $milestones,
             'pageError' => $pageError,
         ]);
+    }
+
+    public function downloadReport(Request $request): HttpResponse
+    {
+        $user = $request->user();
+        $moodleConnected = $this->sessionService->hasActiveSession($user);
+        $subjectId = (int) $request->integer('subject_id', 0);
+
+        if (! $moodleConnected) {
+            abort(403, 'Debes conectar tu cuenta de Moodle para descargar el informe de calificaciones.');
+        }
+
+        try {
+            $academicPayload = $this->cache->getForUser($user);
+            $gradeReport = is_array($academicPayload['gradeReport'] ?? null)
+                ? $academicPayload['gradeReport']
+                : $this->cache->getGradesForUser($user);
+            $courses = is_array($academicPayload['courses'] ?? null) ? $academicPayload['courses'] : [];
+            $tasks = is_array($academicPayload['tasks'] ?? null) ? $academicPayload['tasks'] : [];
+
+            $subjectCards = $this->buildSubjectCards($courses, $tasks, is_array($gradeReport) ? $gradeReport : []);
+
+            if ($subjectId > 0) {
+                $subjectCards = array_values(array_filter(
+                    $subjectCards,
+                    static fn (array $card): bool => (int) ($card['id'] ?? 0) === $subjectId,
+                ));
+
+                if ($subjectCards === []) {
+                    abort(404, 'No se encontro la asignatura seleccionada para generar el informe.');
+                }
+            }
+
+            $report = $this->buildReportPayload($subjectCards);
+
+            $studentName = is_string($academicPayload['studentName'] ?? null) && trim((string) $academicPayload['studentName']) !== ''
+                ? (string) $academicPayload['studentName']
+                : (string) ($user?->name ?? 'Alumno');
+
+            $filename = 'informe-calificaciones-'.CarbonImmutable::now()->format('Y-m-d').'.pdf';
+
+            if ($subjectId > 0) {
+                $subjectName = (string) ($subjectCards[0]['subject'] ?? 'asignatura');
+                $safeSubjectName = preg_replace('/[^a-z0-9]+/i', '-', mb_strtolower($subjectName));
+                $safeSubjectName = trim((string) $safeSubjectName, '-');
+                $safeSubjectName = $safeSubjectName !== '' ? $safeSubjectName : 'asignatura';
+                $filename = 'informe-calificaciones-'.$safeSubjectName.'-'.CarbonImmutable::now()->format('Y-m-d').'.pdf';
+            }
+
+            return Pdf::loadView('reports.calificaciones', [
+                'studentName' => $studentName,
+                'generatedAt' => CarbonImmutable::now(),
+                'report' => $report,
+            ])
+                ->setPaper('a4')
+                ->download($filename);
+        } catch (MoodleAuthenticationException) {
+            abort(403, 'No se pudo autenticar Moodle para generar el informe.');
+        } catch (MoodleRequestException) {
+            abort(503, 'No se pudieron recuperar las calificaciones en este momento.');
+        } catch (\Throwable) {
+            abort(500, 'No se pudo generar el informe de calificaciones.');
+        }
     }
 
     /**
@@ -417,6 +482,133 @@ class CalificacionesController extends Controller
         }
 
         return $grade.'/10';
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $subjectCards
+     * @return array<string, mixed>
+     */
+    private function buildReportPayload(array $subjectCards): array
+    {
+        $subjects = [];
+        $allNumericGrades = [];
+        $gradedTasksCount = 0;
+        $feedbackTasksCount = 0;
+
+        foreach ($subjectCards as $card) {
+            $units = is_array($card['units'] ?? null) ? $card['units'] : [];
+            $subjectTasks = [];
+            $subjectNumericGrades = [];
+
+            foreach ($units as $unit) {
+                $unitName = (string) ($unit['name'] ?? 'General');
+                $tasks = is_array($unit['tasks'] ?? null) ? $unit['tasks'] : [];
+
+                foreach ($tasks as $task) {
+                    $gradeDisplay = trim((string) ($task['grade'] ?? '-'));
+                    $feedback = is_string($task['feedback'] ?? null) ? trim((string) $task['feedback']) : null;
+                    $numericGrade = $this->parseReportNumericGrade($gradeDisplay);
+
+                    if ($numericGrade !== null) {
+                        $subjectNumericGrades[] = $numericGrade;
+                        $allNumericGrades[] = $numericGrade;
+                    }
+
+                    if ($gradeDisplay !== '' && $gradeDisplay !== '-') {
+                        $gradedTasksCount++;
+                    }
+
+                    if ($feedback !== null && $feedback !== '') {
+                        $feedbackTasksCount++;
+                    }
+
+                    $subjectTasks[] = [
+                        'unit' => $unitName,
+                        'task' => (string) ($task['name'] ?? 'Actividad'),
+                        'grade' => $gradeDisplay !== '' ? $gradeDisplay : '-',
+                        'numericGrade' => $numericGrade,
+                        'feedback' => $feedback,
+                    ];
+                }
+            }
+
+            $subjectAverage = count($subjectNumericGrades) > 0
+                ? array_sum($subjectNumericGrades) / count($subjectNumericGrades)
+                : null;
+
+            $subjects[] = [
+                'code' => (string) ($card['code'] ?? ''),
+                'name' => (string) ($card['subject'] ?? 'Asignatura'),
+                'teacher' => (string) ($card['teacher'] ?? 'Docente no disponible'),
+                'average' => $subjectAverage,
+                'tasks' => $subjectTasks,
+            ];
+        }
+
+        $globalAverage = count($allNumericGrades) > 0
+            ? array_sum($allNumericGrades) / count($allNumericGrades)
+            : null;
+
+        return [
+            'subjects' => $subjects,
+            'stats' => [
+                'subjectsCount' => count($subjects),
+                'gradedTasksCount' => $gradedTasksCount,
+                'feedbackTasksCount' => $feedbackTasksCount,
+                'globalAverage' => $globalAverage,
+            ],
+        ];
+    }
+
+    private function parseReportNumericGrade(string $grade): ?float
+    {
+        $normalized = trim(str_replace(',', '.', $grade));
+
+        if ($normalized === '' || $normalized === '-') {
+            return null;
+        }
+
+        if (preg_match('/([0-9]+(?:\.[0-9]+)?)\s*\/\s*([0-9]+(?:\.[0-9]+)?)/', $normalized, $ratioMatch) === 1) {
+            $value = (float) $ratioMatch[1];
+            $base = (float) $ratioMatch[2];
+
+            if ($base <= 0) {
+                return null;
+            }
+
+            if ($base === 10.0 && $value > 10.0 && $value <= 100.0) {
+                return $value / 10;
+            }
+
+            return ($value / $base) * 10;
+        }
+
+        if (preg_match('/([0-9]+(?:\.[0-9]+)?)\s*(?:de|sobre|out\s+of)\s*([0-9]+(?:\.[0-9]+)?)/i', $normalized, $textScale) === 1) {
+            $value = (float) $textScale[1];
+            $base = (float) $textScale[2];
+
+            if ($base <= 0) {
+                return null;
+            }
+
+            return ($value / $base) * 10;
+        }
+
+        if (preg_match('/([0-9]+(?:\.[0-9]+)?)\s*%/', $normalized, $percentMatch) === 1) {
+            return (float) $percentMatch[1] / 10;
+        }
+
+        if (preg_match('/^([0-9]+(?:\.[0-9]+)?)$/', $normalized, $plainMatch) === 1) {
+            $value = (float) $plainMatch[1];
+
+            if ($value > 10.0 && $value <= 100.0) {
+                return $value / 10;
+            }
+
+            return $value;
+        }
+
+        return null;
     }
 
 }

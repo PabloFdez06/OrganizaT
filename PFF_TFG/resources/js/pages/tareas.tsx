@@ -64,6 +64,7 @@ const TASK_BATCH_SIZE = 5;
 const SIDE_CARD_MIN_WIDTH_REM = 15;
 const SIDE_GRID_GAP_REM = 1;
 const FALLBACK_ROOT_FONT_SIZE_PX = 16;
+const FEATURED_SUBJECT_HERO_IMAGE = 'https://www.figma.com/api/mcp/asset/e9a3c07d-e088-4d12-97b6-95272c044a93';
 
 function calculateSubjectsPerRow(containerWidthPx: number, rootFontSizePx: number): number {
     const minCardWidthPx = SIDE_CARD_MIN_WIDTH_REM * rootFontSizePx;
@@ -373,6 +374,27 @@ export default function Tareas({
                             <section className="p-tareas__subjects-column" aria-label="Asignatura activa y asignaturas disponibles">
                                 <article className="p-tareas__featured">
                                     <header className="p-tareas__featured-hero">
+                                        <section className="p-tareas__featured-hero-media" aria-hidden="true">
+                                            <img src={FEATURED_SUBJECT_HERO_IMAGE} alt="" />
+                                            <i className="p-tareas__featured-hero-saturation" />
+                                        </section>
+
+                                        <svg
+                                            className="p-tareas__featured-hero-gradient"
+                                            viewBox="0 0 100 100"
+                                            preserveAspectRatio="none"
+                                            aria-hidden="true"
+                                            focusable="false"
+                                        >
+                                            <defs>
+                                                <linearGradient id="featured-subject-gradient" x1="0%" y1="50%" x2="100%" y2="50%">
+                                                    <stop offset="0%" stopColor="var(--color-brand)" stopOpacity="0.9" />
+                                                    <stop offset="100%" stopColor="var(--color-brand)" stopOpacity="0" />
+                                                </linearGradient>
+                                            </defs>
+                                            <rect x="0" y="0" width="100" height="100" fill="url(#featured-subject-gradient)" />
+                                        </svg>
+
                                         <section className="p-tareas__featured-content">
                                             <small>{featuredSubject.code}</small>
                                             <h2>{featuredSubject.subject}</h2>

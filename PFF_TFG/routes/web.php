@@ -30,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('panel', [DashboardController::class, 'index'])->name('panel');
     Route::get('asignaturas', [AsignaturasController::class, 'index'])->name('asignaturas.index');
     Route::get('calificaciones', [CalificacionesController::class, 'index'])->name('calificaciones.index');
+    Route::get('calificaciones/report', [CalificacionesController::class, 'downloadReport'])->name('calificaciones.report');
     Route::get('tareas', [TareasController::class, 'index'])->name('tareas.index');
     Route::get('recursos', [RecursosController::class, 'index'])->name('recursos.index');
     Route::get('tareas/export-all.ics', [TareasController::class, 'exportAllIcs'])->name('tareas.export_all_ics');
