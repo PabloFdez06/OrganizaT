@@ -30,6 +30,11 @@
     color: var(--color-text);
 }
 
+.p-recursos__head h1::after {
+    content: '.';
+    color: var(--color-brand);
+}
+
 .p-recursos__total {
     display: grid;
     justify-items: end;
