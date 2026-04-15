@@ -32,7 +32,7 @@
     align-items: center;
 }
 
-.p-calificaciones__hero-title h1 {
+.p-calificaciones__hero-heading {
     margin: 0;
     font-size: clamp(2.2rem, 4vw, 3.2rem);
     line-height: 1;
@@ -40,7 +40,7 @@
     color: color-mix(in srgb, var(--color-text) 86%, #000000 14%);
 }
 
-.p-calificaciones__hero-title h1 span {
+.p-calificaciones__hero-heading-dot {
     color: var(--color-brand);
 }
 
@@ -67,7 +67,7 @@
     justify-content: center;
 }
 
-.p-calificaciones__metric small {
+.p-calificaciones__metric-label {
     display: block;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -76,7 +76,7 @@
     font-weight: 700;
 }
 
-.p-calificaciones__metric strong {
+.p-calificaciones__metric-value {
     display: block;
     font-size: clamp(1.6rem, 3.1vw, 2.3rem);
     letter-spacing: -0.02em;
@@ -84,7 +84,7 @@
     color: color-mix(in srgb, var(--color-text) 86%, #000000 14%);
 }
 
-.p-calificaciones__metric-highlight {
+.p-calificaciones__metric-value--highlight {
     color: color-mix(in srgb, var(--color-text) 86%, #000000 14%);
 }
 
@@ -117,7 +117,7 @@
     padding-bottom: 0.9rem;
 }
 
-.p-calificaciones__rail-head h2 {
+.p-calificaciones__rail-title {
     margin: 0;
     font-size: 1.28rem;
     line-height: 1;
@@ -147,7 +147,7 @@
     border-top: 0;
 }
 
-.p-calificaciones__subject-item small {
+.p-calificaciones__subject-item-module {
     display: block;
     font-size: 0.58rem;
     font-weight: 700;
@@ -156,7 +156,7 @@
     color: var(--color-token-94a3b8);
 }
 
-.p-calificaciones__subject-item h3 {
+.p-calificaciones__subject-item-name {
     margin-top: 0.25rem;
     font-size: 1.18rem;
     line-height: 1.25;
@@ -169,23 +169,23 @@
     gap: 0.6rem;
 }
 
-.p-calificaciones__subject-item-score strong {
+.p-calificaciones__subject-item-score-value {
     font-size: 1.45rem;
     line-height: 1;
     color: var(--color-token-94a3b8);
 }
 
-.p-calificaciones__subject-item-score svg {
+.p-calificaciones__subject-item-score-icon {
     color: color-mix(in srgb, var(--color-text-muted) 55%, transparent);
 }
 
-.p-calificaciones__subject-item.is-active small,
-.p-calificaciones__subject-item.is-active svg {
+.p-calificaciones__subject-item--active .p-calificaciones__subject-item-module,
+.p-calificaciones__subject-item--active .p-calificaciones__subject-item-score-icon {
     color: var(--color-brand);
 }
 
-.p-calificaciones__subject-item.is-active h3,
-.p-calificaciones__subject-item.is-active .p-calificaciones__subject-item-score strong {
+.p-calificaciones__subject-item--active .p-calificaciones__subject-item-name,
+.p-calificaciones__subject-item--active .p-calificaciones__subject-item-score-value {
     color: var(--color-text);
 }
 
@@ -224,7 +224,7 @@
     overflow: visible;
 }
 
-.p-calificaciones__chart-card small {
+.p-calificaciones__chart-caption {
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 0.5rem;
@@ -244,7 +244,7 @@
     overflow: visible;
 }
 
-.p-calificaciones__chart.is-scrollable {
+.p-calificaciones__chart--scrollable {
     overflow-x: auto;
     overflow-y: visible;
 }
@@ -256,7 +256,7 @@
     position: relative;
 }
 
-.p-calificaciones__chart-bar.is-selected {
+.p-calificaciones__chart-bar--selected {
     background: var(--color-brand);
 }
 
@@ -341,14 +341,13 @@
     z-index: 0;
 }
 
-.p-calificaciones__detail-head > section {
+.p-calificaciones__detail-head-main,
+.p-calificaciones__detail-score {
     position: relative;
     z-index: 1;
 }
 
-.p-calificaciones__detail-head small,
-.p-calificaciones__detail-score small,
-.p-calificaciones__detail-footer small {
+.p-calificaciones__detail-eyebrow {
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-size: 0.56rem;
@@ -356,30 +355,22 @@
     font-weight: 700;
 }
 
-.p-calificaciones__detail-head h2 {
+.p-calificaciones__detail-title {
     margin-top: 0.4rem;
     font-size: clamp(2rem, 4.3vw, 3.05rem);
     line-height: 1;
     letter-spacing: -0.035em;
 }
 
-.p-calificaciones__detail-head p {
-    margin-top: 0.7rem;
-    max-width: 38ch;
-    font-size: 0.86rem;
-    line-height: 1.35;
-    color: color-mix(in srgb, var(--color-text-muted) 82%, transparent);
-}
-
 .p-calificaciones__detail-score {
     text-align: right;
 }
 
-.p-calificaciones__detail-score small {
+.p-calificaciones__detail-eyebrow--score {
     color: color-mix(in srgb, var(--color-text) 82%, var(--color-text-muted) 18%);
 }
 
-.p-calificaciones__detail-score strong {
+.p-calificaciones__detail-score-value {
     display: block;
     margin-top: 0.2rem;
     font-size: clamp(2.2rem, 5vw, 3.4rem);
@@ -396,7 +387,7 @@
     min-height: 0;
 }
 
-.p-calificaciones__unit ul {
+.p-calificaciones__task-list {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -415,7 +406,7 @@
     border-top: 0;
 }
 
-.p-calificaciones__task-row > small {
+.p-calificaciones__task-unit-label {
     text-transform: uppercase;
     letter-spacing: 0.09em;
     font-size: 0.52rem;
@@ -444,7 +435,7 @@
     text-decoration: none;
 }
 
-a.p-calificaciones__task-name {
+.p-calificaciones__task-name {
     color: var(--color-text);
 }
 
@@ -502,7 +493,7 @@ a.p-calificaciones__task-name {
     gap: 0.8rem;
 }
 
-.p-calificaciones__detail-footer p {
+.p-calificaciones__detail-footer-progress-value {
     margin-top: 0.3rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -577,7 +568,7 @@ a.p-calificaciones__task-name {
     gap: 0.7rem;
 }
 
-.p-calificaciones__feedback-modal-header p {
+.p-calificaciones__feedback-modal-subtitle {
     color: var(--color-text-muted);
     font-size: 0.72rem;
     text-transform: uppercase;
@@ -598,11 +589,20 @@ a.p-calificaciones__task-name {
     padding-top: 0.8rem;
 }
 
-.p-calificaciones__feedback-content p,
-.p-calificaciones__feedback-content li {
+.p-calificaciones__feedback-paragraph,
+.p-calificaciones__feedback-list-item {
     font-size: 0.88rem;
     line-height: 1.5;
     color: var(--color-text);
+}
+
+.p-calificaciones__feedback-list {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.p-calificaciones__feedback-list--ordered {
+    list-style: decimal;
 }
 
 .p-calificaciones__feedback-table-wrap {
@@ -615,8 +615,8 @@ a.p-calificaciones__task-name {
     font-size: 0.82rem;
 }
 
-.p-calificaciones__feedback-table th,
-.p-calificaciones__feedback-table td {
+.p-calificaciones__feedback-table-head-cell,
+.p-calificaciones__feedback-table-body-cell {
     border: 1px solid color-mix(in srgb, var(--color-text-muted) 35%, transparent);
     padding: 0.45rem;
 }

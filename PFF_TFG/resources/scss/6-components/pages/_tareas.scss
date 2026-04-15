@@ -22,14 +22,14 @@
     margin-bottom: 1.75rem;
 }
 
-.p-tareas__head h1 {
+.p-tareas__heading {
     font-size: clamp(2.2rem, 4vw, 3.2rem);
     letter-spacing: -0.06em;
     line-height: 1;
     color: var(--color-text);
 }
 
-.p-tareas__head h1 span {
+.p-tareas__heading-dot {
     color: var(--color-brand);
 }
 
@@ -63,7 +63,7 @@
     background: color-mix(in srgb, var(--color-brand) 16%, var(--color-surface) 84%);
 }
 
-.p-tareas__export-button.is-disabled {
+.p-tareas__export-button--disabled {
     opacity: 0.55;
     cursor: not-allowed;
 }
@@ -123,7 +123,7 @@
     z-index: 0;
 }
 
-.p-tareas__featured-hero-media img {
+.p-tareas__featured-hero-image {
     position: absolute;
     top: -157.29%;
     left: 0;
@@ -157,7 +157,7 @@
     gap: 0.4rem;
 }
 
-.p-tareas__featured-content small {
+.p-tareas__featured-code {
     font-family: var(--font-sans);
     font-size: 0.62rem;
     letter-spacing: 0.08em;
@@ -166,7 +166,7 @@
     padding: 0.2rem 0.45rem;
 }
 
-.p-tareas__featured-content h2 {
+.p-tareas__featured-title {
     font-size: clamp(1.9rem, 3vw, 2.4rem);
     line-height: 1.1;
 }
@@ -188,7 +188,7 @@
     border-bottom: 1px solid color-mix(in srgb, var(--color-text-muted) 24%, transparent);
 }
 
-.p-tareas__table-head p {
+.p-tareas__table-head-cell {
     font-family: var(--font-sans);
     font-size: 0.62rem;
     color: var(--color-text-muted);
@@ -201,22 +201,22 @@
     overflow-y: auto;
 }
 
-.p-tareas__table-body ul {
+.p-tareas__task-list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
 
-.p-tareas__table-body li {
+.p-tareas__task-list-item {
     border-bottom: 1px solid color-mix(in srgb, var(--color-text-muted) 16%, transparent);
 }
 
-.p-tareas__unit-separator {
+.p-tareas__task-list-item--unit-separator {
     border-bottom: 0;
     margin-top: 0.35rem;
 }
 
-.p-tareas__unit-separator span {
+.p-tareas__unit-separator-label {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -243,13 +243,13 @@
     min-width: 0;
 }
 
-.p-tareas__task-main h3 {
+.p-tareas__task-title {
     font-size: 1.05rem;
     line-height: 1.35;
     color: var(--color-text);
 }
 
-.p-tareas__task-main p {
+.p-tareas__task-module {
     font-size: 0.74rem;
     color: var(--color-text-muted);
 }
@@ -269,37 +269,37 @@
     padding: 0.3rem 0.55rem;
 }
 
-.p-tareas__task-status.is-pending {
+.p-tareas__task-status--pending {
     color: var(--color-token-f59e0b);
     background: color-mix(in srgb, var(--color-token-f59e0b) 20%, transparent);
 }
 
-.p-tareas__task-status.is-critical {
+.p-tareas__task-status--critical {
     color: var(--color-token-ea580c);
     background: color-mix(in srgb, var(--color-token-ea580c) 20%, transparent);
 }
 
-.p-tareas__task-status.is-delivered {
+.p-tareas__task-status--delivered {
     color: var(--color-brand);
     background: color-mix(in srgb, var(--color-brand) 20%, transparent);
 }
 
-.p-tareas__task-status.is-graded {
+.p-tareas__task-status--graded {
     color: var(--color-token-16a34a);
     background: color-mix(in srgb, var(--color-token-16a34a) 20%, transparent);
 }
 
-.p-tareas__task-status.is-expired {
+.p-tareas__task-status--expired {
     color: var(--color-danger);
     background: color-mix(in srgb, var(--color-danger) 18%, transparent);
 }
 
-.p-tareas__task-row a {
+.p-tareas__task-link {
     color: color-mix(in srgb, var(--color-text) 62%, transparent);
     display: inline-flex;
 }
 
-.p-tareas__task-row a:hover {
+.p-tareas__task-link:hover {
     color: var(--color-text);
 }
 
@@ -315,7 +315,7 @@
     padding: 1.5rem 2rem 2rem;
 }
 
-.p-tareas__featured-actions button {
+.p-tareas__featured-action-button {
     border: 1px solid color-mix(in srgb, var(--color-text-muted) 36%, transparent);
     background: transparent;
     font-family: var(--font-sans);
@@ -326,7 +326,7 @@
     cursor: pointer;
 }
 
-.p-tareas__featured-actions button:hover {
+.p-tareas__featured-action-button:hover {
     border-color: color-mix(in srgb, var(--color-brand) 38%, transparent);
     color: var(--color-brand);
 }
@@ -345,7 +345,7 @@
     overflow: hidden;
 }
 
-.p-tareas__side-card button {
+.p-tareas__side-card-trigger {
     border: 0;
     background: transparent;
     width: 100%;
@@ -380,43 +380,43 @@
     min-height: 0;
 }
 
-.p-tareas__side-card small {
+.p-tareas__side-code {
     font-family: var(--font-sans);
     font-size: 0.62rem;
     letter-spacing: 0.08em;
     color: color-mix(in srgb, var(--color-text-muted) 88%, transparent);
 }
 
-.p-tareas__side-card h3 {
+.p-tareas__side-title {
     font-size: clamp(1rem, 1.3vw, 1.25rem);
     line-height: 1.25;
     color: var(--color-text);
 }
 
-.p-tareas__side-card button:hover h3 {
+.p-tareas__side-card-trigger:hover .p-tareas__side-title {
     color: var(--color-brand);
 }
 
-.p-tareas__side-card footer {
+.p-tareas__side-footer {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
 }
 
-.p-tareas__side-card footer p {
+.p-tareas__side-metrics {
     display: inline-flex;
     align-items: baseline;
     gap: 0.35rem;
     color: color-mix(in srgb, var(--color-text-muted) 52%, transparent);
 }
 
-.p-tareas__side-card footer strong {
+.p-tareas__side-count {
     font-family: var(--font-sans);
     font-size: 1.28rem;
     line-height: 1;
 }
 
-.p-tareas__side-card footer span {
+.p-tareas__side-metrics-label {
     font-family: var(--font-sans);
     font-size: 0.64rem;
     letter-spacing: 0.1em;
@@ -437,7 +437,7 @@
     gap: 0.7rem;
 }
 
-.p-tareas__side-actions button {
+.p-tareas__side-action-button {
     flex: 0 0 auto;
     border: 1px solid color-mix(in srgb, var(--color-brand) 34%, transparent);
     background: color-mix(in srgb, var(--color-brand) 8%, transparent);
@@ -451,7 +451,7 @@
     cursor: pointer;
 }
 
-.p-tareas__side-actions button:hover {
+.p-tareas__side-action-button:hover {
     border-color: color-mix(in srgb, var(--color-brand) 56%, transparent);
     background: color-mix(in srgb, var(--color-brand) 14%, transparent);
 }
@@ -472,15 +472,15 @@
     background: color-mix(in srgb, var(--color-surface-muted) 78%, var(--color-surface) 22%);
 }
 
-.p-tareas__calendar > header,
-.p-tareas__day-detail > header {
+.p-tareas__calendar-header,
+.p-tareas__day-detail-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.4rem;
 }
 
-.p-tareas__calendar h3 {
+.p-tareas__calendar-title {
     font-size: 1.3rem;
     color: var(--color-text);
 }
@@ -490,7 +490,7 @@
     gap: 0.5rem;
 }
 
-.p-tareas__calendar-nav button {
+.p-tareas__calendar-nav-button {
     min-width: 2rem;
     height: 2rem;
     border: 1px solid color-mix(in srgb, var(--color-text-muted) 34%, transparent);
@@ -506,7 +506,7 @@
     letter-spacing: 0.08em;
 }
 
-.p-tareas__calendar-nav button:hover {
+.p-tareas__calendar-nav-button:hover {
     color: var(--color-brand);
     border-color: color-mix(in srgb, var(--color-brand) 40%, transparent);
 }
@@ -539,17 +539,17 @@
     cursor: pointer;
 }
 
-.p-tareas__calendar-day.is-outside {
+.p-tareas__calendar-day--outside {
     color: color-mix(in srgb, var(--color-text-muted) 45%, transparent);
 }
 
-.p-tareas__calendar-day.is-selected {
+.p-tareas__calendar-day--selected {
     background: var(--color-brand);
     color: var(--color-brand-contrast);
     font-weight: 700;
 }
 
-.p-tareas__calendar-day i {
+.p-tareas__calendar-day-marker {
     position: absolute;
     left: 50%;
     bottom: 0.28rem;
@@ -558,51 +558,51 @@
     transform: translateX(-50%);
 }
 
-.p-tareas__calendar-day i.is-pending {
+.p-tareas__calendar-day-marker--pending {
     background: var(--color-token-f59e0b);
 }
 
-.p-tareas__calendar-day i.is-critical {
+.p-tareas__calendar-day-marker--critical {
     background: var(--color-token-ea580c);
 }
 
-.p-tareas__calendar-day i.is-delivered {
+.p-tareas__calendar-day-marker--delivered {
     background: var(--color-brand);
 }
 
-.p-tareas__calendar-day i.is-expired {
+.p-tareas__calendar-day-marker--expired {
     background: var(--color-danger);
 }
 
-.p-tareas__calendar-day i.is-graded {
+.p-tareas__calendar-day-marker--graded {
     background: var(--color-token-16a34a);
 }
 
-.p-tareas__day-detail > header {
+.p-tareas__day-detail-header {
     justify-content: flex-start;
     gap: 1rem;
 }
 
-.p-tareas__day-detail > header strong {
+.p-tareas__day-detail-day {
     font-family: var(--font-sans);
     font-size: 2.2rem;
     color: var(--color-text);
 }
 
-.p-tareas__day-detail > header h4 {
+.p-tareas__day-detail-weekday {
     font-size: 1rem;
     text-transform: uppercase;
     color: var(--color-text);
 }
 
-.p-tareas__day-detail > header p {
+.p-tareas__day-detail-label {
     font-family: var(--font-sans);
     font-size: 0.64rem;
     letter-spacing: 0.1em;
     color: var(--color-text-muted);
 }
 
-.p-tareas__day-list ul {
+.p-tareas__day-list-items {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -617,30 +617,30 @@
     gap: 1rem;
 }
 
-.p-tareas__day-list li {
+.p-tareas__day-list-item {
     border-left: 2px solid color-mix(in srgb, var(--color-text-muted) 35%, transparent);
     padding-left: 1rem;
     display: grid;
     gap: 0.2rem;
 }
 
-.p-tareas__day-list li.is-pending {
+.p-tareas__day-list-item--pending {
     border-left-color: var(--color-token-f59e0b);
 }
 
-.p-tareas__day-list li.is-critical {
+.p-tareas__day-list-item--critical {
     border-left-color: var(--color-token-ea580c);
 }
 
-.p-tareas__day-list li.is-delivered {
+.p-tareas__day-list-item--delivered {
     border-left-color: var(--color-brand);
 }
 
-.p-tareas__day-list li.is-graded {
+.p-tareas__day-list-item--graded {
     border-left-color: var(--color-token-16a34a);
 }
 
-.p-tareas__day-list li.is-expired {
+.p-tareas__day-list-item--expired {
     border-left-color: var(--color-danger);
 }
 
@@ -653,49 +653,49 @@
     padding: 0.25rem 0.5rem;
 }
 
-.p-tareas__day-status.is-pending {
+.p-tareas__day-status--pending {
     color: var(--color-token-f59e0b);
     background: color-mix(in srgb, var(--color-token-f59e0b) 20%, transparent);
 }
 
-.p-tareas__day-status.is-critical {
+.p-tareas__day-status--critical {
     color: var(--color-token-ea580c);
     background: color-mix(in srgb, var(--color-token-ea580c) 20%, transparent);
 }
 
-.p-tareas__day-status.is-delivered {
+.p-tareas__day-status--delivered {
     color: var(--color-brand);
     background: color-mix(in srgb, var(--color-brand) 20%, transparent);
 }
 
-.p-tareas__day-status.is-graded {
+.p-tareas__day-status--graded {
     color: var(--color-token-16a34a);
     background: color-mix(in srgb, var(--color-token-16a34a) 20%, transparent);
 }
 
-.p-tareas__day-status.is-expired {
+.p-tareas__day-status--expired {
     color: var(--color-danger);
     background: color-mix(in srgb, var(--color-danger) 18%, transparent);
 }
 
-.p-tareas__day-list small {
+.p-tareas__day-list-time {
     font-family: var(--font-sans);
     font-size: 0.67rem;
     color: var(--color-text-muted);
 }
 
-.p-tareas__day-list h5 {
+.p-tareas__day-list-task {
     font-size: 1.08rem;
     color: var(--color-text);
     line-height: 1.25;
 }
 
-.p-tareas__day-list p {
+.p-tareas__day-list-meta-text {
     font-size: 0.76rem;
     color: color-mix(in srgb, var(--color-text-muted) 80%, transparent);
 }
 
-.p-tareas__day-list a {
+.p-tareas__day-list-link {
     font-size: 0.72rem;
     color: var(--color-text-muted);
     text-decoration: underline;
@@ -714,12 +714,12 @@
     background: color-mix(in srgb, var(--color-surface) 85%, transparent);
 }
 
-.p-tareas__empty h3 {
+.p-tareas__empty-title {
     font-size: 1.5rem;
     color: var(--color-text);
 }
 
-.p-tareas__empty p {
+.p-tareas__empty-description {
     color: var(--color-text-muted);
 }
 
@@ -727,21 +727,21 @@
     background: var(--color-bg);
 }
 
-.dark .p-tareas__task-status.is-critical {
+.dark .p-tareas__task-status--critical {
     background: color-mix(in srgb, var(--color-danger) 22%, transparent);
     color: var(--color-danger);
 }
 
-.dark .p-tareas__task-status.is-delivered {
+.dark .p-tareas__task-status--delivered {
     background: color-mix(in srgb, var(--color-brand) 28%, transparent);
 }
 
-.dark .p-tareas__task-status.is-graded,
-.dark .p-tareas__day-status.is-graded {
+.dark .p-tareas__task-status--graded,
+.dark .p-tareas__day-status--graded {
     background: color-mix(in srgb, var(--color-token-16a34a) 28%, transparent);
 }
 
-.dark .p-tareas__day-status.is-delivered {
+.dark .p-tareas__day-status--delivered {
     background: color-mix(in srgb, var(--color-brand) 28%, transparent);
 }
 
@@ -778,7 +778,7 @@
         gap: 0.45rem;
     }
 
-    .p-tareas__task-row a,
+    .p-tareas__task-link,
     .p-tareas__task-link-disabled {
         justify-self: end;
     }
@@ -798,7 +798,7 @@
         flex-wrap: wrap;
     }
 
-    .p-tareas__side-actions button {
+    .p-tareas__side-action-button {
         flex: 1 1 auto;
         justify-content: center;
     }

@@ -47,14 +47,14 @@
     place-items: center;
 }
 
-.c-academia-header__brand strong {
+.c-academia-header__brand-text {
     text-transform: uppercase;
     letter-spacing: -0.6px;
     font-size: 31px;
     line-height: 1;
 }
 
-.c-academia-header__brand strong span {
+.c-academia-header__brand-accent {
     color: var(--color-brand);
 }
 
@@ -62,7 +62,7 @@
     gap: 30px;
 }
 
-.c-academia-header__nav a {
+.c-academia-header__nav-link {
     text-decoration: none;
     text-transform: uppercase;
     letter-spacing: 1.2px;
@@ -73,7 +73,7 @@
     padding-bottom: 4px;
 }
 
-.c-academia-header__nav a.is-active {
+.c-academia-header__nav-link--active {
     color: var(--color-brand);
     border-bottom-color: var(--color-brand);
 }
@@ -129,14 +129,14 @@
     gap: 0.75rem;
 }
 
-.c-academia-header__notifications-head h3 {
+.c-academia-header__notifications-title {
     margin: 0;
     font-size: 0.625rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
 }
 
-.c-academia-header__notifications-head p {
+.c-academia-header__notifications-state {
     margin: 0;
     font-size: 0.625rem;
     color: var(--color-brand);
@@ -174,20 +174,29 @@
     background: color-mix(in srgb, var(--color-muted) 55%, transparent);
 }
 
-.c-academia-header__notification-copy h4 {
+.c-academia-header__notification-title {
     margin: 0;
     font-size: 0.875rem;
     line-height: 1.35;
 }
 
-.c-academia-header__notification-copy p {
+.c-academia-header__notification-message {
     margin: 0.25rem 0 0;
     font-size: 0.8125rem;
     color: var(--color-muted);
     line-height: 1.35;
 }
 
-.c-academia-header__notification-copy small {
+.c-academia-header__notification-meta {
+    display: inline-block;
+    margin-top: 0.25rem;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+}
+
+.c-academia-header__notification-category {
     display: inline-block;
     margin-top: 0.25rem;
     font-size: 0.6875rem;
@@ -208,7 +217,7 @@
     gap: 0.35rem;
 }
 
-.c-academia-header__notification time {
+.c-academia-header__notification-time {
     font-size: 0.6875rem;
     color: var(--color-muted);
     justify-self: end;
@@ -216,23 +225,23 @@
     white-space: nowrap;
 }
 
-.c-academia-header__notification.is-warning {
+.c-academia-header__notification--warning {
     border-color: color-mix(in srgb, var(--color-brand) 44%, var(--color-border) 56%);
 }
 
-.c-academia-header__notification.is-critical {
+.c-academia-header__notification--critical {
     background: color-mix(in srgb, var(--color-brand) 5%, transparent);
 }
 
-.c-academia-header__notification.is-critical .c-academia-header__notification-dot {
+.c-academia-header__notification--critical .c-academia-header__notification-dot {
     background: var(--color-brand);
 }
 
-.c-academia-header__notification.is-critical .c-academia-header__notification-category {
+.c-academia-header__notification--critical .c-academia-header__notification-category {
     color: var(--color-brand);
 }
 
-.c-academia-header__notification.is-read .c-academia-header__notification-dot {
+.c-academia-header__notification--read .c-academia-header__notification-dot {
     background: color-mix(in srgb, var(--color-muted) 45%, transparent);
 }
 
@@ -240,7 +249,7 @@
     padding: 1rem;
 }
 
-.c-academia-header__notifications-empty p {
+.c-academia-header__notifications-empty-text {
     margin: 0;
     color: var(--color-muted);
     font-size: 0.8125rem;
@@ -254,7 +263,7 @@
     place-items: center;
 }
 
-.c-academia-header__notifications-footer button {
+.c-academia-header__notifications-action {
     border: 0;
     background: transparent;
     color: var(--color-muted);
@@ -265,7 +274,7 @@
     cursor: pointer;
 }
 
-.c-academia-header__notifications-footer button:hover {
+.c-academia-header__notifications-action:hover {
     color: var(--color-brand);
 }
 
@@ -300,7 +309,7 @@
     font-weight: 700;
 }
 
-.c-academia-header__avatar img {
+.c-academia-header__avatar-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -320,14 +329,14 @@
     gap: 0.55rem;
 }
 
-.c-academia-header__moodle-warning p {
+.c-academia-header__moodle-warning-text {
     margin: 0;
     color: var(--color-text);
     font-size: 0.83rem;
     line-height: 1.35;
 }
 
-.c-academia-header__moodle-warning a {
+.c-academia-header__moodle-warning-link {
     justify-self: start;
     text-decoration: none;
     text-transform: uppercase;
@@ -341,7 +350,7 @@
     padding: 0.45rem 0.65rem;
 }
 
-.c-academia-header__moodle-warning a:hover {
+.c-academia-header__moodle-warning-link:hover {
     border-color: color-mix(in srgb, var(--color-danger) 56%, transparent);
     background: color-mix(in srgb, var(--color-danger) 18%, transparent);
 }
@@ -352,7 +361,7 @@
 }
 
 .dark .c-academia-header__brand,
-.dark .c-academia-header__nav a,
+.dark .c-academia-header__nav-link,
 .dark .c-academia-header__icon-btn,
 .dark .c-academia-header__student {
     color: var(--color-text);
@@ -378,11 +387,11 @@
     background: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface) 84%);
 }
 
-.dark .c-academia-header__moodle-warning p {
+.dark .c-academia-header__moodle-warning-text {
     color: var(--color-text);
 }
 
-.dark .c-academia-header__moodle-warning a {
+.dark .c-academia-header__moodle-warning-link {
     color: var(--color-danger);
     border-color: color-mix(in srgb, var(--color-danger) 48%, transparent);
     background: color-mix(in srgb, var(--color-danger) 14%, transparent);
@@ -416,7 +425,7 @@
         gap: 10px;
     }
 
-    .c-academia-header__brand strong {
+    .c-academia-header__brand-text {
         font-size: 25px;
     }
 

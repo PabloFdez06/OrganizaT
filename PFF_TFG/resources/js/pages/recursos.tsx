@@ -121,19 +121,19 @@ function kindIcon(kind: ResourceItem['kind']) {
 function kindToneClass(kind: ResourceItem['kind']): string {
     switch (kind) {
         case 'document':
-            return 'is-document';
+            return 'p-recursos__resource-icon--document';
         case 'archive':
-            return 'is-archive';
+            return 'p-recursos__resource-icon--archive';
         case 'folder':
-            return 'is-folder';
+            return 'p-recursos__resource-icon--folder';
         case 'multimedia':
-            return 'is-multimedia';
+            return 'p-recursos__resource-icon--multimedia';
         case 'external_link':
-            return 'is-link';
+            return 'p-recursos__resource-icon--link';
         case 'image':
-            return 'is-image';
+            return 'p-recursos__resource-icon--image';
         default:
-            return 'is-other';
+            return 'p-recursos__resource-icon--other';
     }
 }
 
@@ -260,12 +260,12 @@ export default function Recursos({
 
                 <main className="p-recursos__container p-recursos__main">
                     <header className="p-recursos__head">
-                        <h1>RECURSOS</h1>
+                        <h1 className="p-recursos__head-title">RECURSOS</h1>
 
                         <section className="p-recursos__head-tools" aria-label="Herramientas de recursos">
                             <section className="p-recursos__total" aria-label="Total de recursos disponibles">
-                                <strong>{summary.totalResources}</strong>
-                                <span>Recursos totales</span>
+                                <strong className="p-recursos__total-value">{summary.totalResources}</strong>
+                                <span className="p-recursos__total-label">Recursos totales</span>
                             </section>
                         </section>
                     </header>
@@ -275,62 +275,65 @@ export default function Recursos({
                     <section className="p-recursos__workspace" aria-label="Panel de recursos">
                         <aside className="p-recursos__left-rail" aria-label="Listado de asignaturas">
                             <header className="p-recursos__rail-head">
-                                <h2>ASIGNATURAS</h2>
+                                <h2 className="p-recursos__rail-title">ASIGNATURAS</h2>
 
                                 <section className="p-recursos__dropdowns" aria-label="Paneles de analisis y filtros">
                                     <details className="p-recursos__dropdown p-recursos__dropdown--icon">
-                                        <summary aria-label="Analisis de formato" title="Analisis de formato">
-                                            <BarChart3 size={15} aria-hidden="true" />
+                                        <summary className="p-recursos__dropdown-summary p-recursos__dropdown-summary--icon" aria-label="Analisis de formato" title="Analisis de formato">
+                                            <BarChart3 className="p-recursos__dropdown-summary-icon" size={15} aria-hidden="true" />
                                         </summary>
 
                                         <article className="p-recursos__analysis" aria-label="Analisis de formato">
                                             <section className="p-recursos__analysis-item">
-                                                <header>
-                                                    <span>Documentos</span>
-                                                    <strong>{formatDistribution.documents}%</strong>
+                                                <header className="p-recursos__analysis-item-head">
+                                                    <span className="p-recursos__analysis-item-label">Documentos</span>
+                                                    <strong className="p-recursos__analysis-item-value">{formatDistribution.documents}%</strong>
                                                 </header>
-                                                <progress max={100} value={formatDistribution.documents} aria-label="Porcentaje de documentos" />
+                                                <progress className="p-recursos__analysis-item-progress" max={100} value={formatDistribution.documents} aria-label="Porcentaje de documentos" />
                                             </section>
 
                                             <section className="p-recursos__analysis-item">
-                                                <header>
-                                                    <span>Multimedia</span>
-                                                    <strong>{formatDistribution.multimedia}%</strong>
+                                                <header className="p-recursos__analysis-item-head">
+                                                    <span className="p-recursos__analysis-item-label">Multimedia</span>
+                                                    <strong className="p-recursos__analysis-item-value">{formatDistribution.multimedia}%</strong>
                                                 </header>
-                                                <progress max={100} value={formatDistribution.multimedia} aria-label="Porcentaje de multimedia" />
+                                                <progress className="p-recursos__analysis-item-progress" max={100} value={formatDistribution.multimedia} aria-label="Porcentaje de multimedia" />
                                             </section>
 
                                             <section className="p-recursos__analysis-item">
-                                                <header>
-                                                    <span>Enlaces externos</span>
-                                                    <strong>{formatDistribution.links}%</strong>
+                                                <header className="p-recursos__analysis-item-head">
+                                                    <span className="p-recursos__analysis-item-label">Enlaces externos</span>
+                                                    <strong className="p-recursos__analysis-item-value">{formatDistribution.links}%</strong>
                                                 </header>
-                                                <progress max={100} value={formatDistribution.links} aria-label="Porcentaje de enlaces" />
+                                                <progress className="p-recursos__analysis-item-progress" max={100} value={formatDistribution.links} aria-label="Porcentaje de enlaces" />
                                             </section>
                                         </article>
                                     </details>
 
                                     <details className="p-recursos__dropdown p-recursos__dropdown--icon">
-                                        <summary aria-label="Filtro por metadatos" title="Filtro por metadatos">
-                                            <Filter size={15} aria-hidden="true" />
+                                        <summary className="p-recursos__dropdown-summary p-recursos__dropdown-summary--icon" aria-label="Filtro por metadatos" title="Filtro por metadatos">
+                                            <Filter className="p-recursos__dropdown-summary-icon" size={15} aria-hidden="true" />
                                         </summary>
 
                                         <article className="p-recursos__filters" aria-label="Filtro por metadatos">
-                                            <ul>
+                                            <ul className="p-recursos__filter-list">
                                                 {METADATA_FILTERS.map((item) => {
                                                     const isActive = selectedBuckets.includes(item.bucket);
                                                     const count = metadataCounts[item.bucket];
 
                                                     return (
-                                                        <li key={item.bucket}>
+                                                        <li className="p-recursos__filter-item" key={item.bucket}>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleToggleBucket(item.bucket)}
                                                                 aria-pressed={isActive}
-                                                                className={isActive ? 'is-active' : ''}
+                                                                className={[
+                                                                    'p-recursos__filter-button',
+                                                                    isActive ? 'p-recursos__filter-button--active' : '',
+                                                                ].filter(Boolean).join(' ')}
                                                             >
                                                                 {item.label}
-                                                                <span>{count}</span>
+                                                                <span className="p-recursos__filter-button-count">{count}</span>
                                                             </button>
                                                         </li>
                                                     );
@@ -349,15 +352,15 @@ export default function Recursos({
                                         <button
                                             key={subject.id}
                                             type="button"
-                                            className={`p-recursos__subject-item ${isActive ? 'is-active' : ''}`}
+                                            className={`p-recursos__subject-item ${isActive ? 'p-recursos__subject-item--active' : ''}`}
                                             onClick={() => {
                                                 handleSelectSubject(subject.id);
                                             }}
                                             aria-current={isActive ? 'page' : undefined}
                                         >
-                                            <section>
-                                                <small>{getModuleLabel(subject.code, index)}</small>
-                                                <h3>{subject.subject}</h3>
+                                            <section className="p-recursos__subject-item-main">
+                                                <small className="p-recursos__subject-item-code">{getModuleLabel(subject.code, index)}</small>
+                                                <h3 className="p-recursos__subject-item-title">{subject.subject}</h3>
                                             </section>
                                         </button>
                                     );
@@ -367,23 +370,23 @@ export default function Recursos({
 
                         <section className="p-recursos__content" aria-label="Recursos por asignatura">
                             {filteredSelectedSubject && (
-                                <article className="p-recursos__subject is-featured">
+                                <article className="p-recursos__subject p-recursos__subject--featured">
                                     <header className="p-recursos__subject-head">
-                                        <section>
-                                            <small>{filteredSelectedSubject.code}</small>
-                                            <h2>{filteredSelectedSubject.subject}</h2>
+                                        <section className="p-recursos__subject-head-main">
+                                            <small className="p-recursos__subject-head-code">{filteredSelectedSubject.code}</small>
+                                            <h2 className="p-recursos__subject-head-title">{filteredSelectedSubject.subject}</h2>
                                         </section>
                                     </header>
 
                                     <section className="p-recursos__subject-body">
                                         {filteredSelectedSubject.units.length > 0 ? filteredSelectedSubject.units.map((unit, unitIndex) => (
                                             <section key={`${filteredSelectedSubject.id}-${unit.name}`} className="p-recursos__unit">
-                                                <header>
-                                                    <span>{`${`${unitIndex + 1}`.padStart(2, '0')}`}</span>
-                                                    <h3>{unit.name}</h3>
+                                                <header className="p-recursos__unit-head">
+                                                    <span className="p-recursos__unit-index">{`${`${unitIndex + 1}`.padStart(2, '0')}`}</span>
+                                                    <h3 className="p-recursos__unit-title">{unit.name}</h3>
                                                 </header>
 
-                                                <ul>
+                                                <ul className="p-recursos__unit-list">
                                                     {unit.resources.map((resource) => (
                                                         <li key={resource.id}>
                                                             {resource.kind === 'folder' ? (
@@ -401,8 +404,8 @@ export default function Recursos({
                                                                                 {kindIcon(resource.kind)}
                                                                             </section>
                                                                             <section className="p-recursos__resource-content">
-                                                                                <p>{resource.name}</p>
-                                                                                <small>
+                                                                                <p className="p-recursos__resource-name">{resource.name}</p>
+                                                                                <small className="p-recursos__resource-meta">
                                                                                     {resource.children && resource.children.length > 0
                                                                                         ? `${resource.children.length} archivos`
                                                                                         : resource.kindLabel}
@@ -413,6 +416,7 @@ export default function Recursos({
                                                                         <section className="p-recursos__folder-actions">
                                                                             {resource.url && (
                                                                                 <a
+                                                                                    className="p-recursos__folder-action-link"
                                                                                     href={resource.url}
                                                                                     target="_blank"
                                                                                     rel="noreferrer"
@@ -438,18 +442,18 @@ export default function Recursos({
                                                                                         </section>
 
                                                                                         <section className="p-recursos__resource-content">
-                                                                                            <p>{child.name}</p>
-                                                                                            <small>
+                                                                                            <p className="p-recursos__resource-name">{child.name}</p>
+                                                                                            <small className="p-recursos__resource-meta">
                                                                                                 {child.sizeLabel ? `${child.sizeLabel} / ${child.kindLabel}` : child.kindLabel}
                                                                                             </small>
                                                                                         </section>
 
                                                                                         {child.downloadUrl ? (
-                                                                                            <a href={child.downloadUrl} aria-label={downloadResourceLabel(child)} download>
+                                                                                            <a className="p-recursos__resource-link" href={child.downloadUrl} aria-label={downloadResourceLabel(child)} download>
                                                                                                 <Download size={16} />
                                                                                             </a>
                                                                                         ) : child.url ? (
-                                                                                            <a href={child.url} target="_blank" rel="noreferrer" aria-label={openResourceLabel(child)}>
+                                                                                            <a className="p-recursos__resource-link" href={child.url} target="_blank" rel="noreferrer" aria-label={openResourceLabel(child)}>
                                                                                                 <ExternalLink size={16} />
                                                                                             </a>
                                                                                         ) : (
@@ -470,18 +474,19 @@ export default function Recursos({
                                                                     </section>
 
                                                                     <section className="p-recursos__resource-content">
-                                                                        <p>{resource.name}</p>
-                                                                        <small>
+                                                                        <p className="p-recursos__resource-name">{resource.name}</p>
+                                                                        <small className="p-recursos__resource-meta">
                                                                             {resource.sizeLabel ? `${resource.sizeLabel} / ${resource.kindLabel}` : resource.kindLabel}
                                                                         </small>
                                                                     </section>
 
                                                                     {resource.downloadUrl ? (
-                                                                        <a href={resource.downloadUrl} aria-label={downloadResourceLabel(resource)} download>
+                                                                        <a className="p-recursos__resource-link" href={resource.downloadUrl} aria-label={downloadResourceLabel(resource)} download>
                                                                             <Download size={16} />
                                                                         </a>
                                                                     ) : resource.url ? (
                                                                         <a
+                                                                            className="p-recursos__resource-link"
                                                                             href={resource.url}
                                                                             target="_blank"
                                                                             rel="noreferrer"
@@ -502,8 +507,8 @@ export default function Recursos({
                                             </section>
                                         )) : (
                                             <article className="p-recursos__empty p-recursos__empty--inline">
-                                                <h3>No hay recursos para esta seleccion</h3>
-                                                <p>Puede deberse a que los filtros estan ocultando el contenido o a que esta asignatura aun no tiene material publicado.</p>
+                                                <h3 className="p-recursos__empty-title">No hay recursos para esta seleccion</h3>
+                                                <p className="p-recursos__empty-description">Puede deberse a que los filtros estan ocultando el contenido o a que esta asignatura aun no tiene material publicado.</p>
                                             </article>
                                         )}
                                     </section>
@@ -512,8 +517,8 @@ export default function Recursos({
 
                             {subjects.length === 0 && (
                                 <article className="p-recursos__empty">
-                                    <h3>Sin recursos para mostrar</h3>
-                                    <p>
+                                    <h3 className="p-recursos__empty-title">Sin recursos para mostrar</h3>
+                                    <p className="p-recursos__empty-description">
                                         {moodleConnected
                                             ? 'No se encontraron recursos en las asignaturas con los filtros actuales.'
                                             : 'Conecta Moodle para cargar recursos compartidos por tus docentes.'}

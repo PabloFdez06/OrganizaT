@@ -199,8 +199,8 @@ export default function Dashboard({
                     <section className="p-dashboard__grid">
                         <section className="p-dashboard__left-column" ref={leftColumnRef}>
                             <section className="p-dashboard__label" aria-label="Prioridad actual">
-                                <span>Status: Prioridad critica</span>
-                                <i aria-hidden="true" />
+                                <span className="p-dashboard__label-text">Status: Prioridad critica</span>
+                                <i className="p-dashboard__label-marker" aria-hidden="true" />
                             </section>
 
                             <article className="p-dashboard__hero" ref={heroCardRef}>
@@ -214,13 +214,13 @@ export default function Dashboard({
 
                                     <section className="p-dashboard__hero-meta">
                                         <section className="p-dashboard__hero-kpi">
-                                            <small>Tiempo restante</small>
-                                            <b className="is-critical">{hero.remaining}</b>
+                                            <small className="p-dashboard__hero-kpi-label">Tiempo restante</small>
+                                            <b className="p-dashboard__hero-kpi-value p-dashboard__hero-kpi-value--critical">{hero.remaining}</b>
                                         </section>
                                         <span className="p-dashboard__hero-divider" aria-hidden="true" />
                                         <section className="p-dashboard__hero-kpi">
-                                            <small>Impacto</small>
-                                            <b>{hero.priority}</b>
+                                            <small className="p-dashboard__hero-kpi-label">Impacto</small>
+                                            <b className="p-dashboard__hero-kpi-value">{hero.priority}</b>
                                         </section>
                                     </section>
 
@@ -272,7 +272,7 @@ export default function Dashboard({
                             <section className="p-dashboard__quick" aria-labelledby="quick-view-title">
                                 <header className="p-dashboard__quick-header">
                                     <section>
-                                        <h3 id="quick-view-title">Vista rapida</h3>
+                                        <h3 id="quick-view-title" className="p-dashboard__quick-title">Vista rapida</h3>
                                         <p className="p-dashboard__quick-subtitle">Progreso del semestre actual</p>
                                     </section>
                                     <section className="p-dashboard__quick-actions" aria-label="Acciones de asignaturas">
@@ -298,13 +298,13 @@ export default function Dashboard({
                                             <section className="p-dashboard__subject-top">
                                                 <section>
                                                     <small className="p-dashboard__subject-code">{card.code}</small>
-                                                    <h4>{card.title}</h4>
+                                                    <h4 className="p-dashboard__subject-title">{card.title}</h4>
                                                 </section>
                                                 <span className="p-dashboard__dot" aria-hidden="true" />
                                             </section>
                                             <section className="p-dashboard__subject-bottom">
-                                                <p>{card.status}</p>
-                                                <span aria-hidden="true">→</span>
+                                                <p className="p-dashboard__subject-status">{card.status}</p>
+                                                <span className="p-dashboard__subject-arrow" aria-hidden="true">→</span>
                                             </section>
                                         </Link>
                                     ))}
@@ -314,17 +314,17 @@ export default function Dashboard({
                                             <section className="p-dashboard__subject-top">
                                                 <section>
                                                     <small className="p-dashboard__subject-code">SIN-DATOS</small>
-                                                    <h4>Sin asignaturas cargadas</h4>
+                                                    <h4 className="p-dashboard__subject-title">Sin asignaturas cargadas</h4>
                                                 </section>
                                                 <span className="p-dashboard__dot p-dashboard__dot--muted" aria-hidden="true" />
                                             </section>
                                             <section className="p-dashboard__subject-bottom">
-                                                <p>
+                                                <p className="p-dashboard__subject-status">
                                                     {moodleConnected
                                                         ? 'No hay datos de asignaturas para mostrar'
                                                         : 'Conecta Moodle para cargar tus asignaturas'}
                                                 </p>
-                                                <span aria-hidden="true">→</span>
+                                                <span className="p-dashboard__subject-arrow" aria-hidden="true">→</span>
                                             </section>
                                         </article>
                                     )}
@@ -333,18 +333,18 @@ export default function Dashboard({
 
                             <section className="p-dashboard__matrix" aria-labelledby="matrix-title">
                                 <header className="p-dashboard__matrix-header">
-                                    <h3 id="matrix-title">Matriz de Eisenhower</h3>
+                                    <h3 id="matrix-title" className="p-dashboard__matrix-title">Matriz de Eisenhower</h3>
                                     <section className="p-dashboard__matrix-tools" aria-label="Herramientas de explicacion IA">
                                         <nav className="p-dashboard__matrix-mode" aria-label="Selector de modo de matriz">
                                             <Link
-                                                className={['p-dashboard__matrix-mode-link', !isAiMode ? 'is-active' : ''].filter(Boolean).join(' ')}
+                                                className={['p-dashboard__matrix-mode-link', !isAiMode ? 'p-dashboard__matrix-mode-link--active' : ''].filter(Boolean).join(' ')}
                                                 href="/dashboard?matrix_mode=basic"
                                                 preserveScroll
                                             >
                                                 Logica base
                                             </Link>
                                             <Link
-                                                className={['p-dashboard__matrix-mode-link', isAiMode ? 'is-active' : ''].filter(Boolean).join(' ')}
+                                                className={['p-dashboard__matrix-mode-link', isAiMode ? 'p-dashboard__matrix-mode-link--active' : ''].filter(Boolean).join(' ')}
                                                 href="/dashboard?matrix_mode=ai"
                                                 preserveScroll
                                             >
@@ -353,7 +353,7 @@ export default function Dashboard({
                                         </nav>
 
                                         <small
-                                            className={['p-dashboard__matrix-hint', matrixProvider === 'ai' || matrixProvider === 'gemini' ? 'is-ai' : '']
+                                            className={['p-dashboard__matrix-hint', matrixProvider === 'ai' || matrixProvider === 'gemini' ? 'p-dashboard__matrix-hint--ai' : '']
                                                 .filter(Boolean)
                                                 .join(' ')}
                                         >
@@ -363,7 +363,7 @@ export default function Dashboard({
                                 </header>
 
                                 <p className="p-dashboard__matrix-mode-help">
-                                    Usa <strong>Logica base</strong> para una priorizacion instantanea y estable. Cambia a <strong>IA asistida</strong> si quieres
+                                    Usa <strong className="p-dashboard__matrix-mode-help-emphasis">Logica base</strong> para una priorizacion instantanea y estable. Cambia a <strong className="p-dashboard__matrix-mode-help-emphasis">IA asistida</strong> si quieres
                                     feedback personalizado por asignatura, contexto o preferencias concretas.
                                 </p>
 
@@ -380,8 +380,9 @@ export default function Dashboard({
                                     >
                                         <input type="hidden" name="matrix_mode" value={data.matrix_mode} />
 
-                                        <label htmlFor="matrix-ai-api-key">API key IA</label>
+                                        <label className="p-dashboard__matrix-ai-label" htmlFor="matrix-ai-api-key">API key IA</label>
                                         <input
+                                            className="p-dashboard__matrix-ai-input"
                                             id="matrix-ai-api-key"
                                             name="ai_api_key"
                                             type="password"
@@ -391,8 +392,9 @@ export default function Dashboard({
                                             autoComplete="off"
                                         />
 
-                                        <label htmlFor="matrix-ai-preferences">Enfoque personalizado</label>
+                                        <label className="p-dashboard__matrix-ai-label" htmlFor="matrix-ai-preferences">Enfoque personalizado</label>
                                         <textarea
+                                            className="p-dashboard__matrix-ai-textarea"
                                             id="matrix-ai-preferences"
                                             name="matrix_preferences"
                                             value={data.matrix_preferences}
@@ -403,6 +405,7 @@ export default function Dashboard({
 
                                         <label className="p-dashboard__matrix-ai-check" htmlFor="matrix-ai-explanation">
                                             <input
+                                                className="p-dashboard__matrix-ai-check-input"
                                                 id="matrix-ai-explanation"
                                                 name="matrix_include_explanation"
                                                 type="checkbox"
@@ -416,7 +419,7 @@ export default function Dashboard({
                                             <p className="p-dashboard__matrix-ai-error">{errors.ai_api_key || errors.matrix_preferences}</p>
                                         )}
 
-                                        <button type="submit" disabled={processing}>
+                                        <button className="p-dashboard__matrix-ai-submit" type="submit" disabled={processing}>
                                             {processing ? 'Analizando...' : 'Iniciar analisis IA'}
                                         </button>
                                     </form>
@@ -424,100 +427,100 @@ export default function Dashboard({
 
                                 {matrixExplanation && (
                                     <article className="p-dashboard__matrix-explanation" aria-label="Explicacion IA de la matriz">
-                                        <p>{matrixExplanation}</p>
+                                        <p className="p-dashboard__matrix-explanation-text">{matrixExplanation}</p>
                                     </article>
                                 )}
 
                                 <section className="p-dashboard__matrix-grid">
-                                    <article className="p-dashboard__matrix-card is-critical" aria-label="Urgente e importante">
-                                        <header>
-                                            <strong>Hacer ahora</strong>
-                                            <small>Urgente</small>
+                                    <article className="p-dashboard__matrix-card p-dashboard__matrix-card--critical" aria-label="Urgente e importante">
+                                        <header className="p-dashboard__matrix-card-head">
+                                            <strong className="p-dashboard__matrix-card-title">Hacer ahora</strong>
+                                            <small className="p-dashboard__matrix-card-subtitle">Urgente</small>
                                         </header>
-                                        <ul>
+                                        <ul className="p-dashboard__matrix-list">
                                             {eisenhower.doNow.map((task) => (
-                                                <li key={`do-now-${task.course}-${task.title}`}>
-                                                    <section>
-                                                        <h4>{task.title}</h4>
-                                                        <p>{task.course}</p>
+                                                <li className="p-dashboard__matrix-item" key={`do-now-${task.course}-${task.title}`}>
+                                                    <section className="p-dashboard__matrix-item-copy">
+                                                        <h4 className="p-dashboard__matrix-item-title">{task.title}</h4>
+                                                        <p className="p-dashboard__matrix-item-course">{task.course}</p>
                                                     </section>
                                                     {task.link && (
-                                                        <a href={task.link} target="_blank" rel="noreferrer">
+                                                        <a className="p-dashboard__matrix-item-link" href={task.link} target="_blank" rel="noreferrer">
                                                             Ir
                                                         </a>
                                                     )}
                                                 </li>
                                             ))}
-                                            {eisenhower.doNow.length === 0 && <li className="is-empty">Sin tareas criticas detectadas</li>}
+                                            {eisenhower.doNow.length === 0 && <li className="p-dashboard__matrix-item p-dashboard__matrix-item--empty">Sin tareas criticas detectadas</li>}
                                         </ul>
                                     </article>
 
                                     <article className="p-dashboard__matrix-card" aria-label="No urgente e importante">
-                                        <header>
-                                            <strong>Programar</strong>
-                                            <small>Planificar</small>
+                                        <header className="p-dashboard__matrix-card-head">
+                                            <strong className="p-dashboard__matrix-card-title">Programar</strong>
+                                            <small className="p-dashboard__matrix-card-subtitle">Planificar</small>
                                         </header>
-                                        <ul>
+                                        <ul className="p-dashboard__matrix-list">
                                             {eisenhower.schedule.map((task) => (
-                                                <li key={`schedule-${task.course}-${task.title}`}>
-                                                    <section>
-                                                        <h4>{task.title}</h4>
-                                                        <p>{task.course}</p>
+                                                <li className="p-dashboard__matrix-item" key={`schedule-${task.course}-${task.title}`}>
+                                                    <section className="p-dashboard__matrix-item-copy">
+                                                        <h4 className="p-dashboard__matrix-item-title">{task.title}</h4>
+                                                        <p className="p-dashboard__matrix-item-course">{task.course}</p>
                                                     </section>
                                                     {task.link && (
-                                                        <a href={task.link} target="_blank" rel="noreferrer">
+                                                        <a className="p-dashboard__matrix-item-link" href={task.link} target="_blank" rel="noreferrer">
                                                             Ir
                                                         </a>
                                                     )}
                                                 </li>
                                             ))}
-                                            {eisenhower.schedule.length === 0 && <li className="is-empty">Sin tareas para planificar</li>}
+                                            {eisenhower.schedule.length === 0 && <li className="p-dashboard__matrix-item p-dashboard__matrix-item--empty">Sin tareas para planificar</li>}
                                         </ul>
                                     </article>
 
                                     <article className="p-dashboard__matrix-card" aria-label="Urgente y menos importante">
-                                        <header>
-                                            <strong>Delegar</strong>
-                                            <small>Rapido</small>
+                                        <header className="p-dashboard__matrix-card-head">
+                                            <strong className="p-dashboard__matrix-card-title">Delegar</strong>
+                                            <small className="p-dashboard__matrix-card-subtitle">Rapido</small>
                                         </header>
-                                        <ul>
+                                        <ul className="p-dashboard__matrix-list">
                                             {eisenhower.delegate.map((task) => (
-                                                <li key={`delegate-${task.course}-${task.title}`}>
-                                                    <section>
-                                                        <h4>{task.title}</h4>
-                                                        <p>{task.course}</p>
+                                                <li className="p-dashboard__matrix-item" key={`delegate-${task.course}-${task.title}`}>
+                                                    <section className="p-dashboard__matrix-item-copy">
+                                                        <h4 className="p-dashboard__matrix-item-title">{task.title}</h4>
+                                                        <p className="p-dashboard__matrix-item-course">{task.course}</p>
                                                     </section>
                                                     {task.link && (
-                                                        <a href={task.link} target="_blank" rel="noreferrer">
+                                                        <a className="p-dashboard__matrix-item-link" href={task.link} target="_blank" rel="noreferrer">
                                                             Ir
                                                         </a>
                                                     )}
                                                 </li>
                                             ))}
-                                            {eisenhower.delegate.length === 0 && <li className="is-empty">Sin tareas de ejecucion rapida</li>}
+                                            {eisenhower.delegate.length === 0 && <li className="p-dashboard__matrix-item p-dashboard__matrix-item--empty">Sin tareas de ejecucion rapida</li>}
                                         </ul>
                                     </article>
 
                                     <article className="p-dashboard__matrix-card" aria-label="No urgente y menos importante">
-                                        <header>
-                                            <strong>Eliminar</strong>
-                                            <small>Reducir ruido</small>
+                                        <header className="p-dashboard__matrix-card-head">
+                                            <strong className="p-dashboard__matrix-card-title">Eliminar</strong>
+                                            <small className="p-dashboard__matrix-card-subtitle">Reducir ruido</small>
                                         </header>
-                                        <ul>
+                                        <ul className="p-dashboard__matrix-list">
                                             {eisenhower.optimize.map((task) => (
-                                                <li key={`optimize-${task.course}-${task.title}`}>
-                                                    <section>
-                                                        <h4>{task.title}</h4>
-                                                        <p>{task.course}</p>
+                                                <li className="p-dashboard__matrix-item" key={`optimize-${task.course}-${task.title}`}>
+                                                    <section className="p-dashboard__matrix-item-copy">
+                                                        <h4 className="p-dashboard__matrix-item-title">{task.title}</h4>
+                                                        <p className="p-dashboard__matrix-item-course">{task.course}</p>
                                                     </section>
                                                     {task.link && (
-                                                        <a href={task.link} target="_blank" rel="noreferrer">
+                                                        <a className="p-dashboard__matrix-item-link" href={task.link} target="_blank" rel="noreferrer">
                                                             Ir
                                                         </a>
                                                     )}
                                                 </li>
                                             ))}
-                                            {eisenhower.optimize.length === 0 && <li className="is-empty">Sin tareas para optimizar</li>}
+                                            {eisenhower.optimize.length === 0 && <li className="p-dashboard__matrix-item p-dashboard__matrix-item--empty">Sin tareas para optimizar</li>}
                                         </ul>
                                     </article>
                                 </section>
@@ -526,7 +529,7 @@ export default function Dashboard({
 
                         <aside className="p-dashboard__timeline" aria-labelledby="timeline-title" ref={timelineContainerRef}>
                             <header className="p-dashboard__timeline-header">
-                                <h2 id="timeline-title">Linea de tiempo</h2>
+                                <h2 id="timeline-title" className="p-dashboard__timeline-title">Linea de tiempo</h2>
                             </header>
                             <ol
                                 className="p-dashboard__timeline-list"
@@ -537,10 +540,13 @@ export default function Dashboard({
                                 }}
                             >
                                 {visibleTimeline.map((event, index) => (
-                                    <li key={`${event.title}-${event.when}-${index}`} className={event.current ? 'is-current' : ''}>
+                                    <li
+                                        key={`${event.title}-${event.when}-${index}`}
+                                        className={event.current ? 'p-dashboard__timeline-item p-dashboard__timeline-item--current' : 'p-dashboard__timeline-item'}
+                                    >
                                         <p className="p-dashboard__timeline-time">{event.when}</p>
-                                        <h4>{event.title}</h4>
-                                        <p>{event.description}</p>
+                                        <h4 className="p-dashboard__timeline-item-title">{event.title}</h4>
+                                        <p className="p-dashboard__timeline-item-description">{event.description}</p>
                                         {event.link && (
                                             <a className="p-dashboard__timeline-link" href={event.link} target="_blank" rel="noreferrer">
                                                 Ir a la tarea
@@ -552,8 +558,8 @@ export default function Dashboard({
                                 {timeline.length === 0 && (
                                     <li>
                                         <p className="p-dashboard__timeline-time">SIN EVENTOS</p>
-                                        <h4>No hay entregas proximas</h4>
-                                        <p>
+                                        <h4 className="p-dashboard__timeline-item-title">No hay entregas proximas</h4>
+                                        <p className="p-dashboard__timeline-item-description">
                                             {dashboardError
                                                 ? dashboardError
                                                 : moodleConnected

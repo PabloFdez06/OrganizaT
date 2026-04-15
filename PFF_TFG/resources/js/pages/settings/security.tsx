@@ -90,12 +90,12 @@ function PreferenceToggle({
     return (
         <article className="p-settings__toggle-row">
             <section className="p-settings__toggle-copy">
-                <h4>
+                <h4 className="p-settings__toggle-title">
                     {icon === 'mail' && <Mail size={14} aria-hidden="true" />}
                     {icon === 'push' && <BellRing size={14} aria-hidden="true" />}
-                    <span>{label}</span>
+                    <span className="p-settings__toggle-title-text">{label}</span>
                 </h4>
-                <p>{description}</p>
+                <p className="p-settings__toggle-description">{description}</p>
             </section>
 
             <button
@@ -106,8 +106,8 @@ function PreferenceToggle({
                 aria-label={label}
                 className={[
                     'p-settings__switch',
-                    checked ? 'is-on' : '',
-                    disabled ? 'is-disabled' : '',
+                    checked ? 'p-settings__switch--on' : '',
+                    disabled ? 'p-settings__switch--disabled' : '',
                 ]
                     .filter(Boolean)
                     .join(' ')}
@@ -328,7 +328,7 @@ export default function Security({
                         <span className="p-settings__page-header-icon" aria-hidden="true">
                             <Settings size={14} />
                         </span>
-                        <p>Configuración</p>
+                        <p className="p-settings__page-header-brand-text">Configuración</p>
                     </section>
 
                     <section className="p-settings__page-header-actions">
@@ -341,8 +341,8 @@ export default function Security({
                 <section className="p-settings__workspace">
                     <aside className="p-settings__side" aria-label="Navegación de configuración">
                         <header className="p-settings__side-header">
-                            <h2>Settings</h2>
-                            <p>Management</p>
+                            <h2 className="p-settings__side-header-title">Settings</h2>
+                            <p className="p-settings__side-header-subtitle">Management</p>
                         </header>
 
                         <nav className="p-settings__side-nav" aria-label="Apartados de configuración">
@@ -358,15 +358,15 @@ export default function Security({
                                         aria-pressed={isActive}
                                         className={[
                                             'p-settings__side-link',
-                                            isActive ? 'is-active' : '',
+                                            isActive ? 'p-settings__side-link--active' : '',
                                         ]
                                             .filter(Boolean)
                                             .join(' ')}
                                     >
                                         <Icon size={14} aria-hidden="true" />
-                                        <section>
-                                            <p>{item.title}</p>
-                                            <span>{item.description}</span>
+                                        <section className="p-settings__side-link-copy">
+                                            <p className="p-settings__side-link-title">{item.title}</p>
+                                            <span className="p-settings__side-link-description">{item.description}</span>
                                         </section>
                                     </button>
                                 );
@@ -380,7 +380,7 @@ export default function Security({
                                 <p className="p-settings__eyebrow">Ajustes del sistema</p>
 
                                 <h1 id="settings-title" className="p-settings__title">
-                                    PERFIL<span>.</span>
+                                    PERFIL<span className="p-settings__title-dot">.</span>
                                 </h1>
                                 <p className="p-settings__description">Gestión de identidad académica y sincronización de datos.</p>
                             </section>
@@ -388,7 +388,12 @@ export default function Security({
 
                         {(flash.success || flash.error || syncStatus.message) && (
                             <section className="p-settings__flash" aria-live="polite">
-                                <p className={flash.error || syncStatus.message ? 'is-error' : 'is-success'}>
+                                <p
+                                    className={[
+                                        'p-settings__flash-message',
+                                        flash.error || syncStatus.message ? 'p-settings__flash-message--error' : 'p-settings__flash-message--success',
+                                    ].join(' ')}
+                                >
                                     {flash.error ?? syncStatus.message ?? flash.success}
                                 </p>
                             </section>
@@ -399,34 +404,34 @@ export default function Security({
                             <section className="p-settings__panel">
                                 <article className="p-settings__section">
                                     <header className="p-settings__section-header">
-                                        <h2>Información de usuario</h2>
-                                        <span aria-hidden="true" />
+                                        <h2 className="p-settings__section-title">Información de usuario</h2>
+                                        <span className="p-settings__section-rule" aria-hidden="true" />
                                     </header>
 
                                     <dl className="p-settings__profile-grid">
                                         <div className="p-settings__profile-item">
-                                            <dt>Nombre completo</dt>
-                                            <dd>{profile.fullName ?? 'No disponible'}</dd>
+                                            <dt className="p-settings__profile-term">Nombre completo</dt>
+                                            <dd className="p-settings__profile-detail">{profile.fullName ?? 'No disponible'}</dd>
                                         </div>
                                         <div className="p-settings__profile-item">
-                                            <dt>Correo institucional</dt>
-                                            <dd>{profile.email ?? 'No disponible'}</dd>
+                                            <dt className="p-settings__profile-term">Correo institucional</dt>
+                                            <dd className="p-settings__profile-detail">{profile.email ?? 'No disponible'}</dd>
                                         </div>
                                         <div className="p-settings__profile-item">
-                                            <dt>Curso actual</dt>
-                                            <dd>{profile.course ?? 'No disponible'}</dd>
+                                            <dt className="p-settings__profile-term">Curso actual</dt>
+                                            <dd className="p-settings__profile-detail">{profile.course ?? 'No disponible'}</dd>
                                         </div>
                                         <div className="p-settings__profile-item">
-                                            <dt>Año académico</dt>
-                                            <dd>{profile.academicYear ?? 'No disponible'}</dd>
+                                            <dt className="p-settings__profile-term">Año académico</dt>
+                                            <dd className="p-settings__profile-detail">{profile.academicYear ?? 'No disponible'}</dd>
                                         </div>
                                     </dl>
                                 </article>
 
                                 <article className="p-settings__section">
                                     <header className="p-settings__section-header">
-                                        <h2>Conexión a Moodle</h2>
-                                        <span aria-hidden="true" />
+                                        <h2 className="p-settings__section-title">Conexión a Moodle</h2>
+                                        <span className="p-settings__section-rule" aria-hidden="true" />
                                     </header>
 
                                     <section className="p-settings__moodle-card" aria-live="polite">
@@ -483,7 +488,7 @@ export default function Security({
                                             {({ errors, processing: connectProcessing }) => (
                                                 <>
                                                     <section className="p-settings__field">
-                                                        <label htmlFor="moodle_username">Usuario Moodle</label>
+                                                        <label className="p-settings__field-label" htmlFor="moodle_username">Usuario Moodle</label>
                                                         <Input
                                                             id="moodle_username"
                                                             name="moodle_username"
@@ -494,7 +499,7 @@ export default function Security({
                                                     </section>
 
                                                     <section className="p-settings__field">
-                                                        <label htmlFor="moodle_password">Contraseña Moodle</label>
+                                                        <label className="p-settings__field-label" htmlFor="moodle_password">Contraseña Moodle</label>
                                                         <Input
                                                             id="moodle_password"
                                                             name="moodle_password"
@@ -525,18 +530,18 @@ export default function Security({
 
                                 <article className="p-settings__section">
                                     <header className="p-settings__section-header">
-                                        <h2>Actualización de datos</h2>
-                                        <span aria-hidden="true" />
+                                        <h2 className="p-settings__section-title">Actualización de datos</h2>
+                                        <span className="p-settings__section-rule" aria-hidden="true" />
                                     </header>
 
                                     <section className="p-settings__cache-grid" aria-label="Frecuencias de caché">
                                         <article className="p-settings__cache-card">
-                                            <p>Caché de asignaturas</p>
-                                            <strong>{cacheConfig.asignaturasMinutes} minutos</strong>
+                                            <p className="p-settings__cache-label">Caché de asignaturas</p>
+                                            <strong className="p-settings__cache-value">{cacheConfig.asignaturasMinutes} minutos</strong>
                                         </article>
                                         <article className="p-settings__cache-card">
-                                            <p>Caché de tareas</p>
-                                            <strong>{cacheConfig.tareasMinutes} minutos</strong>
+                                            <p className="p-settings__cache-label">Caché de tareas</p>
+                                            <strong className="p-settings__cache-value">{cacheConfig.tareasMinutes} minutos</strong>
                                         </article>
                                     </section>
                                 </article>
@@ -547,8 +552,8 @@ export default function Security({
                             <section className="p-settings__panel">
                                 <article className="p-settings__section">
                                     <header className="p-settings__section-header">
-                                        <h2>Recordatorios por tiempo</h2>
-                                        <span aria-hidden="true" />
+                                        <h2 className="p-settings__section-title">Recordatorios por tiempo</h2>
+                                        <span className="p-settings__section-rule" aria-hidden="true" />
                                     </header>
 
                                     <section className="p-settings__toggles">
@@ -587,10 +592,11 @@ export default function Security({
                                                 onToggle={(value) => persistPreference('recordatorio_personalizado', value)}
                                             />
 
-                                            <label htmlFor="recordatorio_personalizado_minutos">
+                                            <label className="p-settings__custom-reminder-label" htmlFor="recordatorio_personalizado_minutos">
                                                 Frecuencia personalizada (minutos)
                                             </label>
                                             <Input
+                                                className="p-settings__custom-reminder-input"
                                                 id="recordatorio_personalizado_minutos"
                                                 type="number"
                                                 min={1}
@@ -617,8 +623,8 @@ export default function Security({
 
                                 <article className="p-settings__section">
                                     <header className="p-settings__section-header">
-                                        <h2>Canales de notificación</h2>
-                                        <span aria-hidden="true" />
+                                        <h2 className="p-settings__section-title">Canales de notificación</h2>
+                                        <span className="p-settings__section-rule" aria-hidden="true" />
                                     </header>
 
                                     <section className="p-settings__toggles">
@@ -632,7 +638,7 @@ export default function Security({
                                             onToggle={(value) => persistPreference('email', value)}
                                         />
                                         <section className="p-settings__email-test">
-                                            <p>
+                                            <p className="p-settings__email-test-copy">
                                                 ¿Quieres probarlo ahora? Envía una simulación de "nueva tarea" al correo configurado.
                                             </p>
                                             <Button
@@ -663,8 +669,8 @@ export default function Security({
                             <section className="p-settings__panel">
                                 <article className="p-settings__section">
                                     <header className="p-settings__section-header">
-                                        <h2>Apariencia</h2>
-                                        <span aria-hidden="true" />
+                                        <h2 className="p-settings__section-title">Apariencia</h2>
+                                        <span className="p-settings__section-rule" aria-hidden="true" />
                                     </header>
 
                                     <section className="p-settings__appearance-card" aria-label="Apariencia de la aplicación">
@@ -680,7 +686,7 @@ export default function Security({
                                                     type="button"
                                                     className={[
                                                         'p-settings__appearance-option',
-                                                        appearance === value ? 'is-active' : '',
+                                                        appearance === value ? 'p-settings__appearance-option--active' : '',
                                                     ]
                                                         .filter(Boolean)
                                                         .join(' ')}
@@ -722,14 +728,15 @@ export default function Security({
 
                                                             return (
                                                                 <li key={subject.id}>
-                                                                    <label className={['p-settings__subject-option', isDisabled ? 'is-disabled' : ''].filter(Boolean).join(' ')}>
+                                                                    <label className={['p-settings__subject-option', isDisabled ? 'p-settings__subject-option--disabled' : ''].filter(Boolean).join(' ')}>
                                                                         <input
+                                                                            className="p-settings__subject-option-input"
                                                                             type="checkbox"
                                                                             checked={isChecked}
                                                                             disabled={isDisabled || quickSubjectsProcessing}
                                                                             onChange={(event) => handleQuickSubjectToggle(subject.id, event.target.checked)}
                                                                         />
-                                                                        <span>{subject.title}</span>
+                                                                        <span className="p-settings__subject-option-text">{subject.title}</span>
                                                                     </label>
                                                                 </li>
                                                             );
@@ -739,7 +746,7 @@ export default function Security({
 
                                                 <footer className="p-settings__subjects-footer">
                                                     <p className="p-settings__subjects-counter">
-                                                        Seleccionadas: <b>{quickSubjectsSelectedCount}</b>/{quickSubjectsLimit}
+                                                        Seleccionadas: <b className="p-settings__subjects-counter-value">{quickSubjectsSelectedCount}</b>/{quickSubjectsLimit}
                                                     </p>
 
                                                     <Button
@@ -770,13 +777,13 @@ export default function Security({
                                 {canManageTwoFactor && (
                                     <article className="p-settings__section">
                                         <header className="p-settings__section-header">
-                                            <h2>Seguridad de acceso</h2>
-                                            <span aria-hidden="true" />
+                                            <h2 className="p-settings__section-title">Seguridad de acceso</h2>
+                                            <span className="p-settings__section-rule" aria-hidden="true" />
                                         </header>
 
                                         <section className="p-settings__two-factor">
                                             <p className="p-settings__two-factor-status">
-                                                Verificación en 2 pasos: <b>{twoFactorEnabled ? 'Activada' : 'Desactivada'}</b>
+                                                Verificación en 2 pasos: <b className="p-settings__two-factor-status-value">{twoFactorEnabled ? 'Activada' : 'Desactivada'}</b>
                                             </p>
 
                                             {twoFactorEnabled ? (
@@ -789,8 +796,8 @@ export default function Security({
                                                             aria-label="Desactivar verificación en 2 pasos"
                                                             className={[
                                                                 'p-settings__switch',
-                                                                'is-on',
-                                                                disabling ? 'is-disabled' : '',
+                                                                'p-settings__switch--on',
+                                                                disabling ? 'p-settings__switch--disabled' : '',
                                                             ].join(' ')}
                                                             disabled={disabling}
                                                         >
@@ -808,7 +815,7 @@ export default function Security({
                                                             aria-label="Activar verificación en 2 pasos"
                                                             className={[
                                                                 'p-settings__switch',
-                                                                enabling ? 'is-disabled' : '',
+                                                                enabling ? 'p-settings__switch--disabled' : '',
                                                             ]
                                                                 .filter(Boolean)
                                                                 .join(' ')}
@@ -824,14 +831,14 @@ export default function Security({
                                 )}
 
                                 <article className="p-settings__danger-zone">
-                                    <header>
-                                        <h2>Zona de peligro</h2>
+                                    <header className="p-settings__danger-zone-head">
+                                        <h2 className="p-settings__danger-zone-title">Zona de peligro</h2>
                                     </header>
 
                                     <section className="p-settings__danger-row">
                                         <section className="p-settings__danger-block">
-                                            <h3>Eliminar mi cuenta</h3>
-                                            <p>
+                                            <h3 className="p-settings__danger-block-title">Eliminar mi cuenta</h3>
+                                            <p className="p-settings__danger-block-description">
                                                 La eliminación de la cuenta es permanente y conlleva la pérdida de todo el historial académico almacenado.
                                             </p>
 
@@ -843,7 +850,7 @@ export default function Security({
                                                 }
                                             >
                                                 {({ processing: deleting }) => (
-                                                    <Button type="submit" variant="destructive" disabled={deleting}>
+                                                    <Button className="p-settings__danger-block-action" type="submit" variant="destructive" disabled={deleting}>
                                                         {deleting ? 'Eliminando...' : 'Eliminar mi cuenta'}
                                                     </Button>
                                                 )}
@@ -851,12 +858,12 @@ export default function Security({
                                         </section>
 
                                         <section className="p-settings__danger-block">
-                                            <h3>Cerrar sesión</h3>
-                                            <p>Al cerrar sesión se cerrará también el acceso del usuario en esta aplicación.</p>
+                                            <h3 className="p-settings__danger-block-title">Cerrar sesión</h3>
+                                            <p className="p-settings__danger-block-description">Al cerrar sesión se cerrará también el acceso del usuario en esta aplicación.</p>
 
                                             <Form method="post" action="/logout">
                                                 {({ processing: loggingOut }) => (
-                                                    <Button type="submit" variant="destructive" disabled={loggingOut}>
+                                                    <Button className="p-settings__danger-block-action" type="submit" variant="destructive" disabled={loggingOut}>
                                                         {loggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
                                                     </Button>
                                                 )}
@@ -869,8 +876,8 @@ export default function Security({
                         </section>
 
                         <footer className="p-settings__footer">
-                            <p className="p-settings__version">V2.4.0 <span>Release build</span></p>
-                            <p className="p-settings__latency">Sincronización total: <b>14.2ms LAT</b></p>
+                            <p className="p-settings__version">V2.4.0 <span className="p-settings__version-label">Release build</span></p>
+                            <p className="p-settings__latency">Sincronización total: <b className="p-settings__latency-value">14.2ms LAT</b></p>
                         </footer>
                     </section>
                 </section>

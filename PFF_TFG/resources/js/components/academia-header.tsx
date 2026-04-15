@@ -78,12 +78,19 @@ export default function AcademiaHeader({
                 <section className={`c-academia-header__inner ${containerClassName}`}>
                     <section className="c-academia-header__left">
                         <Link className="c-academia-header__brand" href="/dashboard">
-                            <strong>Organiza<span>T</span></strong>
+                            <strong className="c-academia-header__brand-text">Organiza<span className="c-academia-header__brand-accent">T</span></strong>
                         </Link>
 
                         <nav className="c-academia-header__nav" aria-label="Secciones principales">
                             {NAV_ITEMS.map((item) => (
-                                <Link key={item.href} href={item.href} className={item.href === activePath ? 'is-active' : ''}>
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={[
+                                        'c-academia-header__nav-link',
+                                        item.href === activePath ? 'c-academia-header__nav-link--active' : '',
+                                    ].filter(Boolean).join(' ')}
+                                >
                                     {item.label}
                                 </Link>
                             ))}
@@ -104,8 +111,8 @@ export default function AcademiaHeader({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="c-academia-header__notifications-panel">
                                 <section className="c-academia-header__notifications-head">
-                                    <h3>Notificaciones</h3>
-                                    <p>{unreadCount > 0 ? `${unreadCount} Nuevas` : 'Sin nuevas'}</p>
+                                    <h3 className="c-academia-header__notifications-title">Notificaciones</h3>
+                                    <p className="c-academia-header__notifications-state">{unreadCount > 0 ? `${unreadCount} Nuevas` : 'Sin nuevas'}</p>
                                 </section>
 
                                 {items.length > 0 ? (
@@ -115,8 +122,8 @@ export default function AcademiaHeader({
                                                 <a
                                                     className={[
                                                         'c-academia-header__notification',
-                                                        `is-${notification.level}`,
-                                                        notification.isRead ? 'is-read' : '',
+                                                        `c-academia-header__notification--${notification.level}`,
+                                                        notification.isRead ? 'c-academia-header__notification--read' : '',
                                                     ].filter(Boolean).join(' ')}
                                                     href={notification.url && notification.url !== '' ? notification.url : '/tareas'}
                                                     target={notification.url?.startsWith('http') ? '_blank' : undefined}
@@ -125,25 +132,25 @@ export default function AcademiaHeader({
                                                     <span className="c-academia-header__notification-dot" aria-hidden="true" />
                                                     <section className="c-academia-header__notification-copy">
                                                         <small className="c-academia-header__notification-category">{notification.category}</small>
-                                                        <h4>{notification.title}</h4>
-                                                        <p>{notification.message}</p>
+                                                        <h4 className="c-academia-header__notification-title">{notification.title}</h4>
+                                                        <p className="c-academia-header__notification-message">{notification.message}</p>
                                                         <section className="c-academia-header__notification-meta-row">
-                                                            <small>{notification.meta !== '' ? notification.meta : notification.course}</small>
+                                                            <small className="c-academia-header__notification-meta">{notification.meta !== '' ? notification.meta : notification.course}</small>
                                                         </section>
                                                     </section>
-                                                    <time>{notification.dueLabel}</time>
+                                                    <time className="c-academia-header__notification-time">{notification.dueLabel}</time>
                                                 </a>
                                             </li>
                                         ))}
                                     </ul>
                                 ) : (
                                     <section className="c-academia-header__notifications-empty">
-                                        <p>No hay alertas activas por ahora.</p>
+                                        <p className="c-academia-header__notifications-empty-text">No hay alertas activas por ahora.</p>
                                     </section>
                                 )}
 
                                 <footer className="c-academia-header__notifications-footer">
-                                    <button type="button" onClick={markAllAsRead}>
+                                    <button className="c-academia-header__notifications-action" type="button" onClick={markAllAsRead}>
                                         Marcar todas como leídas
                                     </button>
                                 </footer>
@@ -152,7 +159,7 @@ export default function AcademiaHeader({
                         <span className="c-academia-header__toolbar-divider" aria-hidden="true" />
                         {displayName !== '' && <span className="c-academia-header__student">{displayName}</span>}
                         <Link className="c-academia-header__avatar" href="/settings/security" aria-label="Abrir configuracion">
-                            {avatarUrl ? <img src={avatarUrl} alt="Avatar Moodle" /> : <span>{avatarFallback}</span>}
+                            {avatarUrl ? <img className="c-academia-header__avatar-image" src={avatarUrl} alt="Avatar Moodle" /> : <span className="c-academia-header__avatar-fallback">{avatarFallback}</span>}
                         </Link>
                     </section>
                 </section>
@@ -160,10 +167,10 @@ export default function AcademiaHeader({
 
             {!moodleConnected && (
                 <section className="c-academia-header__moodle-warning" role="alert" aria-live="assertive">
-                    <p>
+                    <p className="c-academia-header__moodle-warning-text">
                         Tu sesión de Moodle no está activa. Inicia sesión para cargar tus datos académicos.
                     </p>
-                    <Link href="/settings/security#usuario">Iniciar sesión ahora</Link>
+                    <Link className="c-academia-header__moodle-warning-link" href="/settings/security#usuario">Iniciar sesión ahora</Link>
                 </section>
             )}
         </>

@@ -256,30 +256,30 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                 <main className="p-calificaciones__container p-calificaciones__main">
                     <header className="p-calificaciones__hero" aria-label="Cabecera de calificaciones">
                         <section className="p-calificaciones__hero-title">
-                            <h1>
+                            <h1 className="p-calificaciones__hero-heading">
                                 CALIFICACIONES
-                                <span>.</span>
+                                <span className="p-calificaciones__hero-heading-dot">.</span>
                             </h1>
                         </section>
 
                         <section className="p-calificaciones__hero-stats" aria-label="Resumen de calificaciones">
                             <article className="p-calificaciones__metric p-calificaciones__metric--average">
-                                <small>MEDIA</small>
-                                <strong className="p-calificaciones__metric-highlight">
+                                <small className="p-calificaciones__metric-label">MEDIA</small>
+                                <strong className="p-calificaciones__metric-value p-calificaciones__metric-value--highlight">
                                     {globalAverage === null ? '--' : globalAverage.toFixed(2)}
                                 </strong>
                             </article>
 
                             <article className="p-calificaciones__metric p-calificaciones__metric--middle">
-                                <small>APROBADAS</small>
-                                <strong>
+                                <small className="p-calificaciones__metric-label">APROBADAS</small>
+                                <strong className="p-calificaciones__metric-value">
                                     {approvedSubjects}/{Math.max(gradedSubjects, 0)}
                                 </strong>
                             </article>
 
                             <article className="p-calificaciones__metric">
-                                <small>ASIGNATURAS CALIFICADAS</small>
-                                <strong>
+                                <small className="p-calificaciones__metric-label">ASIGNATURAS CALIFICADAS</small>
+                                <strong className="p-calificaciones__metric-value">
                                     {gradedSubjects}/{Math.max(totalSubjects, 0)}
                                 </strong>
                             </article>
@@ -292,7 +292,7 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                         <section className="p-calificaciones__workspace">
                             <aside className="p-calificaciones__left-rail" aria-label="Listado de asignaturas">
                                 <header className="p-calificaciones__rail-head">
-                                    <h2>ASIGNATURAS</h2>
+                                    <h2 className="p-calificaciones__rail-title">ASIGNATURAS</h2>
                                 </header>
 
                                 <section className="p-calificaciones__subject-scroll">
@@ -304,16 +304,16 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                                             <button
                                                 key={card.id}
                                                 type="button"
-                                                className={`p-calificaciones__subject-item ${isActive ? 'is-active' : ''}`}
+                                                className={`p-calificaciones__subject-item ${isActive ? 'p-calificaciones__subject-item--active' : ''}`}
                                                 onClick={() => handleSelectSubject(card.id)}
                                             >
-                                                <section>
-                                                    <small>{getModuleLabel(card.code, index)}</small>
-                                                    <h3>{card.subject}</h3>
+                                                <section className="p-calificaciones__subject-item-info">
+                                                    <small className="p-calificaciones__subject-item-module">{getModuleLabel(card.code, index)}</small>
+                                                    <h3 className="p-calificaciones__subject-item-name">{card.subject}</h3>
                                                 </section>
                                                 <section className="p-calificaciones__subject-item-score">
-                                                    <strong>{score !== null ? formatOneDecimal(score) : '0.0'}</strong>
-                                                    <ChevronRight size={14} aria-hidden="true" />
+                                                    <strong className="p-calificaciones__subject-item-score-value">{score !== null ? formatOneDecimal(score) : '0.0'}</strong>
+                                                    <ChevronRight size={14} aria-hidden="true" className="p-calificaciones__subject-item-score-icon" />
                                                 </section>
                                             </button>
                                         );
@@ -345,13 +345,13 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                                 )}
 
                                 <section className="p-calificaciones__chart-card" aria-label="Grafico de notas por asignatura">
-                                    <small>Visualicación técnica de progreso</small>
-                                    <section className={`p-calificaciones__chart ${isChartScrollable ? 'is-scrollable' : ''}`} role="img" aria-label="Notas de todas las asignaturas en escala de 0 a 10">
+                                    <small className="p-calificaciones__chart-caption">Visualicación técnica de progreso</small>
+                                    <section className={`p-calificaciones__chart ${isChartScrollable ? 'p-calificaciones__chart--scrollable' : ''}`} role="img" aria-label="Notas de todas las asignaturas en escala de 0 a 10">
                                         {chartItems.map((item) => (
                                             <button
                                                 key={item.id}
                                                 type="button"
-                                                className={`p-calificaciones__chart-bar ${item.id === featuredSubject.id ? 'is-selected' : ''}`}
+                                                className={`p-calificaciones__chart-bar ${item.id === featuredSubject.id ? 'p-calificaciones__chart-bar--selected' : ''}`}
                                                 style={{ height: `${item.heightPercent}%` }}
                                                 title={`${item.subject}: ${formatOneDecimal(item.value)} / 10`}
                                                 aria-label={`${item.subject}: ${formatOneDecimal(item.value)} sobre 10`}
@@ -372,14 +372,14 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                                         <circle cx="302" cy="40" r="28" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2" />
                                         <rect x="228" y="20" width="10" height="10" rx="5" fill="currentColor" fillOpacity="0.3" />
                                     </svg>
-                                    <section>
-                                        <small>Selección activa</small>
-                                        <h2>{featuredSubject.subject}</h2>
+                                    <section className="p-calificaciones__detail-head-main">
+                                        <small className="p-calificaciones__detail-eyebrow">Selección activa</small>
+                                        <h2 className="p-calificaciones__detail-title">{featuredSubject.subject}</h2>
                                     </section>
 
                                     <section className="p-calificaciones__detail-score">
-                                        <small>Media</small>
-                                        <strong>{featuredScore === null ? '0.0' : formatOneDecimal(featuredScore)}</strong>
+                                        <small className="p-calificaciones__detail-eyebrow p-calificaciones__detail-eyebrow--score">Media</small>
+                                        <strong className="p-calificaciones__detail-score-value">{featuredScore === null ? '0.0' : formatOneDecimal(featuredScore)}</strong>
                                     </section>
                                 </header>
 
@@ -387,10 +387,10 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                                         {featuredSubject.units.length > 0 ? (
                                             visibleFeaturedTasks.map((task) => (
                                                 <section className="p-calificaciones__unit" key={`${task.unitName}-${task.name}`}>
-                                                    <ul>
-                                                        <li>
+                                                    <ul className="p-calificaciones__task-list">
+                                                        <li className="p-calificaciones__task-item">
                                                                 <section className="p-calificaciones__task-row">
-                                                                    <small>{task.unitLabel}</small>
+                                                                    <small className="p-calificaciones__task-unit-label">{task.unitLabel}</small>
                                                                     <section className="p-calificaciones__task-content">
                                                                         {task.linkTitle && task.url ? (
                                                                             <a className="p-calificaciones__task-name" href={task.url} target="_blank" rel="noreferrer">
@@ -453,9 +453,9 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                                 </section>
 
                                 <footer className="p-calificaciones__detail-footer">
-                                    <section>
-                                        <small>Porcentaje de trabajo</small>
-                                        <p>{featuredSuccessRate}% realizado</p>
+                                    <section className="p-calificaciones__detail-footer-progress">
+                                        <small className="p-calificaciones__detail-eyebrow">Porcentaje de trabajo</small>
+                                        <p className="p-calificaciones__detail-footer-progress-value">{featuredSuccessRate}% realizado</p>
                                     </section>
                                     <section className="p-calificaciones__report-actions">
                                         <a className="p-calificaciones__report-btn p-calificaciones__report-btn--secondary" href={downloadReport.url({ query: { subject_id: featuredSubject.id } })}>
@@ -491,9 +491,9 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                             />
                             <article className="p-calificaciones__feedback-modal">
                                 <header className="p-calificaciones__feedback-modal-header">
-                                    <section>
+                                    <section className="p-calificaciones__feedback-modal-title-block">
                                         <h3 id="feedback-modal-title">{selectedFeedback.task}</h3>
-                                        <p>{selectedFeedback.subject} · {selectedFeedback.unit}</p>
+                                        <p className="p-calificaciones__feedback-modal-subtitle">{selectedFeedback.subject} · {selectedFeedback.unit}</p>
                                     </section>
                                     <button
                                         type="button"

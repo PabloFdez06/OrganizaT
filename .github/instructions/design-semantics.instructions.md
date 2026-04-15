@@ -35,6 +35,7 @@ Toda implementación que requiera diseño visual o estructural debe seguir el si
 - Garantizar navegación por teclado, foco visible y orden de tabulación lógico.
 - Mantener contraste suficiente y estados de interacción perceptibles.
 - Usar atributos ARIA solo cuando la semántica nativa no cubra la necesidad.
+- Hacer uso estricto de la metodologia BEM para mantener claridad en la estructura y estilos, evitando así problemas de accesibilidad derivados de estructuras confusas o mal organizadas.
 
 ### 5) Coherencia y mantenibilidad
 - No romper patrones visuales ni de interacción existentes.
@@ -46,4 +47,5 @@ Toda implementación que requiera diseño visual o estructural debe seguir el si
 - ¿Se reutilizaron mixins/utilidades/tokens antes de duplicar CSS?
 - ¿La estructura HTML es semántica y evita `div` innecesarios?
 - ¿Se validaron criterios básicos de accesibilidad y W3C?
+- ¿Se hace uso correcto de la metodologia BEM?
 - ¿El resultado mantiene coherencia con el resto del proyecto?

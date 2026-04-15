@@ -24,8 +24,8 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 >
                     <header className="c-auth-editorial__hero-top">SYSTEM_ARCHIVE_v.2.4</header>
                     <section className="c-auth-editorial__hero-content">
-                        <h1>PRECISION ACADEMICA</h1>
-                        <p>
+                        <h1 className="c-auth-editorial__hero-title">PRECISION ACADEMICA</h1>
+                        <p className="c-auth-editorial__hero-description">
                             Infraestructura digital disenada para la excelencia
                             editorial y la preservacion del conocimiento tecnico
                             de vanguardia.
@@ -39,8 +39,8 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <Link href={home()} className="c-auth-editorial__brand">
                                 <span>OrganizaT</span>
                             </Link>
-                            <h2>Recuperar Contrasena</h2>
-                            <p>Te enviaremos un enlace para restablecer tu acceso.</p>
+                            <h2 className="c-auth-editorial__header-title">Recuperar Contrasena</h2>
+                            <p className="c-auth-editorial__header-description">Te enviaremos un enlace para restablecer tu acceso.</p>
                         </header>
 
                         <Form method="post" action={email().url} className="c-auth-form c-auth-form--editorial">

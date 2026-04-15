@@ -40,7 +40,7 @@ function InertiaLoadingOverlay() {
         <section className="c-global-loading" role="status" aria-live="polite" aria-label="Cargando datos de Moodle">
             <section className="c-global-loading__panel">
                 <span className="c-global-loading__spinner" aria-hidden="true" />
-                <p>Cargando datos completos de Moodle...</p>
+                <p className="c-global-loading__text">Cargando datos completos de Moodle...</p>
             </section>
         </section>
     );

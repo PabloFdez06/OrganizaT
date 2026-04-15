@@ -46,7 +46,7 @@ function renderInlineFeedback(text: string): ReactNode[] {
 
 export default function FeedbackContent({ blocks }: FeedbackContentProps) {
     if (blocks.length === 0) {
-        return <p>Sin retroalimentacion disponible.</p>;
+        return <p className="p-calificaciones__feedback-paragraph">Sin retroalimentacion disponible.</p>;
     }
 
     return (
@@ -55,16 +55,16 @@ export default function FeedbackContent({ blocks }: FeedbackContentProps) {
                 if (block.type === 'heading') {
                     const HeadingTag = (`h${Math.min(Math.max(block.level, 3), 6)}` as 'h3' | 'h4' | 'h5' | 'h6');
 
-                    return <HeadingTag key={`feedback-heading-${blockIndex}`}>{renderInlineFeedback(block.text)}</HeadingTag>;
+                    return <HeadingTag className="p-calificaciones__feedback-heading" key={`feedback-heading-${blockIndex}`}>{renderInlineFeedback(block.text)}</HeadingTag>;
                 }
 
                 if (block.type === 'list') {
                     const ListTag = block.ordered ? 'ol' : 'ul';
 
                     return (
-                        <ListTag key={`feedback-list-${blockIndex}`}>
+                        <ListTag className={`p-calificaciones__feedback-list ${block.ordered ? 'p-calificaciones__feedback-list--ordered' : ''}`} key={`feedback-list-${blockIndex}`}>
                             {block.items.map((item, itemIndex) => (
-                                <li key={`feedback-item-${blockIndex}-${itemIndex}`}>{renderInlineFeedback(item)}</li>
+                                <li className="p-calificaciones__feedback-list-item" key={`feedback-item-${blockIndex}-${itemIndex}`}>{renderInlineFeedback(item)}</li>
                             ))}
                         </ListTag>
                     );
@@ -75,9 +75,9 @@ export default function FeedbackContent({ blocks }: FeedbackContentProps) {
                         <section className="p-calificaciones__feedback-table-wrap" key={`feedback-table-${blockIndex}`}>
                             <table className="p-calificaciones__feedback-table">
                                 <thead>
-                                    <tr>
+                                    <tr className="p-calificaciones__feedback-table-row">
                                         {block.headers.map((header, headerIndex) => (
-                                            <th key={`feedback-table-header-${blockIndex}-${headerIndex}`} scope="col">
+                                            <th className="p-calificaciones__feedback-table-head-cell" key={`feedback-table-header-${blockIndex}-${headerIndex}`} scope="col">
                                                 {renderInlineFeedback(header)}
                                             </th>
                                         ))}
@@ -85,9 +85,9 @@ export default function FeedbackContent({ blocks }: FeedbackContentProps) {
                                 </thead>
                                 <tbody>
                                     {block.rows.map((row, rowIndex) => (
-                                        <tr key={`feedback-table-row-${blockIndex}-${rowIndex}`}>
+                                        <tr className="p-calificaciones__feedback-table-row" key={`feedback-table-row-${blockIndex}-${rowIndex}`}>
                                             {row.map((cell, cellIndex) => (
-                                                <td key={`feedback-table-cell-${blockIndex}-${rowIndex}-${cellIndex}`}>
+                                                <td className="p-calificaciones__feedback-table-body-cell" key={`feedback-table-cell-${blockIndex}-${rowIndex}-${cellIndex}`}>
                                                     {renderInlineFeedback(cell)}
                                                 </td>
                                             ))}
@@ -101,7 +101,7 @@ export default function FeedbackContent({ blocks }: FeedbackContentProps) {
 
                 if (block.type === 'blockquote') {
                     return (
-                        <blockquote key={`feedback-blockquote-${blockIndex}`}>
+                        <blockquote className="p-calificaciones__feedback-blockquote" key={`feedback-blockquote-${blockIndex}`}>
                             {block.lines.map((line, lineIndex) => (
                                 <Fragment key={`feedback-blockquote-line-${blockIndex}-${lineIndex}`}>
                                     {renderInlineFeedback(line)}
@@ -114,14 +114,14 @@ export default function FeedbackContent({ blocks }: FeedbackContentProps) {
 
                 if (block.type === 'code') {
                     return (
-                        <pre key={`feedback-code-${blockIndex}`}>
+                        <pre className="p-calificaciones__feedback-code" key={`feedback-code-${blockIndex}`}>
                             <code>{block.lines.join('\n')}</code>
                         </pre>
                     );
                 }
 
                 return (
-                    <p key={`feedback-paragraph-${blockIndex}`}>
+                    <p className="p-calificaciones__feedback-paragraph" key={`feedback-paragraph-${blockIndex}`}>
                         {block.lines.map((line, lineIndex) => (
                             <Fragment key={`feedback-line-${blockIndex}-${lineIndex}`}>
                                 {renderInlineFeedback(line)}

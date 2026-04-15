@@ -108,9 +108,9 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
                 <main className="p-asignaturas__container p-asignaturas__main">
                     <header className="p-asignaturas__hero-head">
                         <section>
-                            <h1>
+                            <h1 className="p-asignaturas__hero-title">
                                 ASIGNATURAS
-                                <span>.</span>
+                                <span className="p-asignaturas__hero-title-dot">.</span>
                             </h1>
                         </section>
                     </header>
@@ -149,12 +149,12 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
                                         {cardVariantClass === 'hero' && <span className="p-asignaturas__badge">En curso</span>}
                                         {cardVariantClass === 'image' && courseImageUrl && (
                                             <figure className="p-asignaturas__image">
-                                                <img src={courseImageUrl} alt={`Imagen de ${course.title}`} loading="lazy" />
+                                                <img className="p-asignaturas__course-image" src={courseImageUrl} alt={`Imagen de ${course.title}`} loading="lazy" />
                                             </figure>
                                         )}
 
                                         <section className="p-asignaturas__course-content">
-                                            <h3>{course.title}</h3>
+                                            <h3 className="p-asignaturas__course-title">{course.title}</h3>
 
                                             <section className="p-asignaturas__meta">
                                                 <span className="p-asignaturas__teacher-label">Docente</span>
@@ -162,12 +162,12 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
                                             </section>
 
                                             <section className="p-asignaturas__progress" aria-label={`Progreso de ${course.title}`}>
-                                                <header>
-                                                    <span>Progreso</span>
-                                                    <strong>{course.progress}%</strong>
+                                                <header className="p-asignaturas__progress-head">
+                                                    <span className="p-asignaturas__progress-label">Progreso</span>
+                                                    <strong className="p-asignaturas__progress-value">{course.progress}%</strong>
                                                 </header>
                                                 <span className="p-asignaturas__progress-track" aria-hidden="true">
-                                                    <i style={{ width: `${course.progress}%` }} />
+                                                    <i className="p-asignaturas__progress-fill" style={{ width: `${course.progress}%` }} />
                                                 </span>
                                             </section>
                                         </section>
@@ -177,8 +177,8 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
 
                             {courseCards.length === 0 && (
                                 <article className="p-asignaturas__empty">
-                                    <h3>Sin asignaturas disponibles</h3>
-                                    <p>
+                                    <h3 className="p-asignaturas__empty-title">Sin asignaturas disponibles</h3>
+                                    <p className="p-asignaturas__empty-description">
                                         {moodleConnected
                                             ? 'No se encontraron asignaturas en Moodle para esta cuenta.'
                                             : 'Conecta Moodle para cargar todas tus asignaturas.'}

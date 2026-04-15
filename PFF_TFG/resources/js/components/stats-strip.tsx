@@ -16,9 +16,15 @@ export default function StatsStrip({ items, className, ariaLabel }: StatsStripPr
     return (
         <section className={classes} aria-label={ariaLabel}>
             {items.map((item) => (
-                <article key={item.label} className={item.highlight ? 'is-highlight' : ''}>
-                    <strong>{item.value}</strong>
-                    <small>{item.label}</small>
+                <article
+                    key={item.label}
+                    className={[
+                        'c-stats-strip__item',
+                        item.highlight ? 'c-stats-strip__item--highlight' : '',
+                    ].filter(Boolean).join(' ')}
+                >
+                    <strong className="c-stats-strip__value">{item.value}</strong>
+                    <small className="c-stats-strip__label">{item.label}</small>
                 </article>
             ))}
         </section>

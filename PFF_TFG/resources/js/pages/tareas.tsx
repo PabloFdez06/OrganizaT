@@ -180,24 +180,24 @@ function flattenSubjectTasks(subject: SubjectCard | null): TaskItem[] {
     return subject.units.flatMap((unit) => unit.tasks.map((task) => ({ ...task, unitName: unit.name })));
 }
 
-function buildBadgeClass(statusKey: TaskItem['statusKey'], statusTone: TaskItem['statusTone']): string {
+function buildStatusClass(baseClass: string, statusKey: TaskItem['statusKey'], statusTone: TaskItem['statusTone']): string {
     if (statusKey === 'expired' || statusTone === 'expired') {
-        return 'is-expired';
+        return `${baseClass} ${baseClass}--expired`;
     }
 
     if (statusKey === 'graded') {
-        return 'is-graded';
+        return `${baseClass} ${baseClass}--graded`;
     }
 
     if (statusKey === 'delivered') {
-        return 'is-delivered';
+        return `${baseClass} ${baseClass}--delivered`;
     }
 
     if (statusTone === 'critical') {
-        return 'is-critical';
+        return `${baseClass} ${baseClass}--critical`;
     }
 
-    return 'is-pending';
+    return `${baseClass} ${baseClass}--pending`;
 }
 
 function buildSubjectMediaStyle(subject: SubjectCard): React.CSSProperties {
@@ -361,9 +361,9 @@ export default function Tareas({
 
                 <main className="p-tareas__container p-tareas__main">
                     <header className="p-tareas__head">
-                        <h1>
+                        <h1 className="p-tareas__heading">
                             GESTION DE TAREAS
-                            <span>.</span>
+                            <span className="p-tareas__heading-dot">.</span>
                         </h1>
                     </header>
 
@@ -375,7 +375,7 @@ export default function Tareas({
                                 <article className="p-tareas__featured">
                                     <header className="p-tareas__featured-hero">
                                         <section className="p-tareas__featured-hero-media" aria-hidden="true">
-                                            <img src={FEATURED_SUBJECT_HERO_IMAGE} alt="" />
+                                            <img className="p-tareas__featured-hero-image" src={FEATURED_SUBJECT_HERO_IMAGE} alt="" />
                                             <i className="p-tareas__featured-hero-saturation" />
                                         </section>
 
@@ -396,22 +396,22 @@ export default function Tareas({
                                         </svg>
 
                                         <section className="p-tareas__featured-content">
-                                            <small>{featuredSubject.code}</small>
-                                            <h2>{featuredSubject.subject}</h2>
+                                            <small className="p-tareas__featured-code">{featuredSubject.code}</small>
+                                            <h2 className="p-tareas__featured-title">{featuredSubject.subject}</h2>
                                         </section>
                                     </header>
 
                                     <section className="p-tareas__table" aria-label={`Tareas de ${featuredSubject.subject}`}>
                                         <header className="p-tareas__table-head">
-                                            <p>TAREA</p>
-                                            <p>FECHA ENTREGA</p>
-                                            <p>ESTADO</p>
-                                            <p aria-hidden="true" />
+                                            <p className="p-tareas__table-head-cell">TAREA</p>
+                                            <p className="p-tareas__table-head-cell">FECHA ENTREGA</p>
+                                            <p className="p-tareas__table-head-cell">ESTADO</p>
+                                            <p className="p-tareas__table-head-cell" aria-hidden="true" />
                                         </header>
 
                                         <section className="p-tareas__table-body">
                                             {visibleTasks.length > 0 ? (
-                                                <ul>
+                                                <ul className="p-tareas__task-list">
                                                     {visibleTasks.map((task, index) => {
                                                         const previousTask = index > 0 ? visibleTasks[index - 1] : null;
                                                         const showUnitSeparator = previousTask === null || previousTask.unitName !== task.unitName;
@@ -419,25 +419,25 @@ export default function Tareas({
                                                         return (
                                                             <Fragment key={task.id}>
                                                                 {showUnitSeparator && (
-                                                                    <li className="p-tareas__unit-separator" aria-label={`Unidad ${task.unitName}`}>
-                                                                        <span>{task.unitName}</span>
+                                                                    <li className="p-tareas__task-list-item p-tareas__task-list-item--unit-separator" aria-label={`Unidad ${task.unitName}`}>
+                                                                        <span className="p-tareas__unit-separator-label">{task.unitName}</span>
                                                                     </li>
                                                                 )}
-                                                                <li>
+                                                                <li className="p-tareas__task-list-item">
                                                                     <article className="p-tareas__task-row">
                                                                         <section className="p-tareas__task-main">
-                                                                            <h3>{task.name}</h3>
-                                                                            <p>Modulo: {task.unitName}</p>
+                                                                            <h3 className="p-tareas__task-title">{task.name}</h3>
+                                                                            <p className="p-tareas__task-module">Modulo: {task.unitName}</p>
                                                                         </section>
 
                                                                         <p className="p-tareas__task-date">{task.dueLabel}</p>
 
-                                                                        <p className={`p-tareas__task-status ${buildBadgeClass(task.statusKey, task.statusTone)}`}>
+                                                                        <p className={buildStatusClass('p-tareas__task-status', task.statusKey, task.statusTone)}>
                                                                             {task.statusLabel}
                                                                         </p>
 
                                                                         {task.url ? (
-                                                                            <a href={task.url} target="_blank" rel="noreferrer" aria-label={`Abrir ${task.name} en Moodle`}>
+                                                                            <a className="p-tareas__task-link" href={task.url} target="_blank" rel="noreferrer" aria-label={`Abrir ${task.name} en Moodle`}>
                                                                                 <ArrowRight size={16} />
                                                                             </a>
                                                                         ) : (
@@ -464,12 +464,12 @@ export default function Tareas({
                                     {(canLoadMoreTasks || canLoadLessTasks) && (
                                         <footer className="p-tareas__featured-actions">
                                             {canLoadLessTasks && (
-                                                <button type="button" onClick={handleLoadLessTasks}>
+                                                <button type="button" className="p-tareas__featured-action-button" onClick={handleLoadLessTasks}>
                                                     CARGAR MENOS TAREAS
                                                 </button>
                                             )}
                                             {canLoadMoreTasks && (
-                                                <button type="button" onClick={handleLoadMoreTasks}>
+                                                <button type="button" className="p-tareas__featured-action-button" onClick={handleLoadMoreTasks}>
                                                     CARGAR MAS TAREAS
                                                 </button>
                                             )}
@@ -487,7 +487,7 @@ export default function Tareas({
                                             <span>DESCARGAR CALENDARIO (.ICS)</span>
                                         </a>
                                     ) : (
-                                        <button type="button" className="p-tareas__export-button is-disabled" disabled>
+                                        <button type="button" className="p-tareas__export-button p-tareas__export-button--disabled" disabled>
                                             <Download size={16} aria-hidden="true" />
                                             <span>DESCARGAR CALENDARIO (.ICS)</span>
                                         </button>
@@ -502,16 +502,16 @@ export default function Tareas({
                                 </section>
 
                                 <article className="p-tareas__calendar">
-                                    <header>
-                                        <h3>{formatMonthLabel(calendarMonth)}</h3>
+                                    <header className="p-tareas__calendar-header">
+                                        <h3 className="p-tareas__calendar-title">{formatMonthLabel(calendarMonth)}</h3>
                                         <section className="p-tareas__calendar-nav">
-                                            <button type="button" onClick={() => handleChangeMonth(-1)} aria-label="Mes anterior">
+                                            <button type="button" className="p-tareas__calendar-nav-button" onClick={() => handleChangeMonth(-1)} aria-label="Mes anterior">
                                                 <ChevronLeft size={14} />
                                             </button>
-                                            <button type="button" onClick={handleGoToCurrentMonth} aria-label="Volver al mes actual">
+                                            <button type="button" className="p-tareas__calendar-nav-button" onClick={handleGoToCurrentMonth} aria-label="Volver al mes actual">
                                                 HOY
                                             </button>
-                                            <button type="button" onClick={() => handleChangeMonth(1)} aria-label="Mes siguiente">
+                                            <button type="button" className="p-tareas__calendar-nav-button" onClick={() => handleChangeMonth(1)} aria-label="Mes siguiente">
                                                 <ChevronRight size={14} />
                                             </button>
                                         </section>
@@ -526,8 +526,8 @@ export default function Tareas({
                                             const isSelected = cell.iso === selectedDate;
                                             const className = [
                                                 'p-tareas__calendar-day',
-                                                cell.isCurrentMonth ? '' : 'is-outside',
-                                                isSelected ? 'is-selected' : '',
+                                                cell.isCurrentMonth ? '' : 'p-tareas__calendar-day--outside',
+                                                isSelected ? 'p-tareas__calendar-day--selected' : '',
                                             ]
                                                 .filter(Boolean)
                                                 .join(' ');
@@ -541,8 +541,8 @@ export default function Tareas({
                                                     aria-selected={isSelected}
                                                     onClick={() => setSelectedDate(cell.iso)}
                                                 >
-                                                    <span>{`${cell.day}`.padStart(2, '0')}</span>
-                                                    {cell.markerTone && <i className={`is-${cell.markerTone}`} aria-hidden="true" />}
+                                                    <span className="p-tareas__calendar-day-label">{`${cell.day}`.padStart(2, '0')}</span>
+                                                    {cell.markerTone && <i className={`p-tareas__calendar-day-marker p-tareas__calendar-day-marker--${cell.markerTone}`} aria-hidden="true" />}
                                                 </button>
                                             );
                                         })}
@@ -550,27 +550,27 @@ export default function Tareas({
                                 </article>
 
                                 <article className="p-tareas__day-detail">
-                                    <header>
-                                        <strong>{selectedDateDay}</strong>
-                                        <section>
-                                            <h4>{selectedDateWeekday}</h4>
-                                            <p>DETALLES DEL DIA</p>
+                                    <header className="p-tareas__day-detail-header">
+                                        <strong className="p-tareas__day-detail-day">{selectedDateDay}</strong>
+                                        <section className="p-tareas__day-detail-meta">
+                                            <h4 className="p-tareas__day-detail-weekday">{selectedDateWeekday}</h4>
+                                            <p className="p-tareas__day-detail-label">DETALLES DEL DIA</p>
                                         </section>
                                     </header>
 
                                     <section className="p-tareas__day-list">
                                         {dayAgenda.length > 0 ? (
-                                            <ul>
+                                            <ul className="p-tareas__day-list-items">
                                                 {dayAgenda.map((task) => (
-                                                    <li key={`agenda-${task.id}`} className={`is-${task.statusTone}`}>
-                                                        <small>{task.dueLabel}</small>
-                                                        <h5>{task.name}</h5>
-                                                        <p>{task.courseName} · {task.unitName}</p>
-                                                        <p className={`p-tareas__day-status ${buildBadgeClass(task.statusKey, task.statusTone)}`}>
+                                                    <li key={`agenda-${task.id}`} className={`p-tareas__day-list-item p-tareas__day-list-item--${task.statusTone}`}>
+                                                        <small className="p-tareas__day-list-time">{task.dueLabel}</small>
+                                                        <h5 className="p-tareas__day-list-task">{task.name}</h5>
+                                                        <p className="p-tareas__day-list-meta-text">{task.courseName} · {task.unitName}</p>
+                                                        <p className={buildStatusClass('p-tareas__day-status', task.statusKey, task.statusTone)}>
                                                             {task.statusLabel}
                                                         </p>
                                                         {task.url && (
-                                                            <a href={task.url} target="_blank" rel="noreferrer">
+                                                            <a className="p-tareas__day-list-link" href={task.url} target="_blank" rel="noreferrer">
                                                                 Link en Moodle
                                                             </a>
                                                         )}
@@ -592,15 +592,15 @@ export default function Tareas({
                                 <section className="p-tareas__side-grid" aria-label="Asignaturas contraidas" ref={sideGridRef}>
                                     {visibleSideSubjects.map((subject) => (
                                         <article key={subject.id} className="p-tareas__side-card">
-                                            <button type="button" onClick={() => handleSelectSubject(subject.id)}>
+                                            <button type="button" className="p-tareas__side-card-trigger" onClick={() => handleSelectSubject(subject.id)}>
                                                 <figure className="p-tareas__side-media" style={buildSubjectMediaStyle(subject)} aria-hidden="true" />
                                                 <section className="p-tareas__side-body">
-                                                    <small>{subject.code}</small>
-                                                    <h3>{subject.subject}</h3>
-                                                    <footer>
-                                                        <p>
-                                                            <strong>{subject.totalTasks.toString().padStart(2, '0')}</strong>
-                                                            <span>TAREAS</span>
+                                                    <small className="p-tareas__side-code">{subject.code}</small>
+                                                    <h3 className="p-tareas__side-title">{subject.subject}</h3>
+                                                    <footer className="p-tareas__side-footer">
+                                                        <p className="p-tareas__side-metrics">
+                                                            <strong className="p-tareas__side-count">{subject.totalTasks.toString().padStart(2, '0')}</strong>
+                                                            <span className="p-tareas__side-metrics-label">TAREAS</span>
                                                         </p>
                                                         <span className="p-tareas__side-plus" aria-hidden="true">+</span>
                                                     </footer>
@@ -614,6 +614,7 @@ export default function Tareas({
                                             {canLoadLessSubjects && (
                                                 <button
                                                     type="button"
+                                                    className="p-tareas__side-action-button"
                                                     onClick={() =>
                                                         setVisibleSubjectCount((previous) =>
                                                             Math.max(minimumVisibleSubjects, previous - subjectsPerRow),
@@ -624,7 +625,7 @@ export default function Tareas({
                                                 </button>
                                             )}
                                             {canLoadMoreSubjects && (
-                                                <button type="button" onClick={() => setVisibleSubjectCount((previous) => previous + subjectsPerRow)}>
+                                                <button type="button" className="p-tareas__side-action-button" onClick={() => setVisibleSubjectCount((previous) => previous + subjectsPerRow)}>
                                                     Ver mas
                                                 </button>
                                             )}
@@ -635,8 +636,8 @@ export default function Tareas({
                         </section>
                     ) : (
                         <article className="p-tareas__empty">
-                            <h3>Sin tareas disponibles</h3>
-                            <p>
+                            <h3 className="p-tareas__empty-title">Sin tareas disponibles</h3>
+                            <p className="p-tareas__empty-description">
                                 {moodleConnected
                                     ? 'No se encontraron tareas para esta cuenta en Moodle.'
                                     : 'Conecta Moodle para cargar tus tareas por asignatura.'}

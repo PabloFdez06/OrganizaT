@@ -25,8 +25,8 @@ export default function Register() {
                 >
                     <header className="c-auth-editorial__hero-pill">Ecosistema V2.4</header>
                     <section className="c-auth-editorial__hero-content">
-                        <h1>PRECISION ACADEMICA.</h1>
-                        <p>
+                        <h1 className="c-auth-editorial__hero-title">PRECISION ACADEMICA.</h1>
+                        <p className="c-auth-editorial__hero-description">
                             Unase a una infraestructura disenada para la excelencia
                             editorial. Un espacio donde la estructura tecnica se
                             encuentra con la vision intelectual.
@@ -44,8 +44,8 @@ export default function Register() {
                             <Link href={login()} className="c-auth-editorial__brand">
                                 <span>OrganizaT</span>
                             </Link>
-                            <h2>Crear nueva cuenta</h2>
-                            <p>Complete los detalles para iniciar su proceso editorial.</p>
+                            <h2 className="c-auth-editorial__header-title">Crear nueva cuenta</h2>
+                            <p className="c-auth-editorial__header-description">Complete los detalles para iniciar su proceso editorial.</p>
                         </header>
 
                         <Form
