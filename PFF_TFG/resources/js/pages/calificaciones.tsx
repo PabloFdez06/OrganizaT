@@ -1,9 +1,13 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { downloadReport } from '@/actions/App/Http/Controllers/CalificacionesController';
 import AcademiaHeader from '@/components/academia-header';
+import AlertError from '@/components/alert-error';
 import FeedbackContent from '@/components/feedback-content';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { formatFeedbackToBlocks } from '@/lib/feedback-parser';
 
 type SubjectTask = {
@@ -49,6 +53,7 @@ type CalificacionesProps = {
         kind: string;
     }>;
     pageError: string | null;
+    loading: boolean;
 };
 
 type FeedbackModalData = {
@@ -140,7 +145,7 @@ function getModuleLabel(code: string, index: number): string {
 }
 
 
-export default function Calificaciones({ moodleConnected, studentName, profileAvatarUrl, subjectCards, summary, pageError }: CalificacionesProps) {
+export default function Calificaciones({ moodleConnected, studentName, profileAvatarUrl, subjectCards, summary, pageError, loading }: CalificacionesProps) {
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(subjectCards[0]?.id ?? null);
     const [visibleSubjectsCount, setVisibleSubjectsCount] = useState(4);
     const [visibleFeaturedTasksCount, setVisibleFeaturedTasksCount] = useState(4);
@@ -150,6 +155,20 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
         () => (selectedFeedback ? formatFeedbackToBlocks(selectedFeedback.feedback) : []),
         [selectedFeedback],
     );
+
+    useEffect(() => {
+        if (!moodleConnected || !loading) {
+            return;
+        }
+
+        const pollInterval = window.setInterval(() => {
+            router.reload({
+                only: ['studentName', 'profileAvatarUrl', 'subjectCards', 'summary', 'milestones', 'pageError', 'loading'],
+            });
+        }, 2500);
+
+        return () => window.clearInterval(pollInterval);
+    }, [loading, moodleConnected]);
 
     const featuredSubject = useMemo(() => {
         if (selectedSubjectId === null) {
@@ -286,9 +305,33 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                         </section>
                     </header>
 
-                    {pageError && <p className="p-calificaciones__error">{pageError}</p>}
+                    {pageError && <AlertError errors={[pageError]} title="No se pudieron cargar las calificaciones." />}
 
-                    {subjectCards.length > 0 && featuredSubject && (
+                    {loading && (
+                        <section className="p-calificaciones__loading" aria-live="polite" aria-busy="true">
+                            <Alert className="p-calificaciones__loading-alert">
+                                <Spinner className="p-calificaciones__loading-spinner" />
+                                <AlertTitle>Sincronizando calificaciones</AlertTitle>
+                                <AlertDescription>Estamos actualizando notas, resumen y detalle por asignatura.</AlertDescription>
+                            </Alert>
+
+                            <section className="p-calificaciones__loading-grid p-calificaciones__workspace">
+                                <aside className="p-calificaciones__loading-rail p-calificaciones__left-rail">
+                                    <Skeleton className="p-calificaciones__loading-line p-calificaciones__loading-line--rail-title" />
+                                    <Skeleton className="p-calificaciones__loading-block p-calificaciones__loading-block--rail" />
+                                    <Skeleton className="p-calificaciones__loading-block p-calificaciones__loading-block--rail" />
+                                </aside>
+                                <article className="p-calificaciones__loading-detail p-calificaciones__detail">
+                                    <Skeleton className="p-calificaciones__loading-line p-calificaciones__loading-line--detail-title" />
+                                    <Skeleton className="p-calificaciones__loading-line p-calificaciones__loading-line--detail-subtitle" />
+                                    <Skeleton className="p-calificaciones__loading-block p-calificaciones__loading-block--detail" />
+                                    <Skeleton className="p-calificaciones__loading-block p-calificaciones__loading-block--detail" />
+                                </article>
+                            </section>
+                        </section>
+                    )}
+
+                    {!loading && subjectCards.length > 0 && featuredSubject && (
                         <section className="p-calificaciones__workspace">
                             <aside className="p-calificaciones__left-rail" aria-label="Listado de asignaturas">
                                 <header className="p-calificaciones__rail-head">
@@ -470,7 +513,7 @@ export default function Calificaciones({ moodleConnected, studentName, profileAv
                         </section>
                     )}
 
-                    {subjectCards.length === 0 && (
+                    {!loading && subjectCards.length === 0 && (
                         <article className="p-calificaciones__empty">
                             <h3>Sin calificaciones disponibles</h3>
                             <p>

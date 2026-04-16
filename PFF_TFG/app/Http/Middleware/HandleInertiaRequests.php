@@ -73,7 +73,15 @@ class HandleInertiaRequests extends Middleware
                 }
 
                 try {
-                    $payload = $this->cache->getForUser($user);
+                    $payload = $this->cache->getCachedForUser($user);
+
+                    if (! is_array($payload)) {
+                        return [
+                            'unreadCount' => 0,
+                            'items' => [],
+                        ];
+                    }
+
                     $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
 
                     return $this->notificationCenter->buildForUser($user, $tasks);

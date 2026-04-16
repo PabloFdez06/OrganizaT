@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Moodle\FetchCalificacionesJob;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAcademicRules;
+use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\SpanishDateParser;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,13 +20,14 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class CalificacionesController extends Controller
 {
-    private const MOODLE_SESSION_EXPIRED_MESSAGE = 'Tu sesión de Moodle se cerró por inactividad. Debes volver a iniciar sesión porque los datos temporales se han eliminado.';
+    private const MOODLE_SESSION_EXPIRED_MESSAGE = 'Tu sesion de Moodle se cerro por inactividad. Debes volver a iniciar sesion porque los datos temporales se han eliminado.';
 
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
         private readonly SpanishDateParser $dateParser,
         private readonly MoodleAcademicRules $rules,
         private readonly MoodleEphemeralSessionService $sessionService,
+        private readonly MoodleAsyncSectionCache $asyncCache,
     ) {
     }
 
@@ -31,6 +35,7 @@ class CalificacionesController extends Controller
     {
         $user = $request->user();
         $moodleConnected = $this->sessionService->hasActiveSession($user);
+        $loading = false;
 
         $subjectCards = [];
         $summary = [
@@ -48,30 +53,51 @@ class CalificacionesController extends Controller
         }
 
         if ($moodleConnected) {
-            try {
-                $academicPayload = $this->cache->getForUser($user);
-                $gradeReport = is_array($academicPayload['gradeReport'] ?? null)
-                    ? $academicPayload['gradeReport']
-                    : $this->cache->getGradesForUser($user);
-                $courses = is_array($academicPayload['courses'] ?? null) ? $academicPayload['courses'] : [];
-                $tasks = is_array($academicPayload['tasks'] ?? null) ? $academicPayload['tasks'] : [];
+            $state = $this->asyncCache->getState('calificaciones', (int) $user->id);
 
-                $profileAvatarUrl = is_string($academicPayload['profileAvatarUrl'] ?? null)
-                    ? $academicPayload['profileAvatarUrl']
-                    : null;
-                $studentName = is_string($academicPayload['studentName'] ?? null) && trim((string) $academicPayload['studentName']) !== ''
-                    ? (string) $academicPayload['studentName']
-                    : $studentName;
+            if ($state['status'] === 'done') {
+                try {
+                    $data = is_array($state['data'] ?? null) ? $state['data'] : [];
+                    $academicPayload = is_array($data['academicPayload'] ?? null) ? $data['academicPayload'] : [];
 
-                $subjectCards = $this->buildSubjectCards($courses, $tasks, is_array($gradeReport) ? $gradeReport : []);
-                $summary = $this->buildSummary($subjectCards);
-                $milestones = $this->buildMilestones($tasks);
-            } catch (MoodleAuthenticationException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (MoodleRequestException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (\Throwable) {
-                $pageError = 'No se pudieron cargar las calificaciones en este momento.';
+                    if ($academicPayload === []) {
+                        throw new \RuntimeException('Sin payload asincrono de calificaciones.');
+                    }
+
+                    $gradeReport = is_array($academicPayload['gradeReport'] ?? null)
+                        ? $academicPayload['gradeReport']
+                        : $this->cache->getGradesForUser($user);
+                    $courses = is_array($academicPayload['courses'] ?? null) ? $academicPayload['courses'] : [];
+                    $tasks = is_array($academicPayload['tasks'] ?? null) ? $academicPayload['tasks'] : [];
+
+                    $profileAvatarUrl = is_string($academicPayload['profileAvatarUrl'] ?? null)
+                        ? $academicPayload['profileAvatarUrl']
+                        : null;
+                    $studentName = is_string($academicPayload['studentName'] ?? null) && trim((string) $academicPayload['studentName']) !== ''
+                        ? (string) $academicPayload['studentName']
+                        : $studentName;
+
+                    $subjectCards = $this->buildSubjectCards($courses, $tasks, is_array($gradeReport) ? $gradeReport : []);
+                    $summary = $this->buildSummary($subjectCards);
+                    $milestones = $this->buildMilestones($tasks);
+                } catch (MoodleAuthenticationException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (MoodleRequestException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (\Throwable) {
+                    $pageError = 'No se pudieron cargar las calificaciones en este momento.';
+                }
+            } elseif ($state['status'] === 'error') {
+                $pageError = is_string($state['error'] ?? null) && trim((string) $state['error']) !== ''
+                    ? (string) $state['error']
+                    : 'No se pudieron cargar las calificaciones en este momento.';
+            } else {
+                $loading = true;
+
+                if ($state['status'] !== 'pending') {
+                    $this->asyncCache->markPending('calificaciones', (int) $user->id);
+                    FetchCalificacionesJob::dispatch((int) $user->id);
+                }
             }
         }
 
@@ -83,7 +109,32 @@ class CalificacionesController extends Controller
             'summary' => $summary,
             'milestones' => $milestones,
             'pageError' => $pageError,
+            'loading' => $loading,
         ]);
+    }
+
+    public function status(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->sessionService->hasActiveSession($user)) {
+            return response()->json([
+                'status' => 'error',
+                'data' => null,
+                'error' => self::MOODLE_SESSION_EXPIRED_MESSAGE,
+                'updated_at' => time(),
+            ]);
+        }
+
+        $state = $this->asyncCache->getState('calificaciones', (int) $user->id);
+
+        if ($state['status'] === 'idle') {
+            $this->asyncCache->markPending('calificaciones', (int) $user->id);
+            FetchCalificacionesJob::dispatch((int) $user->id);
+            $state = $this->asyncCache->getState('calificaciones', (int) $user->id);
+        }
+
+        return response()->json($state);
     }
 
     public function downloadReport(Request $request): HttpResponse

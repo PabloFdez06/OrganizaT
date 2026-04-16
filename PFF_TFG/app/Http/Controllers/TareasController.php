@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Moodle\FetchTareasJob;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\AcademicCalendarExportService;
 use App\Services\Moodle\MoodleAcademicRules;
+use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use App\Services\Moodle\SpanishDateParser;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,6 +28,7 @@ class TareasController extends Controller
         private readonly MoodleAcademicRules $rules,
         private readonly AcademicCalendarExportService $calendarExportService,
         private readonly MoodleEphemeralSessionService $sessionService,
+        private readonly MoodleAsyncSectionCache $asyncCache,
     ) {
     }
 
@@ -32,6 +36,7 @@ class TareasController extends Controller
     {
         $user = $request->user();
         $moodleConnected = $this->sessionService->hasActiveSession($user);
+        $loading = false;
 
         $studentName = $user?->name;
         $profileAvatarUrl = null;
@@ -55,30 +60,51 @@ class TareasController extends Controller
         }
 
         if ($moodleConnected) {
-            try {
-                $payload = $this->cache->getForUser($user);
-                $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
-                $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+            $state = $this->asyncCache->getState('tareas', (int) $user->id);
 
-                $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null)
-                    ? $payload['profileAvatarUrl']
-                    : null;
-                $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
-                    ? (string) $payload['studentName']
-                    : $studentName;
+            if ($state['status'] === 'done') {
+                try {
+                    $data = is_array($state['data'] ?? null) ? $state['data'] : [];
+                    $payload = is_array($data['academicPayload'] ?? null) ? $data['academicPayload'] : [];
 
-                $normalizedTasks = $this->normalizeTasks($tasks);
-                $subjectCards = $this->buildSubjectCards($courses, $normalizedTasks);
-                $tasksByDate = $this->buildTasksByDate($normalizedTasks);
-                $summary = $this->buildSummary($normalizedTasks);
-                $calendar = $this->buildCalendarDefaults($normalizedTasks, $tasksByDate);
-                $initialSubjectId = $this->resolveInitialSubjectId($request, $subjectCards);
-            } catch (MoodleAuthenticationException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (MoodleRequestException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (\Throwable) {
-                $pageError = 'No se pudieron cargar las tareas en este momento.';
+                    if ($payload === []) {
+                        throw new \RuntimeException('Sin payload asíncrono de tareas.');
+                    }
+
+                    $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
+                    $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+
+                    $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null)
+                        ? $payload['profileAvatarUrl']
+                        : null;
+                    $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
+                        ? (string) $payload['studentName']
+                        : $studentName;
+
+                    $normalizedTasks = $this->normalizeTasks($tasks);
+                    $subjectCards = $this->buildSubjectCards($courses, $normalizedTasks);
+                    $tasksByDate = $this->buildTasksByDate($normalizedTasks);
+                    $summary = $this->buildSummary($normalizedTasks);
+                    $calendar = $this->buildCalendarDefaults($normalizedTasks, $tasksByDate);
+                    $initialSubjectId = $this->resolveInitialSubjectId($request, $subjectCards);
+                } catch (MoodleAuthenticationException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (MoodleRequestException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (\Throwable) {
+                    $pageError = 'No se pudieron cargar las tareas en este momento.';
+                }
+            } elseif ($state['status'] === 'error') {
+                $pageError = is_string($state['error'] ?? null) && trim((string) $state['error']) !== ''
+                    ? (string) $state['error']
+                    : 'No se pudieron cargar las tareas en este momento.';
+            } else {
+                $loading = true;
+
+                if ($state['status'] !== 'pending') {
+                    $this->asyncCache->markPending('tareas', (int) $user->id);
+                    FetchTareasJob::dispatch((int) $user->id);
+                }
             }
         }
 
@@ -92,7 +118,32 @@ class TareasController extends Controller
             'initialSubjectId' => $initialSubjectId,
             'calendar' => $calendar,
             'pageError' => $pageError,
+            'loading' => $loading,
         ]);
+    }
+
+    public function status(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->sessionService->hasActiveSession($user)) {
+            return response()->json([
+                'status' => 'error',
+                'data' => null,
+                'error' => self::MOODLE_SESSION_EXPIRED_MESSAGE,
+                'updated_at' => time(),
+            ]);
+        }
+
+        $state = $this->asyncCache->getState('tareas', (int) $user->id);
+
+        if ($state['status'] === 'idle') {
+            $this->asyncCache->markPending('tareas', (int) $user->id);
+            FetchTareasJob::dispatch((int) $user->id);
+            $state = $this->asyncCache->getState('tareas', (int) $user->id);
+        }
+
+        return response()->json($state);
     }
 
     public function exportAllIcs(Request $request): Response

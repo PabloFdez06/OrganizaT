@@ -199,6 +199,20 @@ class MoodleUserAcademicCache
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function getCachedForUser(User $user): ?array
+    {
+        $envelope = $this->getEnvelope(self::ACADEMIC_CACHE_PREFIX.$user->id);
+
+        if ($envelope === null) {
+            return null;
+        }
+
+        return $this->extractEnvelopeData($envelope);
+    }
+
+    /**
      * @return array{cached_at:int,data:array<string,mixed>}|null
      */
     private function getEnvelope(string $cacheKey): ?array

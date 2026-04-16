@@ -1,6 +1,10 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import AcademiaHeader from '@/components/academia-header';
+import AlertError from '@/components/alert-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 
 type QuickCard = {
     code: string;
@@ -53,6 +57,7 @@ type DashboardProps = {
     matrixIncludeExplanation: boolean;
     profileAvatarUrl: string | null;
     dashboardError: string | null;
+    loading: boolean;
 };
 
 const TIMELINE_BATCH_SIZE = 2;
@@ -71,6 +76,7 @@ export default function Dashboard({
     matrixIncludeExplanation,
     profileAvatarUrl,
     dashboardError,
+    loading,
 }: DashboardProps) {
     const leftColumnRef = useRef<HTMLElement | null>(null);
     const heroCardRef = useRef<HTMLElement | null>(null);
@@ -123,6 +129,33 @@ export default function Dashboard({
         setData('matrix_preferences', matrixPreferences ?? '');
         setData('matrix_include_explanation', matrixIncludeExplanation);
     }, [matrixMode, matrixPreferences, matrixIncludeExplanation, setData]);
+
+    useEffect(() => {
+        if (!moodleConnected || !loading) {
+            return;
+        }
+
+        const pollInterval = window.setInterval(() => {
+            router.reload({
+                only: [
+                    'studentName',
+                    'quickCards',
+                    'timeline',
+                    'hero',
+                    'eisenhower',
+                    'matrixExplanation',
+                    'matrixProvider',
+                    'profileAvatarUrl',
+                    'dashboardError',
+                    'loading',
+                ],
+            });
+        }, 2500);
+
+        return () => {
+            window.clearInterval(pollInterval);
+        };
+    }, [loading, moodleConnected]);
 
     useEffect(() => {
         const updateTimelineHeight = () => {
@@ -196,6 +229,33 @@ export default function Dashboard({
                 />
 
                 <main className="p-dashboard__main p-dashboard__container">
+                    {dashboardError && <AlertError errors={[dashboardError]} title="No se pudo cargar el dashboard." />}
+
+                    {loading && (
+                        <section className="p-dashboard__loading" aria-live="polite" aria-busy="true">
+                            <Alert className="p-dashboard__loading-alert">
+                                <Spinner className="p-dashboard__loading-spinner" />
+                                <AlertTitle>Sincronizando dashboard</AlertTitle>
+                                <AlertDescription>Estamos preparando prioridades, timeline y matriz en segundo plano.</AlertDescription>
+                            </Alert>
+
+                            <section className="p-dashboard__loading-grid p-dashboard__grid">
+                                <article className="p-dashboard__loading-hero p-dashboard__hero">
+                                    <Skeleton className="p-dashboard__loading-line p-dashboard__loading-line--title" />
+                                    <Skeleton className="p-dashboard__loading-line p-dashboard__loading-line--subtitle" />
+                                    <Skeleton className="p-dashboard__loading-block p-dashboard__loading-block--hero" />
+                                </article>
+                                <article className="p-dashboard__loading-timeline p-dashboard__timeline">
+                                    <Skeleton className="p-dashboard__loading-line p-dashboard__loading-line--timeline-title" />
+                                    <Skeleton className="p-dashboard__loading-line p-dashboard__loading-line--full" />
+                                    <Skeleton className="p-dashboard__loading-line p-dashboard__loading-line--wide" />
+                                    <Skeleton className="p-dashboard__loading-line p-dashboard__loading-line--narrow" />
+                                </article>
+                            </section>
+                        </section>
+                    )}
+
+                    {!loading && (
                     <section className="p-dashboard__grid">
                         <section className="p-dashboard__left-column" ref={leftColumnRef}>
                             <section className="p-dashboard__label" aria-label="Prioridad actual">
@@ -603,6 +663,7 @@ export default function Dashboard({
                             </div>
                         </aside>
                     </section>
+                    )}
                 </main>
             </article>
         </>

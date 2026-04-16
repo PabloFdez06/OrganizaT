@@ -1,8 +1,10 @@
 import { Form, Head, router, usePage } from '@inertiajs/react';
-import { BellRing, Mail, Monitor, Moon, Palette, Settings, ShieldAlert, Sun, UserRound, X } from 'lucide-react';
+import { BellRing, CircleHelp, Mail, Monitor, Moon, Palette, Settings, ShieldAlert, Sun, UserRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { connect } from '@/actions/App/Http/Controllers/Moodle/MoodleConnectionController';
+import { updateBackgroundNotifications } from '@/actions/App/Http/Controllers/Moodle/MoodlePreferencesController';
 import InputError from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -50,6 +52,7 @@ type QuickSubjects = {
 
 type Props = {
     moodleConnected: boolean;
+    moodleBackgroundNotifications: boolean;
     profile: UserProfile;
     syncStatus: SyncStatus;
     preferences: Preferences;
@@ -126,6 +129,7 @@ function PreferenceToggle({
 
 export default function Security({
     moodleConnected,
+    moodleBackgroundNotifications,
     profile,
     syncStatus,
     preferences,
@@ -145,6 +149,8 @@ export default function Security({
     const [preferencesData, setPreferencesData] = useState<Preferences>(preferences);
     const [processing, setProcessing] = useState(false);
     const [testingEmail, setTestingEmail] = useState(false);
+    const [backgroundNotificationsEnabled, setBackgroundNotificationsEnabled] = useState<boolean>(moodleBackgroundNotifications);
+    const [backgroundNotificationsProcessing, setBackgroundNotificationsProcessing] = useState(false);
     const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
 
@@ -203,6 +209,10 @@ export default function Security({
             window.removeEventListener('hashchange', syncSection);
         };
     }, []);
+
+    useEffect(() => {
+        setBackgroundNotificationsEnabled(moodleBackgroundNotifications);
+    }, [moodleBackgroundNotifications]);
 
     const handleSectionChange = (section: SettingsSection) => {
         setActiveSection(section);
@@ -282,6 +292,26 @@ export default function Security({
                 preserveState: true,
                 replace: true,
                 onFinish: () => setTestingEmail(false),
+            },
+        );
+    };
+
+    const persistBackgroundNotifications = (enabled: boolean) => {
+        const previous = backgroundNotificationsEnabled;
+        setBackgroundNotificationsEnabled(enabled);
+        setBackgroundNotificationsProcessing(true);
+
+        router.post(
+            updateBackgroundNotifications().url,
+            {
+                moodle_background_notifications: enabled,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onError: () => setBackgroundNotificationsEnabled(previous),
+                onFinish: () => setBackgroundNotificationsProcessing(false),
             },
         );
     };
@@ -526,6 +556,42 @@ export default function Security({
                                     <p className="p-settings__caption">
                                         Usamos una sesión temporal segura para Moodle y no conservamos tu contraseña de forma persistente en base de datos.
                                     </p>
+                                </article>
+
+                                <article className="p-settings__section">
+                                    <header className="p-settings__section-header">
+                                        <h2 className="p-settings__section-title">Control de sincronización</h2>
+                                        <span className="p-settings__section-rule" aria-hidden="true" />
+                                    </header>
+
+                                    <section className="p-settings__toggles">
+                                        <PreferenceToggle
+                                            id="background-notifications"
+                                            label="Notificaciones de Moodle en segundo plano"
+                                            description="Tú decides si mantener una sesión técnica cifrada para revisar tareas nuevas y avisarte por email sin tener la app abierta."
+                                            checked={backgroundNotificationsEnabled}
+                                            disabled={!moodleConnected || backgroundNotificationsProcessing}
+                                            onToggle={persistBackgroundNotifications}
+                                        />
+
+                                        <Alert className="p-settings__background-info">
+                                            <header className="p-settings__background-info-head">
+                                                <span className="p-settings__background-info-icon" aria-hidden="true">
+                                                    <CircleHelp size={14} aria-hidden="true" />
+                                                </span>
+                                                <AlertTitle className="p-settings__background-info-title">Decisión de usuario</AlertTitle>
+                                            </header>
+
+                                            <AlertDescription className="p-settings__background-info-description">
+                                                <p className="p-settings__background-info-text">
+                                                    Activado: mantenemos una sesión técnica cifrada para comprobar tareas nuevas y enviarte avisos por correo aunque no tengas la app abierta.
+                                                </p>
+                                                <p className="p-settings__background-info-text">
+                                                    Desactivado: eliminamos inmediatamente esa sesión técnica.
+                                                </p>
+                                            </AlertDescription>
+                                        </Alert>
+                                    </section>
                                 </article>
 
                                 <article className="p-settings__section">

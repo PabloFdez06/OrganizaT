@@ -26,6 +26,9 @@ class User extends Authenticatable
         'moodle_username',
         'moodle_notification_preferences',
         'dashboard_quick_subject_ids',
+        'moodle_session_data',
+        'moodle_session_expires_at',
+        'moodle_background_notifications',
     ];
 
     /**
@@ -52,7 +55,17 @@ class User extends Authenticatable
             'password' => 'hashed',
             'moodle_notification_preferences' => 'array',
             'dashboard_quick_subject_ids' => 'array',
+            'moodle_session_expires_at' => 'datetime',
+            'moodle_background_notifications' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function hasMoodleBackgroundSession(): bool
+    {
+        return is_string($this->moodle_session_data)
+            && trim($this->moodle_session_data) !== ''
+            && $this->moodle_session_expires_at !== null
+            && $this->moodle_session_expires_at->isFuture();
     }
 }

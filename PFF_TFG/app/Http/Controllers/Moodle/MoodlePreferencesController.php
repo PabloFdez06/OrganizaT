@@ -3,11 +3,19 @@
 namespace App\Http\Controllers\Moodle;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Moodle\UpdateBackgroundNotificationsRequest;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class MoodlePreferencesController extends Controller
 {
+    public function __construct(
+        private readonly MoodleEphemeralSessionService $sessionService,
+    ) {
+    }
+
     /**
      * @var array<string, bool|int>
      */
@@ -53,5 +61,30 @@ class MoodlePreferencesController extends Controller
             'message' => 'Preferencias guardadas correctamente.',
             'data' => $merged,
         ]);
+    }
+
+    public function updateBackgroundNotifications(UpdateBackgroundNotificationsRequest $request): JsonResponse|RedirectResponse
+    {
+        $enabled = (bool) $request->boolean('moodle_background_notifications');
+        $user = $request->user();
+
+        $user->update([
+            'moodle_background_notifications' => $enabled,
+        ]);
+
+        if (! $enabled) {
+            $this->sessionService->invalidateDatabaseSession($user);
+        }
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'message' => 'Preferencia de notificaciones en background actualizada correctamente.',
+                'data' => [
+                    'moodle_background_notifications' => $enabled,
+                ],
+            ]);
+        }
+
+        return back()->with('success', 'Preferencia de notificaciones en background actualizada correctamente.');
     }
 }

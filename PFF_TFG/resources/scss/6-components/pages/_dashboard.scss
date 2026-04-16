@@ -13,6 +13,77 @@
     padding: 64px 0 28px;
 }
 
+.p-dashboard__loading {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.p-dashboard__loading-alert {
+    width: 100%;
+}
+
+.p-dashboard__loading-spinner {
+    width: 1rem;
+    height: 1rem;
+    animation: dashboard-loading-spin 1s linear infinite;
+}
+
+.p-dashboard__loading-hero,
+.p-dashboard__loading-timeline {
+    padding: 2rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.p-dashboard__loading-line,
+.p-dashboard__loading-block {
+    width: 100%;
+}
+
+.p-dashboard__loading-line--title {
+    height: 2rem;
+    width: 33.3333%;
+}
+
+.p-dashboard__loading-line--subtitle {
+    height: 1.5rem;
+    width: 66.6667%;
+}
+
+.p-dashboard__loading-line--timeline-title {
+    height: 1.5rem;
+    width: 50%;
+}
+
+.p-dashboard__loading-line--full {
+    height: 1rem;
+}
+
+.p-dashboard__loading-line--wide {
+    height: 1rem;
+    width: 80%;
+}
+
+.p-dashboard__loading-line--narrow {
+    height: 1rem;
+    width: 75%;
+}
+
+.p-dashboard__loading-block--hero {
+    height: 5rem;
+    margin-top: 0.5rem;
+}
+
+@keyframes dashboard-loading-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .p-dashboard__grid {
     display: grid;
     gap: 64px;

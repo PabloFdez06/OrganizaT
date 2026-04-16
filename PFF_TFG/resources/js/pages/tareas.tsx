@@ -1,7 +1,11 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { ArrowRight, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import AcademiaHeader from '@/components/academia-header';
+import AlertError from '@/components/alert-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 
 type TaskItem = {
     id: string;
@@ -50,6 +54,7 @@ type TareasProps = {
         selectedDate: string;
     };
     pageError: string | null;
+    loading: boolean;
 };
 
 type CalendarCell = {
@@ -221,6 +226,7 @@ export default function Tareas({
     initialSubjectId,
     calendar,
     pageError,
+    loading,
 }: TareasProps) {
     const sideGridRef = useRef<HTMLElement | null>(null);
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(initialSubjectId ?? subjectCards[0]?.id ?? null);
@@ -248,6 +254,32 @@ export default function Tareas({
         () => subjectCards.filter((subject) => featuredSubject === null || subject.id !== featuredSubject.id),
         [featuredSubject, subjectCards],
     );
+
+    useEffect(() => {
+        if (!moodleConnected || !loading) {
+            return;
+        }
+
+        const pollInterval = window.setInterval(() => {
+            router.reload({
+                only: [
+                    'studentName',
+                    'profileAvatarUrl',
+                    'subjectCards',
+                    'tasksByDate',
+                    'summary',
+                    'initialSubjectId',
+                    'calendar',
+                    'pageError',
+                    'loading',
+                ],
+            });
+        }, 2500);
+
+        return () => {
+            window.clearInterval(pollInterval);
+        };
+    }, [loading, moodleConnected]);
 
     useEffect(() => {
         const updateSubjectsPerRow = () => {
@@ -367,9 +399,32 @@ export default function Tareas({
                         </h1>
                     </header>
 
-                    {pageError && <p className="p-tareas__error">{pageError}</p>}
+                    {pageError && <AlertError errors={[pageError]} title="No se pudieron cargar las tareas." />}
 
-                    {featuredSubject ? (
+                    {loading && (
+                        <section className="p-tareas__loading" aria-live="polite" aria-busy="true">
+                            <Alert className="p-tareas__loading-alert">
+                                <Spinner className="p-tareas__loading-spinner" />
+                                <AlertTitle>Sincronizando tareas</AlertTitle>
+                                <AlertDescription>Estamos procesando las tareas y el calendario desde Moodle.</AlertDescription>
+                            </Alert>
+
+                            <section className="p-tareas__loading-grid p-tareas__workspace">
+                                <article className="p-tareas__loading-featured p-tareas__featured">
+                                    <Skeleton className="p-tareas__loading-line p-tareas__loading-line--title" />
+                                    <Skeleton className="p-tareas__loading-line p-tareas__loading-line--subtitle" />
+                                    <Skeleton className="p-tareas__loading-block p-tareas__loading-block--task" />
+                                    <Skeleton className="p-tareas__loading-block p-tareas__loading-block--task" />
+                                </article>
+                                <article className="p-tareas__loading-calendar p-tareas__calendar">
+                                    <Skeleton className="p-tareas__loading-line p-tareas__loading-line--calendar-title" />
+                                    <Skeleton className="p-tareas__loading-block p-tareas__loading-block--calendar" />
+                                </article>
+                            </section>
+                        </section>
+                    )}
+
+                    {!loading && (featuredSubject ? (
                         <section className="p-tareas__workspace">
                             <section className="p-tareas__subjects-column" aria-label="Asignatura activa y asignaturas disponibles">
                                 <article className="p-tareas__featured">
@@ -643,7 +698,7 @@ export default function Tareas({
                                     : 'Conecta Moodle para cargar tus tareas por asignatura.'}
                             </p>
                         </article>
-                    )}
+                    ))}
                 </main>
             </article>
         </>

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Moodle\FetchAsignaturasJob;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,19 +20,15 @@ class AsignaturasController extends Controller
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
         private readonly MoodleEphemeralSessionService $sessionService,
+        private readonly MoodleAsyncSectionCache $asyncCache,
     ) {
     }
 
     public function index(Request $request): Response
     {
-        if (function_exists('set_time_limit')) {
-            @set_time_limit(120);
-        }
-
-        @ini_set('max_execution_time', '120');
-
         $user = $request->user();
         $moodleConnected = $this->sessionService->hasActiveSession($user);
+        $loading = false;
 
         $courseCards = [];
         $summary = [
@@ -46,24 +45,45 @@ class AsignaturasController extends Controller
         }
 
         if ($moodleConnected) {
-            try {
-                $payload = $this->cache->getForUser($user);
-                $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
-                $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
-                $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null) ? $payload['profileAvatarUrl'] : null;
-                $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
-                    ? (string) $payload['studentName']
-                    : $studentName;
-                $taskStats = $this->collectTaskStatsByCourse($tasks);
+            $state = $this->asyncCache->getState('asignaturas', (int) $user->id);
 
-                $courseCards = $this->buildCourseCards($courses, $taskStats);
-                $summary = $this->buildSummary($courses, $taskStats);
-            } catch (MoodleAuthenticationException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (MoodleRequestException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (\Throwable) {
-                $pageError = 'No se pudieron cargar las asignaturas en este momento.';
+            if ($state['status'] === 'done') {
+                try {
+                    $data = is_array($state['data'] ?? null) ? $state['data'] : [];
+                    $payload = is_array($data['academicPayload'] ?? null) ? $data['academicPayload'] : [];
+
+                    if ($payload === []) {
+                        throw new \RuntimeException('Sin payload asíncrono de asignaturas.');
+                    }
+
+                    $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
+                    $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+                    $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null) ? $payload['profileAvatarUrl'] : null;
+                    $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
+                        ? (string) $payload['studentName']
+                        : $studentName;
+                    $taskStats = $this->collectTaskStatsByCourse($tasks);
+
+                    $courseCards = $this->buildCourseCards($courses, $taskStats);
+                    $summary = $this->buildSummary($courses, $taskStats);
+                } catch (MoodleAuthenticationException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (MoodleRequestException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (\Throwable) {
+                    $pageError = 'No se pudieron cargar las asignaturas en este momento.';
+                }
+            } elseif ($state['status'] === 'error') {
+                $pageError = is_string($state['error'] ?? null) && trim((string) $state['error']) !== ''
+                    ? (string) $state['error']
+                    : 'No se pudieron cargar las asignaturas en este momento.';
+            } else {
+                $loading = true;
+
+                if ($state['status'] !== 'pending') {
+                    $this->asyncCache->markPending('asignaturas', (int) $user->id);
+                    FetchAsignaturasJob::dispatch((int) $user->id);
+                }
             }
         }
 
@@ -74,7 +94,32 @@ class AsignaturasController extends Controller
             'summary' => $summary,
             'profileAvatarUrl' => $profileAvatarUrl,
             'pageError' => $pageError,
+            'loading' => $loading,
         ]);
+    }
+
+    public function status(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->sessionService->hasActiveSession($user)) {
+            return response()->json([
+                'status' => 'error',
+                'data' => null,
+                'error' => self::MOODLE_SESSION_EXPIRED_MESSAGE,
+                'updated_at' => time(),
+            ]);
+        }
+
+        $state = $this->asyncCache->getState('asignaturas', (int) $user->id);
+
+        if ($state['status'] === 'idle') {
+            $this->asyncCache->markPending('asignaturas', (int) $user->id);
+            FetchAsignaturasJob::dispatch((int) $user->id);
+            $state = $this->asyncCache->getState('asignaturas', (int) $user->id);
+        }
+
+        return response()->json($state);
     }
 
     /**

@@ -114,6 +114,7 @@ class SecurityController extends Controller
 
         return Inertia::render('settings/security', [
             'moodleConnected' => $moodleConnected,
+            'moodleBackgroundNotifications' => (bool) ($user?->moodle_background_notifications ?? false),
             'profile' => $profile,
             'syncStatus' => $syncStatus,
             'preferences' => $preferences,

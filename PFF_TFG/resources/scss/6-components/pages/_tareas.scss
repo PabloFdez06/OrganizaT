@@ -84,6 +84,66 @@
     color: var(--color-danger);
 }
 
+.p-tareas__loading {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.p-tareas__loading-alert {
+    width: 100%;
+}
+
+.p-tareas__loading-spinner {
+    width: 1rem;
+    height: 1rem;
+    animation: tareas-loading-spin 1s linear infinite;
+}
+
+.p-tareas__loading-featured,
+.p-tareas__loading-calendar {
+    padding: 1.25rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.p-tareas__loading-line,
+.p-tareas__loading-block {
+    width: 100%;
+}
+
+.p-tareas__loading-line--title {
+    height: 2rem;
+    width: 33.3333%;
+}
+
+.p-tareas__loading-line--subtitle {
+    height: 1.5rem;
+    width: 66.6667%;
+}
+
+.p-tareas__loading-line--calendar-title {
+    height: 1.5rem;
+    width: 50%;
+}
+
+.p-tareas__loading-block--task {
+    height: 3.5rem;
+}
+
+.p-tareas__loading-block--calendar {
+    height: 14rem;
+}
+
+@keyframes tareas-loading-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .p-tareas__workspace {
     display: grid;
     grid-template-columns: minmax(0, 2fr) var(--tareas-side-width);

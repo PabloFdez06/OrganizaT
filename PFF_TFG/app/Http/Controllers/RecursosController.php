@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Moodle\FetchRecursosJob;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
-use App\Services\Moodle\MoodleAcademicService;
+use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,28 +19,20 @@ class RecursosController extends Controller
 
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
-        private readonly MoodleAcademicService $academicService,
         private readonly MoodleEphemeralSessionService $sessionService,
+        private readonly MoodleAsyncSectionCache $asyncCache,
     ) {
     }
 
     public function index(Request $request): Response
     {
-        if (function_exists('set_time_limit')) {
-            @set_time_limit(300);
-        }
-
-        @ini_set('max_execution_time', '300');
-
-        // Recursos puede implicar muchas consultas a Moodle; usamos modo rapido para evitar bloqueos.
-        config([
-            'services.moodle.timeout' => 12,
-            'services.moodle.retry_attempts' => 1,
-            'services.moodle.retry_delay_ms' => 250,
-        ]);
-
         $user = $request->user();
         $moodleConnected = $this->sessionService->hasActiveSession($user);
+        $loading = false;
+        $requestedSubjectId = (int) $request->integer('subject_id');
+        $scope = $requestedSubjectId > 0
+            ? 'subject:'.$requestedSubjectId
+            : 'subject:auto';
 
         $studentName = $user?->name;
         $profileAvatarUrl = null;
@@ -67,38 +61,58 @@ class RecursosController extends Controller
         }
 
         if ($moodleConnected) {
-            try {
-                $payload = $this->cache->getForUser($user);
-                $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
+            $state = $this->asyncCache->getState('recursos', (int) $user->id, $scope);
 
-                $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null)
-                    ? $payload['profileAvatarUrl']
-                    : null;
-                $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
-                    ? (string) $payload['studentName']
-                    : $studentName;
+            if ($state['status'] === 'done') {
+                try {
+                    $data = is_array($state['data'] ?? null) ? $state['data'] : [];
+                    $payload = is_array($data['academicPayload'] ?? null) ? $data['academicPayload'] : [];
 
-                $subjects = $this->buildSubjects($courses);
-                $selectedSubjectId = $this->resolveSelectedSubjectId($request, $subjects);
-
-                if ($selectedSubjectId !== null) {
-                    $session = $this->sessionService->reopenForUser($user);
-
-                    try {
-                        $resources = $this->academicService->getResourcesByCourse($session, $selectedSubjectId);
-                    } finally {
-                        $session->close();
+                    if ($payload === []) {
+                        throw new \RuntimeException('Sin payload asincrono de recursos.');
                     }
 
-                    $selectedSubject = $this->buildSelectedSubject($subjects, $selectedSubjectId, $resources);
-                    $summary = $this->buildSummary($resources);
+                    $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
+                    $resources = is_array($data['resources'] ?? null) ? $data['resources'] : [];
+
+                    $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null)
+                        ? $payload['profileAvatarUrl']
+                        : null;
+                    $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
+                        ? (string) $payload['studentName']
+                        : $studentName;
+
+                    $subjects = $this->buildSubjects($courses);
+
+                    $jobSelectedSubjectId = isset($data['selectedSubjectId']) ? (int) $data['selectedSubjectId'] : 0;
+                    $selectedSubjectId = $jobSelectedSubjectId > 0 ? $jobSelectedSubjectId : null;
+
+                    if ($selectedSubjectId === null && $subjects !== []) {
+                        $selectedSubjectId = (int) ($subjects[0]['id'] ?? 0);
+                    }
+
+                    if ($selectedSubjectId !== null) {
+                        $selectedSubject = $this->buildSelectedSubject($subjects, $selectedSubjectId, $resources);
+                        $summary = $this->buildSummary($resources);
+                    }
+                } catch (MoodleAuthenticationException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (MoodleRequestException $exception) {
+                    $pageError = $exception->getMessage();
+                } catch (\Throwable) {
+                    $pageError = 'No se pudieron cargar los recursos en este momento.';
                 }
-            } catch (MoodleAuthenticationException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (MoodleRequestException $exception) {
-                $pageError = $exception->getMessage();
-            } catch (\Throwable) {
-                $pageError = 'No se pudieron cargar los recursos en este momento.';
+            } elseif ($state['status'] === 'error') {
+                $pageError = is_string($state['error'] ?? null) && trim((string) $state['error']) !== ''
+                    ? (string) $state['error']
+                    : 'No se pudieron cargar los recursos en este momento.';
+            } else {
+                $loading = true;
+
+                if ($state['status'] !== 'pending') {
+                    $this->asyncCache->markPending('recursos', (int) $user->id, $scope);
+                    FetchRecursosJob::dispatch((int) $user->id, $requestedSubjectId > 0 ? $requestedSubjectId : null);
+                }
             }
         }
 
@@ -111,7 +125,36 @@ class RecursosController extends Controller
             'selectedSubjectId' => $selectedSubjectId,
             'summary' => $summary,
             'pageError' => $pageError,
+            'loading' => $loading,
         ]);
+    }
+
+    public function status(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $requestedSubjectId = (int) $request->integer('subject_id');
+        $scope = $requestedSubjectId > 0
+            ? 'subject:'.$requestedSubjectId
+            : 'subject:auto';
+
+        if (! $this->sessionService->hasActiveSession($user)) {
+            return response()->json([
+                'status' => 'error',
+                'data' => null,
+                'error' => self::MOODLE_SESSION_EXPIRED_MESSAGE,
+                'updated_at' => time(),
+            ]);
+        }
+
+        $state = $this->asyncCache->getState('recursos', (int) $user->id, $scope);
+
+        if ($state['status'] === 'idle') {
+            $this->asyncCache->markPending('recursos', (int) $user->id, $scope);
+            FetchRecursosJob::dispatch((int) $user->id, $requestedSubjectId > 0 ? $requestedSubjectId : null);
+            $state = $this->asyncCache->getState('recursos', (int) $user->id, $scope);
+        }
+
+        return response()->json($state);
     }
 
     /**

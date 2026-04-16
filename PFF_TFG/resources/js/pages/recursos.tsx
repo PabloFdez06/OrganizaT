@@ -13,9 +13,13 @@ import {
     Link as LinkIcon,
     PlayCircle,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { index as recursosIndex } from '@/actions/App/Http/Controllers/RecursosController';
 import AcademiaHeader from '@/components/academia-header';
+import AlertError from '@/components/alert-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 
 type ResourceItem = {
     id: string;
@@ -72,6 +76,7 @@ type RecursosProps = {
         };
     };
     pageError: string | null;
+    loading: boolean;
 };
 
 type MetadataBucket = 'links' | 'images' | 'files' | 'folders' | 'others';
@@ -146,9 +151,26 @@ export default function Recursos({
     selectedSubjectId,
     summary,
     pageError,
+    loading,
 }: RecursosProps) {
     const [selectedBuckets, setSelectedBuckets] = useState<MetadataBucket[]>(['links', 'images', 'files', 'folders', 'others']);
     const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        if (!moodleConnected || !loading) {
+            return;
+        }
+
+        const pollInterval = window.setInterval(() => {
+            router.reload({
+                only: ['studentName', 'profileAvatarUrl', 'subjects', 'selectedSubject', 'selectedSubjectId', 'summary', 'pageError', 'loading'],
+            });
+        }, 2500);
+
+        return () => {
+            window.clearInterval(pollInterval);
+        };
+    }, [loading, moodleConnected]);
 
     const filteredSelectedSubject = useMemo(() => {
         if (! selectedSubject) {
@@ -270,7 +292,31 @@ export default function Recursos({
                         </section>
                     </header>
 
-                    {pageError && <p className="p-recursos__error">{pageError}</p>}
+                    {pageError && <AlertError errors={[pageError]} title="No se pudieron cargar los recursos." />}
+
+                    {loading && (
+                        <section className="p-recursos__loading" aria-live="polite" aria-busy="true">
+                            <Alert className="p-recursos__loading-alert">
+                                <Spinner className="p-recursos__loading-spinner" />
+                                <AlertTitle>Sincronizando recursos</AlertTitle>
+                                <AlertDescription>Estamos obteniendo materiales de Moodle para la asignatura seleccionada.</AlertDescription>
+                            </Alert>
+
+                            <section className="p-recursos__loading-grid p-recursos__workspace">
+                                <aside className="p-recursos__loading-rail p-recursos__left-rail">
+                                    <Skeleton className="p-recursos__loading-line p-recursos__loading-line--rail-title" />
+                                    <Skeleton className="p-recursos__loading-block p-recursos__loading-block--rail" />
+                                    <Skeleton className="p-recursos__loading-block p-recursos__loading-block--rail" />
+                                </aside>
+                                <section className="p-recursos__loading-content p-recursos__content">
+                                    <Skeleton className="p-recursos__loading-line p-recursos__loading-line--content-title" />
+                                    <Skeleton className="p-recursos__loading-block p-recursos__loading-block--content" />
+                                    <Skeleton className="p-recursos__loading-block p-recursos__loading-block--content" />
+                                    <Skeleton className="p-recursos__loading-block p-recursos__loading-block--content" />
+                                </section>
+                            </section>
+                        </section>
+                    )}
 
                     <section className="p-recursos__workspace" aria-label="Panel de recursos">
                         <aside className="p-recursos__left-rail" aria-label="Listado de asignaturas">
@@ -369,7 +415,7 @@ export default function Recursos({
                         </aside>
 
                         <section className="p-recursos__content" aria-label="Recursos por asignatura">
-                            {filteredSelectedSubject && (
+                            {!loading && filteredSelectedSubject && (
                                 <article className="p-recursos__subject p-recursos__subject--featured">
                                     <header className="p-recursos__subject-head">
                                         <section className="p-recursos__subject-head-main">
@@ -515,7 +561,7 @@ export default function Recursos({
                                 </article>
                             )}
 
-                            {subjects.length === 0 && (
+                            {!loading && subjects.length === 0 && (
                                 <article className="p-recursos__empty">
                                     <h3 className="p-recursos__empty-title">Sin recursos para mostrar</h3>
                                     <p className="p-recursos__empty-description">

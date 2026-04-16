@@ -1,6 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useEffect } from 'react';
 import AcademiaHeader from '@/components/academia-header';
+import AlertError from '@/components/alert-error';
 import StatsStrip from '@/components/stats-strip';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { toMoodleMediaUrl } from '@/lib/moodle-media';
 
 type CourseCard = {
@@ -28,6 +33,7 @@ type AsignaturasProps = {
     };
     profileAvatarUrl: string | null;
     pageError: string | null;
+    loading: boolean;
 };
 
 type LayoutVariant = 'hero' | 'image' | 'violet' | 'night' | 'base';
@@ -87,10 +93,23 @@ function buildColumnSpans(total: number): ColumnSpan[] {
     return spans;
 }
 
-export default function Asignaturas({ moodleConnected, studentName, courseCards, summary, profileAvatarUrl, pageError }: AsignaturasProps) {
+export default function Asignaturas({ moodleConnected, studentName, courseCards, summary, profileAvatarUrl, pageError, loading }: AsignaturasProps) {
     const variantSequence = buildLayoutSequence(courseCards.length);
     const columnSpans = buildColumnSpans(courseCards.length);
-    
+
+    useEffect(() => {
+        if (!moodleConnected || !loading) {
+            return;
+        }
+
+        const pollInterval = window.setInterval(() => {
+            router.reload({
+                only: ['studentName', 'courseCards', 'summary', 'profileAvatarUrl', 'pageError', 'loading'],
+            });
+        }, 2500);
+
+        return () => window.clearInterval(pollInterval);
+    }, [loading, moodleConnected]);
 
     return (
         <>
@@ -115,7 +134,30 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
                         </section>
                     </header>
 
-                    {pageError && <p className="p-asignaturas__error">{pageError}</p>}
+                    {pageError && <AlertError errors={[pageError]} title="No se pudieron cargar las asignaturas." />}
+
+                    {loading && (
+                        <section className="p-asignaturas__loading" aria-live="polite" aria-busy="true">
+                            <Alert className="p-asignaturas__loading-alert">
+                                <Spinner className="p-asignaturas__loading-spinner" />
+                                <AlertTitle>Sincronizando asignaturas</AlertTitle>
+                                <AlertDescription>Estamos cargando tus datos de Moodle en segundo plano.</AlertDescription>
+                            </Alert>
+
+                            <section className="p-asignaturas__loading-grid">
+                                {Array.from({ length: 3 }).map((_, index) => (
+                                    <article key={`asig-skeleton-${index}`} className="p-asignaturas__loading-card p-asignaturas__course p-asignaturas__course--base">
+                                        <section className="p-asignaturas__course-content">
+                                            <Skeleton className="p-asignaturas__loading-line p-asignaturas__loading-line--title" />
+                                            <Skeleton className="p-asignaturas__loading-line p-asignaturas__loading-line--meta" />
+                                            <Skeleton className="p-asignaturas__loading-line p-asignaturas__loading-line--full" />
+                                            <Skeleton className="p-asignaturas__loading-line p-asignaturas__loading-line--wide" />
+                                        </section>
+                                    </article>
+                                ))}
+                            </section>
+                        </section>
+                    )}
 
                     <StatsStrip
                         className="p-asignaturas__summary"
@@ -175,7 +217,7 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
                                 );
                             })}
 
-                            {courseCards.length === 0 && (
+                            {!loading && courseCards.length === 0 && (
                                 <article className="p-asignaturas__empty">
                                     <h3 className="p-asignaturas__empty-title">Sin asignaturas disponibles</h3>
                                     <p className="p-asignaturas__empty-description">

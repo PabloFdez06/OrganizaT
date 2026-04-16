@@ -2,12 +2,10 @@
 
 namespace App\Services\Moodle;
 
-use App\Mail\MoodleNotificationMail;
+use App\Jobs\Moodle\SendMoodleNotificationEmailJob;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class MoodleNotificationCenter
 {
@@ -691,7 +689,6 @@ class MoodleNotificationCenter
         }
 
         $emailed = $this->getEmailedIds($user);
-        $nowIso = CarbonImmutable::now()->toIso8601String();
         $hasNewDelivery = false;
 
         foreach ($items as $item) {
@@ -706,24 +703,13 @@ class MoodleNotificationCenter
                 continue;
             }
 
-            try {
-                Mail::to($recipient)->send(new MoodleNotificationMail($item, $user));
-                $emailed[$id] = $nowIso;
-                $hasNewDelivery = true;
-            } catch (\Throwable $exception) {
-                Log::warning('No se pudo enviar notificacion Moodle por email.', [
-                    'user_id' => $user->id,
-                    'notification_id' => $id,
-                    'message' => $exception->getMessage(),
-                ]);
-            }
+            SendMoodleNotificationEmailJob::dispatch($user, $item);
+            $hasNewDelivery = true;
         }
 
         if (! $hasNewDelivery) {
             return;
         }
-
-        Cache::put($this->emailedKey($user), $emailed, now()->addSeconds(self::EMAILED_TTL_SECONDS));
     }
 
     /**

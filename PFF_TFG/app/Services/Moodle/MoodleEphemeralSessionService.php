@@ -53,6 +53,10 @@ class MoodleEphemeralSessionService
         ];
 
         $this->persistPayload($user->id, $payload);
+
+        if ((bool) $user->moodle_background_notifications) {
+            $this->persistSessionToDatabase($user, $session);
+        }
     }
 
     public function reopenForUser(User $user): MoodleSession
@@ -91,6 +95,73 @@ class MoodleEphemeralSessionService
     public function clearForUser(User $user): void
     {
         Cache::forget($this->cacheKey((int) $user->id));
+    }
+
+    public function persistSessionToDatabase(User $user, MoodleSession $session): void
+    {
+        $payload = [
+            'sesskey' => $session->sesskey,
+            'userid' => $session->userid,
+            'cookies' => $this->client->exportCookies($session),
+            'persisted_at' => time(),
+        ];
+
+        $serialized = json_encode($payload, JSON_THROW_ON_ERROR);
+        $encrypted = Crypt::encryptString($serialized);
+        $expiresAt = now()->addHours(8);
+
+        $user->forceFill([
+            'moodle_session_data' => $encrypted,
+            'moodle_session_expires_at' => $expiresAt,
+        ])->save();
+    }
+
+    public function restoreSessionFromDatabase(User $user): ?MoodleSession
+    {
+        if (! (bool) $user->moodle_background_notifications || ! $user->hasMoodleBackgroundSession()) {
+            return null;
+        }
+
+        $encrypted = is_string($user->moodle_session_data) ? trim($user->moodle_session_data) : '';
+
+        if ($encrypted === '') {
+            return null;
+        }
+
+        try {
+            $decrypted = Crypt::decryptString($encrypted);
+            $payload = json_decode($decrypted, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            $this->invalidateDatabaseSession($user);
+
+            return null;
+        }
+
+        if (! is_array($payload)) {
+            $this->invalidateDatabaseSession($user);
+
+            return null;
+        }
+
+        $cookies = is_array($payload['cookies'] ?? null) ? $payload['cookies'] : [];
+        $fallbackSesskey = is_string($payload['sesskey'] ?? null) ? (string) $payload['sesskey'] : null;
+        $fallbackUserid = isset($payload['userid']) ? (int) $payload['userid'] : null;
+
+        if ($cookies === [] && (! is_string($fallbackSesskey) || trim($fallbackSesskey) === '')) {
+            $this->invalidateDatabaseSession($user);
+
+            return null;
+        }
+
+        return $this->client->resume($cookies, $fallbackSesskey, $fallbackUserid);
+    }
+
+    public function invalidateDatabaseSession(User $user): void
+    {
+        $user->forceFill([
+            'moodle_session_data' => null,
+            'moodle_session_expires_at' => null,
+        ])->save();
     }
 
     public function usernameForUser(?User $user): ?string

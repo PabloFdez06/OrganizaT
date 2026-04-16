@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Moodle\FetchDashboardDataJob;
 use App\Services\EisenhowerMatrixService;
 use App\Services\Ai\EisenhowerMatrixAiService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\SpanishDateParser;
 use App\Services\Moodle\MoodleUserAcademicCache;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,6 +25,7 @@ class DashboardController extends Controller
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
         private readonly MoodleEphemeralSessionService $sessionService,
+        private readonly MoodleAsyncSectionCache $asyncCache,
         private readonly SpanishDateParser $dateParser,
         private readonly EisenhowerMatrixService $matrixResolver,
         private readonly EisenhowerMatrixAiService $matrixAi,
@@ -32,6 +36,7 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         $moodleConnected = $this->sessionService->hasActiveSession($user);
+        $loading = false;
 
         $quickCards = [];
         $timeline = [];
@@ -67,66 +72,87 @@ class DashboardController extends Controller
         }
 
         if ($moodleConnected) {
-            try {
-                $payload = $this->cache->getForUser($user);
-                $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
-                $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
-                $selectedQuickSubjectIds = collect(is_array($user?->dashboard_quick_subject_ids) ? $user->dashboard_quick_subject_ids : [])
-                    ->map(fn (mixed $value): int => (int) $value)
-                    ->filter(fn (int $value): bool => $value > 0)
-                    ->unique()
-                    ->values();
+            $state = $this->asyncCache->getState('dashboard', (int) $user->id);
 
-                $selectedQuickSubjectIds = $selectedQuickSubjectIds->count() === 4
-                    ? $selectedQuickSubjectIds->all()
-                    : [];
-                $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null) ? $payload['profileAvatarUrl'] : null;
-                $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
-                    ? (string) $payload['studentName']
-                    : $studentName;
+            if ($state['status'] === 'done') {
+                try {
+                    $data = is_array($state['data'] ?? null) ? $state['data'] : [];
+                    $payload = is_array($data['academicPayload'] ?? null) ? $data['academicPayload'] : [];
 
-                $quickCards = $this->buildQuickCards($courses, $tasks, $selectedQuickSubjectIds);
-                $timeline = $this->buildTimeline($tasks);
-                $hero = $this->buildHero($tasks);
-
-                $matrixTasks = $this->buildOpenTasksForMatrix($tasks);
-                if ($matrixMode === 'basic') {
-                    $eisenhower = $this->matrixResolver->classify($matrixTasks);
-                    $matrixProvider = 'rule-based';
-                } else {
-                    $eisenhower = [
-                        'doNow' => [],
-                        'schedule' => [],
-                        'delegate' => [],
-                        'optimize' => [],
-                    ];
-                    $matrixProvider = 'ai-idle';
-                }
-
-                if ($matrixRunAi) {
-                    if ($matrixApiKey === '') {
-                        $matrixProvider = 'missing-api-key';
-                        $matrixExplanation = 'Debes introducir una API key valida para generar la matriz con IA.';
-                    } else {
-                        $analysis = $this->matrixAi->analyze(
-                            $matrixTasks,
-                            $matrixIncludeExplanation,
-                            $matrixApiKey,
-                            $matrixPreferences,
-                        );
-                        $aiMatrix = is_array($analysis['matrix'] ?? null) ? $analysis['matrix'] : [];
-                        $eisenhower = $aiMatrix;
-
-                        $matrixExplanation = is_string($analysis['explanation'] ?? null) ? $analysis['explanation'] : null;
-                        $matrixProvider = is_string($analysis['provider'] ?? null) ? $analysis['provider'] : 'none';
+                    if ($payload === []) {
+                        throw new \RuntimeException('Sin payload asíncrono para dashboard.');
                     }
+
+                    $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
+                    $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+                    $selectedQuickSubjectIds = collect(is_array($user?->dashboard_quick_subject_ids) ? $user->dashboard_quick_subject_ids : [])
+                        ->map(fn (mixed $value): int => (int) $value)
+                        ->filter(fn (int $value): bool => $value > 0)
+                        ->unique()
+                        ->values();
+
+                    $selectedQuickSubjectIds = $selectedQuickSubjectIds->count() === 4
+                        ? $selectedQuickSubjectIds->all()
+                        : [];
+                    $profileAvatarUrl = is_string($payload['profileAvatarUrl'] ?? null) ? $payload['profileAvatarUrl'] : null;
+                    $studentName = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
+                        ? (string) $payload['studentName']
+                        : $studentName;
+
+                    $quickCards = $this->buildQuickCards($courses, $tasks, $selectedQuickSubjectIds);
+                    $timeline = $this->buildTimeline($tasks);
+                    $hero = $this->buildHero($tasks);
+
+                    $matrixTasks = $this->buildOpenTasksForMatrix($tasks);
+                    if ($matrixMode === 'basic') {
+                        $eisenhower = $this->matrixResolver->classify($matrixTasks);
+                        $matrixProvider = 'rule-based';
+                    } else {
+                        $eisenhower = [
+                            'doNow' => [],
+                            'schedule' => [],
+                            'delegate' => [],
+                            'optimize' => [],
+                        ];
+                        $matrixProvider = 'ai-idle';
+                    }
+
+                    if ($matrixRunAi) {
+                        if ($matrixApiKey === '') {
+                            $matrixProvider = 'missing-api-key';
+                            $matrixExplanation = 'Debes introducir una API key valida para generar la matriz con IA.';
+                        } else {
+                            $analysis = $this->matrixAi->analyze(
+                                $matrixTasks,
+                                $matrixIncludeExplanation,
+                                $matrixApiKey,
+                                $matrixPreferences,
+                            );
+                            $aiMatrix = is_array($analysis['matrix'] ?? null) ? $analysis['matrix'] : [];
+                            $eisenhower = $aiMatrix;
+
+                            $matrixExplanation = is_string($analysis['explanation'] ?? null) ? $analysis['explanation'] : null;
+                            $matrixProvider = is_string($analysis['provider'] ?? null) ? $analysis['provider'] : 'none';
+                        }
+                    }
+                } catch (MoodleAuthenticationException $exception) {
+                    $dashboardError = $exception->getMessage();
+                } catch (MoodleRequestException $exception) {
+                    $dashboardError = $exception->getMessage();
+                } catch (\Throwable) {
+                    $dashboardError = 'No se pudieron cargar los datos del dashboard en este momento.';
                 }
-            } catch (MoodleAuthenticationException $exception) {
-                $dashboardError = $exception->getMessage();
-            } catch (MoodleRequestException $exception) {
-                $dashboardError = $exception->getMessage();
-            } catch (\Throwable) {
-                $dashboardError = 'No se pudieron cargar los datos del dashboard en este momento.';
+            } elseif ($state['status'] === 'error') {
+                $dashboardError = is_string($state['error'] ?? null) && trim((string) $state['error']) !== ''
+                    ? (string) $state['error']
+                    : 'No se pudieron cargar los datos del dashboard en este momento.';
+            } else {
+                $loading = true;
+
+                if ($state['status'] !== 'pending') {
+                    $this->asyncCache->markPending('dashboard', (int) $user->id);
+                    FetchDashboardDataJob::dispatch((int) $user->id);
+                }
             }
         }
 
@@ -144,7 +170,32 @@ class DashboardController extends Controller
             'matrixIncludeExplanation' => $matrixIncludeExplanation,
             'profileAvatarUrl' => $profileAvatarUrl,
             'dashboardError' => $dashboardError,
+            'loading' => $loading,
         ]);
+    }
+
+    public function status(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->sessionService->hasActiveSession($user)) {
+            return response()->json([
+                'status' => 'error',
+                'data' => null,
+                'error' => self::MOODLE_SESSION_EXPIRED_MESSAGE,
+                'updated_at' => time(),
+            ]);
+        }
+
+        $state = $this->asyncCache->getState('dashboard', (int) $user->id);
+
+        if ($state['status'] === 'idle') {
+            $this->asyncCache->markPending('dashboard', (int) $user->id);
+            FetchDashboardDataJob::dispatch((int) $user->id);
+            $state = $this->asyncCache->getState('dashboard', (int) $user->id);
+        }
+
+        return response()->json($state);
     }
 
     public function updateMatrix(Request $request): RedirectResponse
