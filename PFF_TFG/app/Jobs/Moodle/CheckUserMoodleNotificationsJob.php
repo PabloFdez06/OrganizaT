@@ -61,8 +61,9 @@ class CheckUserMoodleNotificationsJob implements ShouldQueue
         try {
             $payload = $academicService->getAllAssignments($session);
             $tasks = is_array($payload['tareas'] ?? null) ? $payload['tareas'] : [];
+            $messages = $academicService->getUnreadMessages($session);
 
-            $notificationCenter->buildForUser($user, $tasks);
+            $notificationCenter->buildForUser($user, $tasks, $messages);
         } catch (MoodleAuthenticationException $exception) {
             $sessionService->invalidateDatabaseSession($user);
 

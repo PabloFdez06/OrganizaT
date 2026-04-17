@@ -32,6 +32,16 @@ type Preferences = {
     recordatorio_personalizado_minutos: number;
     email: boolean;
     push: boolean;
+    email_48h: boolean;
+    email_24h: boolean;
+    email_same_day: boolean;
+    email_custom: boolean;
+    email_overdue: boolean;
+    email_new_task: boolean;
+    email_deadline_changed: boolean;
+    email_new_grade: boolean;
+    email_new_feedback: boolean;
+    email_moodle_message: boolean;
 };
 
 type CacheConfig = {
@@ -568,7 +578,7 @@ export default function Security({
                                         <PreferenceToggle
                                             id="background-notifications"
                                             label="Notificaciones de Moodle en segundo plano"
-                                            description="Tú decides si mantener una sesión técnica cifrada para revisar tareas nuevas y avisarte por email sin tener la app abierta."
+                                            description="Tú decides si mantener una sesión técnica cifrada para revisar tareas y mensajes nuevos de Moodle, y avisarte por email sin tener la app abierta."
                                             checked={backgroundNotificationsEnabled}
                                             disabled={!moodleConnected || backgroundNotificationsProcessing}
                                             onToggle={persistBackgroundNotifications}
@@ -584,7 +594,7 @@ export default function Security({
 
                                             <AlertDescription className="p-settings__background-info-description">
                                                 <p className="p-settings__background-info-text">
-                                                    Activado: mantenemos una sesión técnica cifrada para comprobar tareas nuevas y enviarte avisos por correo aunque no tengas la app abierta.
+                                                    Activado: mantenemos una sesión técnica cifrada para comprobar tareas y mensajes nuevos de Moodle, y enviarte avisos por correo aunque no tengas la app abierta.
                                                 </p>
                                                 <p className="p-settings__background-info-text">
                                                     Desactivado: eliminamos inmediatamente esa sesión técnica.
@@ -703,20 +713,120 @@ export default function Security({
                                             icon="mail"
                                             onToggle={(value) => persistPreference('email', value)}
                                         />
-                                        <section className="p-settings__email-test">
-                                            <p className="p-settings__email-test-copy">
-                                                ¿Quieres probarlo ahora? Envía una simulación de "nueva tarea" al correo configurado.
+
+                                        {preferencesData.email ? (
+                                            <fieldset className="p-settings__email-preferences" aria-label="Preferencias del canal de correo">
+                                                <legend className="p-settings__email-preferences-legend">
+                                                    Tipos de aviso por correo
+                                                </legend>
+                                                <p className="p-settings__email-preferences-intro">
+                                                    Estas opciones solo aplican al canal de correo electrónico.
+                                                </p>
+
+                                                <section className="p-settings__email-test">
+                                                    <p className="p-settings__email-test-copy">
+                                                        ¿Quieres probarlo ahora? Envía una simulación de "nueva tarea" al correo configurado.
+                                                    </p>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="p-settings__outline-button"
+                                                        disabled={processing || testingEmail || !profile.email || !preferencesData.email}
+                                                        onClick={sendTestNotificationEmail}
+                                                    >
+                                                        {testingEmail ? 'Enviando prueba...' : 'Probar correo'}
+                                                    </Button>
+                                                </section>
+
+                                                <section aria-label="Tipos de notificación por correo" className="p-settings__toggles p-settings__toggles--compact">
+                                                    <PreferenceToggle
+                                                        id="email-type-48h"
+                                                        label="Recordatorio 48h"
+                                                        description="Permite correos de aviso cuando falten menos de 48 horas para la entrega"
+                                                        checked={preferencesData.email_48h}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_48h', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-24h"
+                                                        label="Recordatorio 24h"
+                                                        description="Permite correos de aviso cuando falten menos de 24 horas para la entrega"
+                                                        checked={preferencesData.email_24h}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_24h', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-same-day"
+                                                        label="Recordatorio del mismo día"
+                                                        description="Permite correos de entregas que vencen hoy"
+                                                        checked={preferencesData.email_same_day}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_same_day', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-custom"
+                                                        label="Recordatorio personalizado"
+                                                        description="Permite correos según la ventana de minutos personalizada"
+                                                        checked={preferencesData.email_custom}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_custom', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-overdue"
+                                                        label="Entrega vencida"
+                                                        description="Permite correos cuando una entrega ya está fuera de plazo"
+                                                        checked={preferencesData.email_overdue}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_overdue', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-new-task"
+                                                        label="Nueva tarea"
+                                                        description="Permite correos cuando se detecta una tarea nueva en Moodle"
+                                                        checked={preferencesData.email_new_task}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_new_task', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-deadline-changed"
+                                                        label="Cambio de fecha de entrega"
+                                                        description="Permite correos cuando el profesorado modifica la fecha de entrega"
+                                                        checked={preferencesData.email_deadline_changed}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_deadline_changed', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-new-grade"
+                                                        label="Nueva calificación"
+                                                        description="Permite correos cuando aparece una nueva nota"
+                                                        checked={preferencesData.email_new_grade}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_new_grade', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-new-feedback"
+                                                        label="Nueva retroalimentación"
+                                                        description="Permite correos cuando el profesorado publica feedback"
+                                                        checked={preferencesData.email_new_feedback}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_new_feedback', value)}
+                                                    />
+                                                    <PreferenceToggle
+                                                        id="email-type-moodle-message"
+                                                        label="Mensajería Moodle"
+                                                        description="Permite correos cuando llega un nuevo mensaje en Moodle"
+                                                        checked={preferencesData.email_moodle_message}
+                                                        disabled={processing}
+                                                        onToggle={(value) => persistPreference('email_moodle_message', value)}
+                                                    />
+                                                </section>
+                                            </fieldset>
+                                        ) : (
+                                            <p className="p-settings__caption">
+                                                Activa el canal de correo para configurar qué tipos de notificaciones quieres recibir.
                                             </p>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="p-settings__outline-button"
-                                                disabled={processing || testingEmail || !profile.email}
-                                                onClick={sendTestNotificationEmail}
-                                            >
-                                                {testingEmail ? 'Enviando prueba...' : 'Probar correo'}
-                                            </Button>
-                                        </section>
+                                        )}
+
                                         <PreferenceToggle
                                             id="channel-push"
                                             label="Notificaciones push"

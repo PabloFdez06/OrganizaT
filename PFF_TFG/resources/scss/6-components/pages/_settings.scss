@@ -546,6 +546,10 @@
     margin-top: 18px;
 }
 
+.p-settings__connect-form .c-input {
+    border-radius: 0;
+}
+
 .p-settings__connect-form .p-settings__outline-button {
     grid-column: span 2;
     justify-self: start;
@@ -613,6 +617,62 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
+}
+
+.p-settings__toggles--compact {
+    gap: 0.875rem;
+}
+
+.p-settings__toggles--compact .p-settings__toggle-row {
+    gap: 0.75rem;
+}
+
+.p-settings__toggles--compact .p-settings__toggle-title {
+    font-size: 0.875rem;
+}
+
+.p-settings__toggles--compact .p-settings__toggle-description {
+    font-size: 0.6875rem;
+    line-height: 1.35;
+}
+
+.p-settings__toggles--compact .p-settings__switch {
+    width: 2.625rem;
+    height: 1.375rem;
+    padding: 0.125rem;
+}
+
+.p-settings__toggles--compact .p-settings__switch-thumb {
+    width: 1rem;
+    height: 1rem;
+}
+
+.p-settings__toggles--compact .p-settings__switch--on .p-settings__switch-thumb {
+    transform: translateX(1.25rem);
+}
+
+.p-settings__email-preferences {
+    border: 1px solid color-mix(in srgb, var(--color-brand) 22%, var(--color-border) 78%);
+    background: color-mix(in srgb, var(--color-brand) 5%, var(--color-surface) 95%);
+    padding: 0.9375rem;
+    display: grid;
+    gap: 0.875rem;
+}
+
+.p-settings__email-preferences-legend {
+    color: var(--color-brand);
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding-inline: 0.25rem;
+}
+
+.p-settings__email-preferences-intro {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.6875rem;
+    line-height: 1.4;
 }
 
 .p-settings__background-info {
@@ -743,8 +803,8 @@
 }
 
 .p-settings__email-test {
-    margin-top: -8px;
-    padding: 14px 16px;
+    margin-top: 0;
+    padding: 0.75rem;
     border: 1px solid var(--color-border);
     background: color-mix(in srgb, var(--color-brand) 6%, transparent);
     display: flex;
@@ -756,7 +816,7 @@
 
     .p-settings__email-test-copy {
     color: var(--color-text-muted);
-    font-size: 12px;
+        font-size: 0.6875rem;
     line-height: 1.35;
 }
 

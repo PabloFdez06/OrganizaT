@@ -56,9 +56,10 @@ class MoodleNotificationCenter
 
     /**
      * @param  array<int, array<string, mixed>>  $tasks
+     * @param  array<int, array<string, mixed>>  $messages
      * @return array{unreadCount:int,items:array<int,array<string,mixed>>}
      */
-    public function buildForUser(User $user, array $tasks): array
+    public function buildForUser(User $user, array $tasks, array $messages = []): array
     {
         $preferences = $this->resolvePreferences($user);
         $now = CarbonImmutable::now();
@@ -67,6 +68,7 @@ class MoodleNotificationCenter
         $eventFeed = $this->getEventFeed($user);
 
         $eventFeed = $this->appendDiffEvents($eventFeed, $snapshot, $previousSnapshot, $now);
+        $eventFeed = $this->appendMessageEvents($eventFeed, $messages, $now);
         $eventFeed = $this->pruneEventFeed($eventFeed, $now);
 
         Cache::put($this->snapshotKey($user), $snapshot, now()->addSeconds(self::SNAPSHOT_TTL_SECONDS));
@@ -147,7 +149,7 @@ class MoodleNotificationCenter
                 'course' => (string) ($item['course'] ?? 'Sistema'),
                 'level' => (string) ($item['level'] ?? 'info'),
                 'dueLabel' => (string) ($item['dueLabel'] ?? ''),
-                'url' => (string) ($item['url'] ?? '/tareas'),
+                'url' => (string) ($item['url'] ?? '/dashboard'),
                 'trigger' => (string) ($item['trigger'] ?? 'system'),
                 'category' => (string) ($item['category'] ?? 'MENSAJE DEL SISTEMA'),
                 'meta' => (string) ($item['meta'] ?? ''),
@@ -281,7 +283,7 @@ class MoodleNotificationCenter
                     title: $current['title'] !== '' ? $current['title'] : 'Nueva actividad',
                     course: $current['course'] !== '' ? $current['course'] : 'Asignatura',
                     message: 'Se ha creado una nueva tarea en Moodle.',
-                    url: $current['url'] !== '' ? $current['url'] : '/tareas',
+                    url: $current['url'] !== '' ? $current['url'] : '/dashboard',
                     meta: 'NUEVA TAREA',
                     category: 'NUEVA TAREA',
                     level: 'info',
@@ -298,7 +300,7 @@ class MoodleNotificationCenter
                     title: $current['title'] !== '' ? $current['title'] : 'Fecha de entrega actualizada',
                     course: $current['course'] !== '' ? $current['course'] : 'Asignatura',
                     message: 'La fecha de entrega fue modificada por el profesor.',
-                    url: $current['url'] !== '' ? $current['url'] : '/tareas',
+                    url: $current['url'] !== '' ? $current['url'] : '/dashboard',
                     meta: 'NUEVA FECHA',
                     category: 'ENTREGA MODIFICADA',
                     level: 'warning',
@@ -316,7 +318,7 @@ class MoodleNotificationCenter
                     title: $current['title'] !== '' ? $current['title'] : 'Nueva calificación',
                     course: $current['course'] !== '' ? $current['course'] : 'Asignatura',
                     message: 'Se ha publicado una nueva calificación.',
-                    url: $current['url'] !== '' ? $current['url'] : '/calificaciones',
+                    url: $current['url'] !== '' ? $current['url'] : '/dashboard',
                     meta: 'NOTA: '.trim((string) $current['grade']),
                     category: 'NUEVA CALIFICACIÓN',
                     level: 'info',
@@ -334,7 +336,7 @@ class MoodleNotificationCenter
                     title: $current['title'] !== '' ? $current['title'] : 'Nueva retroalimentación',
                     course: $current['course'] !== '' ? $current['course'] : 'Asignatura',
                     message: 'Hay nueva retroalimentación del profesor en esta actividad.',
-                    url: $current['url'] !== '' ? $current['url'] : '/tareas',
+                    url: $current['url'] !== '' ? $current['url'] : '/dashboard',
                     meta: 'NUEVO FEEDBACK',
                     category: 'NUEVA RETROALIMENTACIÓN',
                     level: 'info',
@@ -345,6 +347,64 @@ class MoodleNotificationCenter
         }
 
         return $eventFeed;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $eventFeed
+     * @param  array<int, array<string, mixed>>  $messages
+     * @return array<int, array<string, mixed>>
+     */
+    private function appendMessageEvents(array $eventFeed, array $messages, CarbonImmutable $now): array
+    {
+        foreach ($messages as $message) {
+            if (! is_array($message)) {
+                continue;
+            }
+
+            $messageId = trim((string) ($message['id'] ?? ''));
+
+            if ($messageId === '') {
+                continue;
+            }
+
+            $sender = trim((string) ($message['sender'] ?? 'Moodle'));
+            $title = trim((string) ($message['title'] ?? 'Nuevo mensaje en Moodle'));
+            $content = trim((string) ($message['message'] ?? 'Has recibido un nuevo mensaje en Moodle.'));
+            $course = trim((string) ($message['course'] ?? 'Mensajeria Moodle'));
+            $url = trim((string) ($message['url'] ?? ''));
+
+            $eventFeed[] = $this->buildEventItem(
+                type: 'moodle_message',
+                title: $title !== '' ? $title : 'Nuevo mensaje en Moodle',
+                course: $course !== '' ? $course : 'Mensajeria Moodle',
+                message: $content !== '' ? $content : 'Has recibido un nuevo mensaje en Moodle.',
+                url: $url !== '' ? $url : '/dashboard',
+                meta: 'DE: '.($sender !== '' ? $sender : 'Moodle'),
+                category: 'MENSAJERIA MOODLE',
+                level: 'info',
+                fingerprint: $messageId,
+                createdAt: $this->resolveEventCreatedAt($message['createdAt'] ?? null, $now),
+            );
+        }
+
+        return $eventFeed;
+    }
+
+    private function resolveEventCreatedAt(mixed $value, CarbonImmutable $fallback): CarbonImmutable
+    {
+        if (is_int($value) && $value > 0) {
+            return CarbonImmutable::createFromTimestamp($value);
+        }
+
+        if (is_string($value) && trim($value) !== '') {
+            try {
+                return CarbonImmutable::parse($value);
+            } catch (\Throwable) {
+                return $fallback;
+            }
+        }
+
+        return $fallback;
     }
 
     /**
@@ -410,7 +470,7 @@ class MoodleNotificationCenter
             'course' => $course,
             'level' => $level,
             'dueLabel' => $createdAt->locale('es')->translatedFormat('D, d M · H:i'),
-            'url' => $url !== '' ? $url : '/tareas',
+            'url' => $url !== '' ? $url : '/dashboard',
             'trigger' => $type,
             'category' => $category,
             'meta' => $meta,
@@ -488,6 +548,16 @@ class MoodleNotificationCenter
             'recordatorio_personalizado_minutos' => 180,
             'email' => true,
             'push' => false,
+            'email_48h' => true,
+            'email_24h' => true,
+            'email_same_day' => true,
+            'email_custom' => true,
+            'email_overdue' => true,
+            'email_new_task' => true,
+            'email_deadline_changed' => true,
+            'email_new_grade' => true,
+            'email_new_feedback' => true,
+            'email_moodle_message' => true,
         ];
 
         $saved = is_array($user->moodle_notification_preferences) ? $user->moodle_notification_preferences : [];
@@ -500,6 +570,16 @@ class MoodleNotificationCenter
         $merged['recordatorio_personalizado_minutos'] = max(1, (int) ($merged['recordatorio_personalizado_minutos'] ?? 180));
         $merged['email'] = (bool) ($merged['email'] ?? true);
         $merged['push'] = (bool) ($merged['push'] ?? false);
+        $merged['email_48h'] = (bool) ($merged['email_48h'] ?? true);
+        $merged['email_24h'] = (bool) ($merged['email_24h'] ?? true);
+        $merged['email_same_day'] = (bool) ($merged['email_same_day'] ?? true);
+        $merged['email_custom'] = (bool) ($merged['email_custom'] ?? true);
+        $merged['email_overdue'] = (bool) ($merged['email_overdue'] ?? true);
+        $merged['email_new_task'] = (bool) ($merged['email_new_task'] ?? true);
+        $merged['email_deadline_changed'] = (bool) ($merged['email_deadline_changed'] ?? true);
+        $merged['email_new_grade'] = (bool) ($merged['email_new_grade'] ?? true);
+        $merged['email_new_feedback'] = (bool) ($merged['email_new_feedback'] ?? true);
+        $merged['email_moodle_message'] = (bool) ($merged['email_moodle_message'] ?? true);
 
         return $merged;
     }
@@ -600,7 +680,7 @@ class MoodleNotificationCenter
             'course' => $course,
             'level' => $level,
             'dueLabel' => $dueLabel,
-            'url' => $taskUrl !== '' ? $taskUrl : '/tareas',
+            'url' => $taskUrl !== '' ? $taskUrl : '/dashboard',
             'trigger' => $trigger,
             'category' => $category,
             'meta' => $meta,
@@ -647,7 +727,7 @@ class MoodleNotificationCenter
             'course' => $course,
             'level' => 'info',
             'dueLabel' => $dueAt->locale('es')->translatedFormat('D, d M · H:i'),
-            'url' => $taskUrl !== '' ? $taskUrl : '/tareas',
+            'url' => $taskUrl !== '' ? $taskUrl : '/dashboard',
             'trigger' => 'custom',
             'category' => 'RECORDATORIO PERSONALIZADO',
             'meta' => 'VENTANA DE '.$customMinutes.' MIN',
@@ -698,8 +778,13 @@ class MoodleNotificationCenter
 
             $id = trim((string) ($item['id'] ?? ''));
             $isRead = (bool) ($item['isRead'] ?? false);
+            $trigger = trim((string) ($item['trigger'] ?? 'system'));
 
             if ($id === '' || $isRead || isset($emailed[$id])) {
+                continue;
+            }
+
+            if (! $this->shouldSendEmailForTrigger($trigger, $preferences)) {
                 continue;
             }
 
@@ -710,6 +795,33 @@ class MoodleNotificationCenter
         if (! $hasNewDelivery) {
             return;
         }
+    }
+
+    /**
+     * @param  array<string, bool|int>  $preferences
+     */
+    private function shouldSendEmailForTrigger(string $trigger, array $preferences): bool
+    {
+        $map = [
+            '48h' => 'email_48h',
+            '24h' => 'email_24h',
+            'same_day' => 'email_same_day',
+            'custom' => 'email_custom',
+            'overdue' => 'email_overdue',
+            'new_task' => 'email_new_task',
+            'deadline_changed' => 'email_deadline_changed',
+            'new_grade' => 'email_new_grade',
+            'new_feedback' => 'email_new_feedback',
+            'moodle_message' => 'email_moodle_message',
+        ];
+
+        $key = $map[$trigger] ?? null;
+
+        if (! is_string($key)) {
+            return true;
+        }
+
+        return (bool) ($preferences[$key] ?? true);
     }
 
     /**

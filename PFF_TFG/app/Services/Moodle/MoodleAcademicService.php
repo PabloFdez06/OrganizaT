@@ -160,6 +160,237 @@ class MoodleAcademicService
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getUnreadMessages(MoodleSession $session, int $limit = 20): array
+    {
+        $safeLimit = max(1, min(50, $limit));
+
+        $messages = $this->getUnreadMessagesFromPopupApi($session, $safeLimit);
+
+        if ($messages !== []) {
+            return $messages;
+        }
+
+        return $this->getUnreadMessagesFromCoreApi($session, $safeLimit);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getUnreadMessagesFromPopupApi(MoodleSession $session, int $limit): array
+    {
+        try {
+            $payload = json_encode([
+                [
+                    'index' => 0,
+                    'methodname' => 'message_popup_get_popup_notifications',
+                    'args' => [
+                        'offset' => 0,
+                        'limit' => $limit,
+                    ],
+                ],
+            ], JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        try {
+            $response = $this->client->post(
+                $session,
+                '/lib/ajax/service.php?sesskey='.$session->sesskey.'&info=message_popup_get_popup_notifications',
+                $payload,
+                [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                ],
+                traceStep: 'messages_popup_service',
+            );
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $decoded = json_decode($response, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $data = $decoded[0]['data'] ?? null;
+
+        if (! is_array($data)) {
+            return [];
+        }
+
+        $rows = is_array($data['notifications'] ?? null) ? $data['notifications'] : [];
+
+        return $this->normalizeMoodleMessages($rows, $limit);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getUnreadMessagesFromCoreApi(MoodleSession $session, int $limit): array
+    {
+        $userId = (int) ($session->userid ?? 0);
+
+        if ($userId <= 0) {
+            return [];
+        }
+
+        try {
+            $payload = json_encode([
+                [
+                    'index' => 0,
+                    'methodname' => 'core_message_get_messages',
+                    'args' => [
+                        'useridto' => $userId,
+                        'useridfrom' => 0,
+                        'type' => 'notifications',
+                        'read' => 0,
+                        'newestfirst' => 1,
+                        'limitfrom' => 0,
+                        'limitnum' => $limit,
+                    ],
+                ],
+            ], JSON_THROW_ON_ERROR);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        try {
+            $response = $this->client->post(
+                $session,
+                '/lib/ajax/service.php?sesskey='.$session->sesskey.'&info=core_message_get_messages',
+                $payload,
+                [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'X-Requested-With' => 'XMLHttpRequest',
+                ],
+                traceStep: 'messages_core_service',
+            );
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $decoded = json_decode($response, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        $data = $decoded[0]['data'] ?? null;
+
+        if (! is_array($data)) {
+            return [];
+        }
+
+        $rows = [];
+
+        if (is_array($data['messages'] ?? null)) {
+            $rows = array_merge($rows, $data['messages']);
+        }
+
+        if (is_array($data['notifications'] ?? null)) {
+            $rows = array_merge($rows, $data['notifications']);
+        }
+
+        return $this->normalizeMoodleMessages($rows, $limit);
+    }
+
+    /**
+     * @param  array<int, mixed>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeMoodleMessages(array $rows, int $limit): array
+    {
+        $normalized = [];
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $id = isset($row['id']) ? (int) $row['id'] : (isset($row['messageid']) ? (int) $row['messageid'] : 0);
+
+            if ($id <= 0) {
+                continue;
+            }
+
+            $subject = trim((string) ($row['subject'] ?? $row['shortenedsubject'] ?? ''));
+            $smallMessage = trim((string) ($row['smallmessage'] ?? $row['text'] ?? ''));
+            $fullMessageRaw = (string) ($row['fullmessage'] ?? $row['message'] ?? $smallMessage);
+            $fullMessage = trim(preg_replace('/\s+/u', ' ', strip_tags($fullMessageRaw)) ?? '');
+
+            $message = $fullMessage !== '' ? $fullMessage : $smallMessage;
+
+            if ($message === '') {
+                $message = 'Has recibido un nuevo mensaje en Moodle.';
+            }
+
+            if (mb_strlen($message) > 220) {
+                $message = mb_substr($message, 0, 217).'...';
+            }
+
+            $fromName = trim((string) ($row['userfromfullname'] ?? $row['fullname'] ?? $row['name'] ?? 'Moodle'));
+            $title = $subject !== '' ? $subject : 'Nuevo mensaje de '.$fromName;
+
+            $timeCreated = isset($row['timecreated']) ? (int) $row['timecreated'] : 0;
+            $createdAt = $timeCreated > 0
+                ? CarbonImmutable::createFromTimestamp($timeCreated)->toIso8601String()
+                : CarbonImmutable::now()->toIso8601String();
+
+            $rawUrl = trim((string) ($row['contexturl'] ?? $row['url'] ?? ''));
+            $url = $this->normalizeMoodleMessageUrl($rawUrl);
+
+            $normalized[] = [
+                'id' => 'moodle-message-'.$id,
+                'title' => $title,
+                'message' => $message,
+                'sender' => $fromName,
+                'course' => 'Mensajeria Moodle',
+                'url' => $url,
+                'createdAt' => $createdAt,
+                'source' => 'moodle_message',
+            ];
+        }
+
+        usort($normalized, static function (array $a, array $b): int {
+            $aCreated = strtotime((string) ($a['createdAt'] ?? '')) ?: 0;
+            $bCreated = strtotime((string) ($b['createdAt'] ?? '')) ?: 0;
+
+            return $bCreated <=> $aCreated;
+        });
+
+        if (count($normalized) <= $limit) {
+            return $normalized;
+        }
+
+        return array_slice($normalized, 0, $limit);
+    }
+
+    private function normalizeMoodleMessageUrl(string $url): string
+    {
+        if ($url === '') {
+            return '';
+        }
+
+        if (preg_match('/^https?:\/\//i', $url)) {
+            return $url;
+        }
+
+        $baseUrl = rtrim((string) config('services.moodle.base_url'), '/');
+
+        if ($baseUrl === '') {
+            return $url;
+        }
+
+        return $baseUrl.'/'.ltrim($url, '/');
+    }
+
+    /**
      * @return array<int, array<string, string|null>>
      */
     public function getResourcesByCourse(MoodleSession $session, int $courseId): array

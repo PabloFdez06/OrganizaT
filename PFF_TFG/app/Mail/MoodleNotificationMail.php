@@ -35,6 +35,7 @@ class MoodleNotificationMail extends Mailable
             'custom' => 'Recordatorio personalizado - '.$title,
             '24h' => 'Entrega en menos de 24h - '.$title,
             '48h' => 'Entrega en menos de 48h - '.$title,
+            'moodle_message' => 'Nuevo mensaje de Moodle - '.$title,
             default => 'Actualizacion academica - '.$title,
         };
 
@@ -43,15 +44,25 @@ class MoodleNotificationMail extends Mailable
 
     public function content(): Content
     {
-        $rawUrl = trim((string) ($this->notification['url'] ?? '/tareas'));
+        $rawUrl = trim((string) ($this->notification['url'] ?? ''));
         $appUrl = rtrim((string) config('app.url', 'http://localhost'), '/');
+        $logoSrc = $this->resolveLogoSrc($appUrl);
         $appName = trim((string) config('app.name', 'Campus'));
         $trigger = trim((string) ($this->notification['trigger'] ?? 'system'));
         $level = trim((string) ($this->notification['level'] ?? 'info'));
+        $dashboardUrl = $appUrl.'/dashboard';
 
-        $url = preg_match('/^https?:\/\//i', $rawUrl)
-            ? $rawUrl
-            : $appUrl.'/'.ltrim($rawUrl, '/');
+        $url = $dashboardUrl;
+
+        if ($rawUrl !== '') {
+            if (preg_match('/^https?:\/\//i', $rawUrl) === 1) {
+                $url = $rawUrl;
+            } elseif (str_starts_with($rawUrl, '/')) {
+                $url = $appUrl.$rawUrl;
+            } else {
+                $url = $appUrl.'/'.ltrim($rawUrl, '/');
+            }
+        }
 
         $triggerLabel = match ($trigger) {
             'new_task' => 'Nueva tarea',
@@ -63,6 +74,7 @@ class MoodleNotificationMail extends Mailable
             'new_grade' => 'Nueva calificacion',
             'new_feedback' => 'Nueva retroalimentacion',
             'deadline_changed' => 'Cambio de fecha',
+            'moodle_message' => 'Nuevo mensaje en Moodle',
             default => 'Actualizacion academica',
         };
 
@@ -74,6 +86,7 @@ class MoodleNotificationMail extends Mailable
             'new_grade' => 'Se registro una nueva calificacion en Moodle.',
             'new_feedback' => 'El profesor publico nueva retroalimentacion en una actividad.',
             'deadline_changed' => 'Se actualizo la fecha de entrega de una actividad.',
+            'moodle_message' => 'Se detecto un nuevo mensaje en la mensajeria de Moodle.',
             default => 'Se detecto un nuevo evento en tu actividad academica.',
         };
 
@@ -98,6 +111,7 @@ class MoodleNotificationMail extends Mailable
                 'notification' => $this->notification,
                 'recipientName' => trim((string) ($this->user->name ?? '')),
                 'actionUrl' => $url,
+                'logoSrc' => $logoSrc,
                 'appName' => $appName,
                 'triggerLabel' => $triggerLabel,
                 'introText' => $introText,
@@ -105,5 +119,20 @@ class MoodleNotificationMail extends Mailable
                 'badgeText' => $badgeStyles['text'],
             ],
         );
+    }
+
+    private function resolveLogoSrc(string $appUrl): string
+    {
+        $logoPath = public_path('favicon.png');
+
+        if (is_file($logoPath)) {
+            try {
+                return $this->embed($logoPath);
+            } catch (\Throwable) {
+                // Fallback below if embedding is not available for this transport.
+            }
+        }
+
+        return $appUrl.'/favicon.png';
     }
 }
