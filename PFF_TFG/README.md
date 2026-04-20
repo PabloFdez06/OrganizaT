@@ -89,6 +89,13 @@ Este script automatiza:
 - migraciones, optimizacion y reinicio de colas,
 - checks finales de HTTP (`/up`), Redis, worker y scheduler.
 
+No necesitas instalar PHP, Composer ni Node en el host Ubuntu.
+Todo eso vive dentro de la imagen Docker.
+
+Dependencias PHP de app cubiertas en el Dockerfile:
+
+- core de Laravel + extensiones de trabajo (`pdo_mysql`, `mbstring`, `dom`, `xml`, `simplexml`, `xmlwriter`, `bcmath`, `gd`, `intl`, `zip`, `pcntl`, `opcache`, `redis`).
+
 ## 6) Parte 11 - Preparacion del Droplet Ubuntu
 
 Comandos base recomendados (root o usuario con sudo):

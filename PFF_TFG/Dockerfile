@@ -12,6 +12,7 @@ RUN apk add --no-cache \
     icu-data-full \
     icu-libs \
     libjpeg-turbo \
+    libxml2 \
     libpng \
     libzip \
     oniguruma \
@@ -24,18 +25,24 @@ RUN apk add --no-cache \
         freetype-dev \
         icu-dev \
         libjpeg-turbo-dev \
+        libxml2-dev \
         libpng-dev \
         libzip-dev \
         oniguruma-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         bcmath \
+        dom \
         exif \
         gd \
         intl \
+        mbstring \
         opcache \
         pcntl \
         pdo_mysql \
+        simplexml \
+        xml \
+        xmlwriter \
         zip \
     && pecl install redis \
     && docker-php-ext-enable redis \
