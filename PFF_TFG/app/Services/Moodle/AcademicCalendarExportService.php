@@ -6,6 +6,11 @@ use Carbon\CarbonImmutable;
 
 class AcademicCalendarExportService
 {
+    public function __construct(
+        private readonly MoodleAccessUrlService $accessUrl,
+    ) {
+    }
+
     /**
      * @param  array<int, array<string, mixed>>  $tasks
      */
@@ -44,7 +49,7 @@ class AcademicCalendarExportService
             $statusLabel = $this->resolveStatusLabel($task);
             $dueOriginal = trim((string) ($task['fecha_entrega'] ?? ''));
             $daysRemaining = $this->resolveDaysRemaining($task, $dueDate);
-            $taskUrl = $this->normalizeString($task['url'] ?? null);
+            $taskUrl = $this->accessUrl->toAccessibleUrl($this->normalizeString($task['url'] ?? null));
 
             $descriptionParts = [
                 'Estado: '.$statusLabel,

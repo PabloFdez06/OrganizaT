@@ -7,6 +7,7 @@ use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\AcademicCalendarExportService;
 use App\Services\Moodle\MoodleAcademicRules;
+use App\Services\Moodle\MoodleAccessUrlService;
 use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
@@ -29,6 +30,7 @@ class TareasController extends Controller
         private readonly AcademicCalendarExportService $calendarExportService,
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleAsyncSectionCache $asyncCache,
+        private readonly MoodleAccessUrlService $accessUrl,
     ) {
     }
 
@@ -230,7 +232,9 @@ class TareasController extends Controller
                 'statusLabel' => $status['label'],
                 'statusTone' => $status['tone'],
                 'isOverdue' => $status['isOverdue'],
-                'url' => is_string($task['url'] ?? null) && trim((string) $task['url']) !== '' ? (string) $task['url'] : null,
+                'url' => $this->accessUrl->toAccessibleUrl(
+                    is_string($task['url'] ?? null) ? (string) $task['url'] : null,
+                ),
             ];
         }
 

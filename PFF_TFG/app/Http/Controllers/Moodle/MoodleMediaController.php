@@ -25,9 +25,8 @@ class MoodleMediaController extends Controller
         ]);
 
         $user = $request->user();
-        $moodleConnected = $this->sessionService->hasActiveSession($user);
 
-        if (! $moodleConnected) {
+        if (! $user) {
             abort(403, 'Moodle no conectado.');
         }
 
@@ -37,8 +36,29 @@ class MoodleMediaController extends Controller
             abort(403, 'URL de recurso no permitida.');
         }
 
+        $session = null;
+
         try {
-            $session = $this->sessionService->reopenForUser($user);
+            if ($this->sessionService->hasActiveSession($user)) {
+                $session = $this->sessionService->reopenForUser($user);
+            } else {
+                $session = $this->sessionService->restoreSessionFromDatabase($user);
+
+                if ($session) {
+                    $username = is_string($user?->moodle_username ?? null)
+                        ? trim((string) $user->moodle_username)
+                        : '';
+
+                    if ($username !== '') {
+                        $this->sessionService->storeForUser($user, $username, $session);
+                    }
+                }
+            }
+
+            if (! $session) {
+                abort(403, 'Moodle no conectado.');
+            }
+
             $binary = $this->client->getBinary($session, $target);
         } catch (MoodleAuthenticationException|MoodleRequestException) {
             abort(404, 'No se pudo recuperar el recurso solicitado.');

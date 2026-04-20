@@ -7,6 +7,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAcademicRules;
+use App\Services\Moodle\MoodleAccessUrlService;
 use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\SpanishDateParser;
@@ -28,6 +29,7 @@ class CalificacionesController extends Controller
         private readonly MoodleAcademicRules $rules,
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleAsyncSectionCache $asyncCache,
+        private readonly MoodleAccessUrlService $accessUrl,
     ) {
     }
 
@@ -234,7 +236,7 @@ class CalificacionesController extends Controller
                 'title' => $title,
                 'subject' => (string) ($task['asignatura_nombre'] ?? 'Sin asignatura'),
                 'dateLabel' => $this->buildMilestoneDateLabel($task, $date, $days),
-                'link' => is_string($task['url'] ?? null) && $task['url'] !== '' ? (string) $task['url'] : null,
+                'link' => $this->accessUrl->toAccessibleUrl(is_string($task['url'] ?? null) ? (string) $task['url'] : null),
                 'kind' => $isDelivered ? 'entregada' : 'proxima',
                 'days' => $days,
                 'date' => $date,
@@ -369,7 +371,7 @@ class CalificacionesController extends Controller
         foreach ($tasks as $task) {
             $courseId = (int) ($task['asignatura_id'] ?? 0);
             $taskName = mb_strtolower(trim((string) ($task['nombre'] ?? '')));
-            $taskUrl = is_string($task['url'] ?? null) && $task['url'] !== '' ? (string) $task['url'] : null;
+            $taskUrl = $this->accessUrl->toAccessibleUrl(is_string($task['url'] ?? null) ? (string) $task['url'] : null);
 
             if ($courseId <= 0 || $taskName === '' || $taskUrl === null) {
                 continue;

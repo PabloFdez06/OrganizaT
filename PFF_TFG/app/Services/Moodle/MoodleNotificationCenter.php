@@ -15,6 +15,11 @@ class MoodleNotificationCenter
     private const DISMISSED_TTL_SECONDS = 1209600;
     private const EMAILED_TTL_SECONDS = 1209600;
 
+    public function __construct(
+        private readonly MoodleAccessUrlService $accessUrl,
+    ) {
+    }
+
     public function markAllAsRead(User $user): void
     {
         $feed = $this->getEventFeed($user);
@@ -138,9 +143,11 @@ class MoodleNotificationCenter
         $items = array_slice($items, 0, self::MAX_ITEMS);
         $dismissed = $this->getDismissedIds($user);
 
-        $mapped = array_map(static function (array $item) use ($dismissed): array {
+        $mapped = array_map(function (array $item) use ($dismissed): array {
             $id = (string) ($item['id'] ?? '');
             $isRead = isset($dismissed[$id]);
+            $url = is_string($item['url'] ?? null) ? (string) $item['url'] : '/dashboard';
+            $resolvedUrl = $this->accessUrl->toAccessibleUrl($url) ?? '/dashboard';
 
             return [
                 'id' => $id,
@@ -149,7 +156,7 @@ class MoodleNotificationCenter
                 'course' => (string) ($item['course'] ?? 'Sistema'),
                 'level' => (string) ($item['level'] ?? 'info'),
                 'dueLabel' => (string) ($item['dueLabel'] ?? ''),
-                'url' => (string) ($item['url'] ?? '/dashboard'),
+                'url' => $resolvedUrl,
                 'trigger' => (string) ($item['trigger'] ?? 'system'),
                 'category' => (string) ($item['category'] ?? 'MENSAJE DEL SISTEMA'),
                 'meta' => (string) ($item['meta'] ?? ''),

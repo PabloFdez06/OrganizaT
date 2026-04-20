@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\Moodle\FetchRecursosJob;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Services\Moodle\MoodleAccessUrlService;
 use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
@@ -21,6 +22,7 @@ class RecursosController extends Controller
         private readonly MoodleUserAcademicCache $cache,
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleAsyncSectionCache $asyncCache,
+        private readonly MoodleAccessUrlService $accessUrl,
     ) {
     }
 
@@ -480,17 +482,19 @@ class RecursosController extends Controller
             return null;
         }
 
-        $normalizedUrl = $this->toAbsoluteMoodleUrl(trim($url), $module);
+        $normalizedUrl = $this->accessUrl->toAbsoluteUrl(trim($url), $module);
 
         if (! is_string($normalizedUrl) || trim($normalizedUrl) === '') {
             return null;
         }
 
+        $resolved = $normalizedUrl;
+
         if ($kind === 'external_link' && str_contains($normalizedUrl, '/mod/url/view.php')) {
-            return $this->appendQueryParam($normalizedUrl, 'redirect', '1');
+            $resolved = $this->appendQueryParam($normalizedUrl, 'redirect', '1');
         }
 
-        return $normalizedUrl;
+        return $this->accessUrl->toAccessibleUrl($resolved);
     }
 
     private function buildDownloadUrl(?string $url, string $kind, ?string $module): ?string
@@ -503,55 +507,20 @@ class RecursosController extends Controller
             return null;
         }
 
-        $normalizedUrl = $this->toAbsoluteMoodleUrl(trim($url), $module);
+        $normalizedUrl = $this->accessUrl->toAbsoluteUrl(trim($url), $module);
 
         if (! is_string($normalizedUrl) || trim($normalizedUrl) === '') {
             return null;
         }
 
         if (str_contains($normalizedUrl, '/pluginfile.php') || str_contains($normalizedUrl, '/webservice/pluginfile.php')) {
-            return $this->appendQueryParam($normalizedUrl, 'forcedownload', '1');
+            $downloadUrl = $this->appendQueryParam($normalizedUrl, 'forcedownload', '1');
+
+            return $this->accessUrl->toAccessibleUrl($downloadUrl);
         }
 
         // Evita descargar HTML de vistas tipo /mod/*/view.php (termina como view.htm en navegador).
         return null;
-    }
-
-    private function toAbsoluteMoodleUrl(string $url, ?string $module): ?string
-    {
-        $trimmed = trim($url);
-
-        if ($trimmed === '') {
-            return null;
-        }
-
-        if (str_starts_with($trimmed, 'http://') || str_starts_with($trimmed, 'https://')) {
-            return $trimmed;
-        }
-
-        $baseUrl = rtrim((string) config('services.moodle.base_url'), '/');
-
-        if ($baseUrl === '') {
-            return $trimmed;
-        }
-
-        if (str_starts_with($trimmed, '//')) {
-            $baseScheme = (string) parse_url($baseUrl, PHP_URL_SCHEME);
-
-            return ($baseScheme !== '' ? $baseScheme : 'https').':'.$trimmed;
-        }
-
-        if (str_starts_with($trimmed, '/')) {
-            return $baseUrl.$trimmed;
-        }
-
-        $safeModule = is_string($module) ? trim(mb_strtolower($module)) : '';
-
-        if ($safeModule !== '' && preg_match('/^[a-z0-9_]+$/', $safeModule) === 1) {
-            return $baseUrl.'/mod/'.$safeModule.'/'.$trimmed;
-        }
-
-        return $baseUrl.'/'.$trimmed;
     }
 
     private function appendQueryParam(string $url, string $key, string $value): string

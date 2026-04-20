@@ -7,6 +7,7 @@ use App\Services\EisenhowerMatrixService;
 use App\Services\Ai\EisenhowerMatrixAiService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Services\Moodle\MoodleAccessUrlService;
 use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\SpanishDateParser;
@@ -29,6 +30,7 @@ class DashboardController extends Controller
         private readonly SpanishDateParser $dateParser,
         private readonly EisenhowerMatrixService $matrixResolver,
         private readonly EisenhowerMatrixAiService $matrixAi,
+        private readonly MoodleAccessUrlService $accessUrl,
     ) {
     }
 
@@ -433,7 +435,7 @@ class DashboardController extends Controller
                 'when' => $dayLabel.' · '.$timeLabel,
                 'title' => (string) ($task['nombre'] ?? 'Actividad'),
                 'description' => (string) ($task['asignatura_nombre'] ?? 'Sin asignatura'),
-                'link' => (string) ($task['url'] ?? ''),
+                'link' => $this->accessUrl->toAccessibleUrl(is_string($task['url'] ?? null) ? (string) $task['url'] : null) ?? '',
                 'current' => $isCurrent,
             ];
         }
@@ -553,7 +555,7 @@ class DashboardController extends Controller
             'highlight' => (string) ($task['asignatura_nombre'] ?? 'Sin asignatura'),
             'remaining' => $remaining,
             'priority' => $priority,
-            'link' => is_string($task['url'] ?? null) && $task['url'] !== '' ? (string) $task['url'] : null,
+            'link' => $this->accessUrl->toAccessibleUrl(is_string($task['url'] ?? null) ? (string) $task['url'] : null),
         ];
     }
 
@@ -591,7 +593,7 @@ class DashboardController extends Controller
                 'daysRemaining' => $days,
                 'dueLabel' => is_string($task['fecha_entrega'] ?? null) ? (string) $task['fecha_entrega'] : '',
                 'status' => (string) ($task['estado'] ?? ''),
-                'link' => is_string($task['url'] ?? null) && $task['url'] !== '' ? (string) $task['url'] : null,
+                'link' => $this->accessUrl->toAccessibleUrl(is_string($task['url'] ?? null) ? (string) $task['url'] : null),
             ];
         }
 
