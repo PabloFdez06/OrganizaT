@@ -24,7 +24,8 @@ class MoodleNotificationsController extends Controller
             try {
                 $payload = $this->cache->getForUser($user);
                 $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
-                $notifications = $this->notificationCenter->buildForUser($user, $tasks);
+                $messages = is_array($payload['messages'] ?? null) ? $payload['messages'] : [];
+                $notifications = $this->notificationCenter->buildForUser($user, $tasks, $messages);
                 $ids = collect(is_array($notifications['items'] ?? null) ? $notifications['items'] : [])
                     ->map(fn (array $item): string => trim((string) ($item['id'] ?? '')))
                     ->filter(fn (string $id): bool => $id !== '')

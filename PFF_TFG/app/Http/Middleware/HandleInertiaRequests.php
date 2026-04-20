@@ -83,8 +83,9 @@ class HandleInertiaRequests extends Middleware
                     }
 
                     $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
+                    $messages = is_array($payload['messages'] ?? null) ? $payload['messages'] : [];
 
-                    return $this->notificationCenter->buildForUser($user, $tasks);
+                    return $this->notificationCenter->buildForUser($user, $tasks, $messages);
                 } catch (\Throwable) {
                     return [
                         'unreadCount' => 0,

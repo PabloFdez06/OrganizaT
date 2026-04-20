@@ -25,7 +25,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-        * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
+        * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, messages: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
      */
     public function getForUser(User $user): array
     {
@@ -69,7 +69,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-        * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
+        * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, messages: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
      */
     private function buildAcademicPayload(User $user): array
     {
@@ -85,6 +85,15 @@ class MoodleUserAcademicCache
             $courses = $this->academicService->getCourses($session, includeTutor: true);
             $tasks = $this->collectAllTasks($session, $courses);
             $gradeReport = $this->academicService->getGrades($session);
+            $messages = [];
+
+            try {
+                $messages = $this->academicService->getUnreadMessages($session);
+            } catch (\Throwable) {
+                // If Moodle messaging endpoint fails, keep academic payload available.
+                $messages = [];
+            }
+
             $tasks = $this->enrichTasksWithGradeReport($tasks, is_array($gradeReport) ? $gradeReport : []);
             $profileAvatarUrl = $this->extractProfileAvatarUrl($session);
             $studentName = $this->extractStudentName($session);
@@ -114,6 +123,7 @@ class MoodleUserAcademicCache
             return [
                 'courses' => $courses,
                 'tasks' => $normalizedTasks,
+                'messages' => is_array($messages) ? $messages : [],
                 'gradeReport' => is_array($gradeReport) ? $gradeReport : [],
                 'profileAvatarUrl' => $profileAvatarUrl,
                 'studentName' => $studentName,
