@@ -64,12 +64,20 @@ RUN composer install \
     --optimize-autoloader \
     --no-scripts
 
-FROM node:${NODE_VERSION}-alpine AS frontend
+FROM base AS frontend
 
 WORKDIR /var/www/html
+
+RUN apk add --no-cache nodejs npm
+
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
 COPY package*.json ./
 RUN npm ci
 COPY . .
+COPY --from=vendor /var/www/html/vendor ./vendor
 RUN npm run build
 
 FROM base AS runtime
