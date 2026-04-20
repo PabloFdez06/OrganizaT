@@ -12,8 +12,9 @@
 /vendor
 .DS_Store
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
+!.env.beta.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json

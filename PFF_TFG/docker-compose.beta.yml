@@ -1,0 +1,137 @@
+name: organizat-beta
+
+x-laravel-service: &laravel-service
+  env_file:
+    - ./.env
+  restart: unless-stopped
+  networks:
+    - backend
+
+services:
+  app:
+    <<: *laravel-service
+    image: organizat-app:beta
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    command: ["php-fpm", "-F"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f php-fpm >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    <<: *laravel-service
+    image: organizat-app:beta
+    command: ["php", "artisan", "queue:work", "--queue=default", "--sleep=1", "--tries=3", "--timeout=120", "--max-time=3600", "--no-interaction"]
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck-worker"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  scheduler:
+    <<: *laravel-service
+    image: organizat-app:beta
+    command: ["php", "artisan", "schedule:work", "--no-interaction"]
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck-scheduler"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  nginx:
+    image: organizat-nginx:beta
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: nginx
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "${APP_HTTP_PORT:-80}:80"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:7.2-alpine
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    command: >-
+      sh -c '
+      if [ -n "$${REDIS_PASSWORD}" ] && [ "$${REDIS_PASSWORD}" != "null" ]; then
+        exec redis-server --appendonly yes --save 60 1000 --loglevel warning --requirepass "$${REDIS_PASSWORD}";
+      else
+        exec redis-server --appendonly yes --save 60 1000 --loglevel warning;
+      fi'
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - if [ -n "$${REDIS_PASSWORD}" ] && [ "$${REDIS_PASSWORD}" != "null" ]; then redis-cli -a "$${REDIS_PASSWORD}" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  db:
+    image: mysql:8.4
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-name-resolve
+    environment:
+      TZ: ${APP_TIMEZONE:-UTC}
+      MYSQL_DATABASE: ${DB_DATABASE:-organizat_beta}
+      MYSQL_USER: ${DB_USERNAME:-organizat_beta}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-change_this_db_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-change_this_root_password}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:
