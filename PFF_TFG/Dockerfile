@@ -8,6 +8,7 @@ FROM php:${PHP_VERSION}-fpm-alpine AS base
 RUN apk add --no-cache \
     bash \
     curl \
+    freetype \
     git \
     icu-data-full \
     icu-libs \

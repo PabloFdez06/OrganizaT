@@ -18,6 +18,17 @@ compose() {
     ${DOCKER_CMD} compose -f "${COMPOSE_FILE}" "$@"
 }
 
+set_env_value() {
+    local key="$1"
+    local value="$2"
+
+    if grep -qE "^${key}=" .env; then
+        sed -i "s|^${key}=.*|${key}=${value}|" .env
+    else
+        printf "\n%s=%s\n" "${key}" "${value}" >> .env
+    fi
+}
+
 read_env_value() {
     local key="$1"
     local line
@@ -153,13 +164,21 @@ deploy_stack() {
     log "Construyendo imagenes..."
     compose build --pull
 
+    if ! grep -Eq '^APP_KEY=base64:' .env; then
+        local generated_key
+
+        log "Generando APP_KEY..."
+        generated_key="$(compose run --rm --no-deps app php artisan key:generate --show | tail -n 1 | tr -d '\r')"
+
+        if [[ ! "${generated_key}" =~ ^base64: ]]; then
+            fail "No se pudo generar una APP_KEY valida."
+        fi
+
+        set_env_value "APP_KEY" "${generated_key}"
+    fi
+
     log "Levantando servicios..."
     compose up -d --remove-orphans
-
-    if ! grep -Eq '^APP_KEY=base64:' .env; then
-        log "Generando APP_KEY..."
-        compose exec -T app php artisan key:generate --force
-    fi
 
     log "Ejecutando migraciones y optimizacion..."
     compose exec -T app php artisan migrate --force
