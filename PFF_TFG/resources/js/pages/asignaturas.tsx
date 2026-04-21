@@ -102,13 +102,35 @@ export default function Asignaturas({ moodleConnected, studentName, courseCards,
             return;
         }
 
-        const pollInterval = window.setInterval(() => {
+        let cancelled = false;
+        let pollTimeout: number | null = null;
+
+        const runPoll = () => {
+            if (cancelled) {
+                return;
+            }
+
             router.reload({
                 only: ['studentName', 'courseCards', 'summary', 'profileAvatarUrl', 'pageError', 'loading'],
-            });
-        }, 2500);
+                onFinish: () => {
+                    if (cancelled) {
+                        return;
+                    }
 
-        return () => window.clearInterval(pollInterval);
+                    pollTimeout = window.setTimeout(runPoll, 5000);
+                },
+            });
+        };
+
+        pollTimeout = window.setTimeout(runPoll, 5000);
+
+        return () => {
+            cancelled = true;
+
+            if (pollTimeout !== null) {
+                window.clearTimeout(pollTimeout);
+            }
+        };
     }, [loading, moodleConnected]);
 
     return (

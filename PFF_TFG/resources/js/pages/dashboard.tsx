@@ -135,7 +135,14 @@ export default function Dashboard({
             return;
         }
 
-        const pollInterval = window.setInterval(() => {
+        let cancelled = false;
+        let pollTimeout: number | null = null;
+
+        const runPoll = () => {
+            if (cancelled) {
+                return;
+            }
+
             router.reload({
                 only: [
                     'studentName',
@@ -149,11 +156,23 @@ export default function Dashboard({
                     'dashboardError',
                     'loading',
                 ],
+                onFinish: () => {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    pollTimeout = window.setTimeout(runPoll, 5000);
+                },
             });
-        }, 2500);
+        };
+
+        pollTimeout = window.setTimeout(runPoll, 5000);
 
         return () => {
-            window.clearInterval(pollInterval);
+            cancelled = true;
+            if (pollTimeout !== null) {
+                window.clearTimeout(pollTimeout);
+            }
         };
     }, [loading, moodleConnected]);
 

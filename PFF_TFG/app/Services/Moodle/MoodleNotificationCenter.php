@@ -64,7 +64,7 @@ class MoodleNotificationCenter
      * @param  array<int, array<string, mixed>>  $messages
      * @return array{unreadCount:int,items:array<int,array<string,mixed>>}
      */
-    public function buildForUser(User $user, array $tasks, array $messages = []): array
+    public function buildForUser(User $user, array $tasks, array $messages = [], bool $dispatchEmails = false): array
     {
         $preferences = $this->resolvePreferences($user);
         $now = CarbonImmutable::now();
@@ -166,7 +166,9 @@ class MoodleNotificationCenter
 
         $unreadCount = count(array_filter($mapped, static fn (array $item): bool => ! (bool) ($item['isRead'] ?? false)));
 
-        $this->dispatchEmailNotifications($user, $mapped, $preferences);
+        if ($dispatchEmails) {
+            $this->dispatchEmailNotifications($user, $mapped, $preferences);
+        }
 
         return [
             'unreadCount' => $unreadCount,

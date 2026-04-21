@@ -31,7 +31,7 @@ services:
   worker:
     <<: *laravel-service
     image: organizat-app:beta
-    command: ["php", "artisan", "queue:work", "--queue=default", "--sleep=1", "--tries=3", "--timeout=120", "--max-time=3600", "--no-interaction"]
+    command: ["php", "artisan", "queue:work", "--queue=default,mail", "--sleep=1", "--tries=3", "--timeout=300", "--max-time=3600", "--no-interaction"]
     depends_on:
       app:
         condition: service_healthy

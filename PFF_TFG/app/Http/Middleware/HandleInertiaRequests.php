@@ -45,11 +45,25 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                // Keep shared auth payload lean to reduce Inertia response size.
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar ?? null,
+                    'email_verified_at' => $user->email_verified_at,
+                    'two_factor_enabled' => method_exists($user, 'hasEnabledTwoFactorAuthentication')
+                        ? $user->hasEnabledTwoFactorAuthentication()
+                        : false,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                ] : null,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
@@ -85,7 +99,7 @@ class HandleInertiaRequests extends Middleware
                     $tasks = is_array($payload['tasks'] ?? null) ? $payload['tasks'] : [];
                     $messages = is_array($payload['messages'] ?? null) ? $payload['messages'] : [];
 
-                    return $this->notificationCenter->buildForUser($user, $tasks, $messages);
+                    return $this->notificationCenter->buildForUser($user, $tasks, $messages, false);
                 } catch (\Throwable) {
                     return [
                         'unreadCount' => 0,
