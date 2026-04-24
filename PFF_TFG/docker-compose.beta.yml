@@ -66,6 +66,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+      adminer:
+        condition: service_started
     ports:
       - "${APP_HTTP_PORT:-80}:80"
     networks:
@@ -127,6 +129,17 @@ services:
       timeout: 5s
       retries: 10
       start_period: 40s
+
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: ${DB_HOST:-db}
+    networks:
+      - backend
 
 networks:
   backend:

@@ -12,6 +12,7 @@ Servicios del stack:
 - `scheduler`: proceso dedicado al scheduler (`schedule:work`).
 - `redis`: backend de sesiones, cache y colas.
 - `db`: MySQL 8.4 para persistencia de datos.
+- `adminer`: interfaz web para gestion de base de datos (enrutada por Nginx en `/adminer/`).
 
 Decisiones clave:
 
@@ -63,6 +64,11 @@ docker compose -f docker-compose.beta.yml config
 sh scripts/ops/first-boot-beta.sh
 sh scripts/ops/inspect-beta.sh
 ```
+
+Acceso Adminer:
+
+- `http://IP_O_DOMINIO/adminer/`
+- Servidor por defecto en login: `db`
 
 ## 5) Arranque automatico en Droplet (sin agente)
 
