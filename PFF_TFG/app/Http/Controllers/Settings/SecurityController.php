@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
-use App\Mail\MoodleNotificationMail;
+use App\Jobs\Moodle\SendMoodleNotificationEmailJob;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
@@ -12,7 +12,6 @@ use App\Services\Moodle\MoodleUserAcademicCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
@@ -211,15 +210,15 @@ class SecurityController extends Controller
         ];
 
         try {
-            Mail::to($recipient)->send(new MoodleNotificationMail($notification, $user));
+            SendMoodleNotificationEmailJob::dispatch($user, $notification)->onQueue('mail');
 
-            return back()->with('success', 'Correo de simulación enviado correctamente a '.$recipient.'.');
+            return back()->with('success', 'Correo de simulación encolado para envío a '.$recipient.'.');
         } catch (\Throwable $exception) {
             if ((bool) config('app.debug', false)) {
-                return back()->with('error', 'No se pudo enviar el correo de prueba. Detalle SMTP: '.$exception->getMessage());
+                return back()->with('error', 'No se pudo encolar el correo de prueba. Detalle: '.$exception->getMessage());
             }
 
-            return back()->with('error', 'No se pudo enviar el correo de prueba. Revisa la configuración SMTP de Gmail.');
+            return back()->with('error', 'No se pudo encolar el correo de prueba. Revisa la configuración de colas.');
         }
     }
 
