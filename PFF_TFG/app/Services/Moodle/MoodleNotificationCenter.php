@@ -797,7 +797,7 @@ class MoodleNotificationCenter
                 continue;
             }
 
-            SendMoodleNotificationEmailJob::dispatch($user, $item);
+            SendMoodleNotificationEmailJob::dispatch($user, $item)->onQueue('mail');
             $hasNewDelivery = true;
         }
 
