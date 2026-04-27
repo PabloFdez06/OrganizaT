@@ -25,7 +25,6 @@ class SendMoodleNotificationEmailJob implements ShouldQueue
 
     public int $timeout = 120;
 
-    public string $queue = 'mail';
 
     /**
      * @var array<int, int>
