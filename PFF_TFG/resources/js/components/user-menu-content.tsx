@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 import {
     DropdownMenuGroup,
@@ -21,7 +21,6 @@ export function UserMenuContent({ user }: Props) {
 
     const handleLogout = () => {
         cleanup();
-        router.flushAll();
     };
 
     return (
@@ -51,6 +50,7 @@ export function UserMenuContent({ user }: Props) {
                     className=""
                     href={logout()}
                     as="button"
+                    method="post"
                     onClick={handleLogout}
                     data-test="logout-button"
                 >
