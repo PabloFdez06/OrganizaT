@@ -79,7 +79,9 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 COPY --from=vendor /var/www/html/vendor ./vendor
+RUN php artisan wayfinder:generate --with-form
 RUN npm run build
+
 
 FROM base AS runtime
 
