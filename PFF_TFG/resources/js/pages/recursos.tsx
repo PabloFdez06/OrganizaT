@@ -14,12 +14,12 @@ import {
     PlayCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { index as recursosIndex } from '@/actions/App/Http/Controllers/RecursosController';
 import AcademiaHeader from '@/components/academia-header';
 import AlertError from '@/components/alert-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import { index as recursosIndex } from '@/actions/App/Http/Controllers/RecursosController';
 
 type ResourceItem = {
     id: string;
@@ -185,6 +185,7 @@ export default function Recursos({
 
         return () => {
             cancelled = true;
+
             if (pollTimeout !== null) {
                 window.clearTimeout(pollTimeout);
             }

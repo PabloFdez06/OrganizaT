@@ -170,6 +170,7 @@ export default function Dashboard({
 
         return () => {
             cancelled = true;
+
             if (pollTimeout !== null) {
                 window.clearTimeout(pollTimeout);
             }
