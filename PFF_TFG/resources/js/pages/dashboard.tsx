@@ -140,6 +140,7 @@ export default function Dashboard({
 
         const runPoll = () => {
             if (cancelled) {
+
                 return;
             }
 
@@ -158,6 +159,7 @@ export default function Dashboard({
                 ],
                 onFinish: () => {
                     if (cancelled) {
+
                         return;
                     }
 
@@ -186,7 +188,6 @@ export default function Dashboard({
             const timelineActions = timelineActionsRef.current;
 
             if (!leftColumn || !heroCard || !timelineContainer || !timelineList) {
-
                 return;
             }
 

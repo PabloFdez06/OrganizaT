@@ -166,6 +166,7 @@ export default function Recursos({
 
         const runPoll = () => {
             if (cancelled) {
+
                 return;
             }
 
@@ -173,6 +174,7 @@ export default function Recursos({
                 only: ['studentName', 'profileAvatarUrl', 'subjects', 'selectedSubject', 'selectedSubjectId', 'summary', 'pageError', 'loading'],
                 onFinish: () => {
                     if (cancelled) {
+
                         return;
                     }
 
@@ -194,7 +196,6 @@ export default function Recursos({
 
     const filteredSelectedSubject = useMemo(() => {
         if (! selectedSubject) {
-
             return null;
         }
 
