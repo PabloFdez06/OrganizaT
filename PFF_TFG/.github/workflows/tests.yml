@@ -2,30 +2,24 @@ name: tests
 
 on:
   push:
-    branches:
-      - deploy-beta
-      - develop
-      - main
-      - master
-      - workos
+    branches: [deploy-beta, develop, main, master, workos]
   pull_request:
-    branches:
-      - deploy-beta
-      - develop
-      - main
-      - master
-      - workos
+    branches: [deploy-beta, develop, main, master, workos]
 
 jobs:
   ci:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-version: ['8.4', '8.5']
+        php-version: ["8.4", "8.5"]
+
+    defaults:
+      run:
+        working-directory: PFF_TFG
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -37,22 +31,31 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: PFF_TFG/package-lock.json
 
-      - name: Install Node Dependencies
-        run: npm i
+      - name: Verify project files
+        run: |
+          test -f composer.json
+          test -f package.json
+          test -f artisan
+          test -f phpunit.xml
 
-      - name: Install Dependencies
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Copy Environment File
+      - name: Copy environment file
         run: cp .env.example .env
 
-      - name: Generate Application Key
-        run: php artisan key:generate
+      - name: Generate application key
+        run: php artisan key:generate --ansi
 
-      - name: Build Assets
+      - name: Build assets
         run: npm run build
 
-      - name: Tests
+      - name: Run tests
         run: ./vendor/bin/pest
