@@ -8,11 +8,10 @@ use App\Services\Moodle\Exceptions\MoodleRequestException;
 class MoodleCasClient
 {
     private const DEFAULT_MOODLE_CAS_PATH = '/login/index.php?authCAS=CAS';
+
     private const DEFAULT_CAS_LOGIN_PATH = '/login';
 
-    public function __construct(private readonly CasLoginParser $parser)
-    {
-    }
+    public function __construct(private readonly CasLoginParser $parser) {}
 
     public function login(string $username, string $password, bool $withTrace = false): MoodleSession
     {
@@ -226,6 +225,7 @@ class MoodleCasClient
 
                 if ($attempt < $maxAttempts && $this->shouldRetryCurlError($errno)) {
                     $this->pauseRetry($attempt, $baseDelayMs);
+
                     continue;
                 }
 
@@ -234,6 +234,7 @@ class MoodleCasClient
 
             if ($status === 429 && $attempt < $maxAttempts) {
                 $this->pauseRetry($attempt, $baseDelayMs);
+
                 continue;
             }
 

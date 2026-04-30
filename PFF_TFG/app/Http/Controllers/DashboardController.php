@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\Moodle\FetchDashboardDataJob;
-use App\Services\EisenhowerMatrixService;
 use App\Services\Ai\EisenhowerMatrixAiService;
+use App\Services\EisenhowerMatrixService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAccessUrlService;
 use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
-use App\Services\Moodle\SpanishDateParser;
 use App\Services\Moodle\MoodleUserAcademicCache;
+use App\Services\Moodle\SpanishDateParser;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -31,8 +31,7 @@ class DashboardController extends Controller
         private readonly EisenhowerMatrixService $matrixResolver,
         private readonly EisenhowerMatrixAiService $matrixAi,
         private readonly MoodleAccessUrlService $accessUrl,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -568,8 +567,8 @@ class DashboardController extends Controller
         $openTasks = [];
 
         foreach ($tasks as $task) {
-                $delivered = (bool) ($task['entregada'] ?? false)
-                    || (bool) ($task['calificada'] ?? false);
+            $delivered = (bool) ($task['entregada'] ?? false)
+                || (bool) ($task['calificada'] ?? false);
 
             if ($delivered) {
                 continue;
@@ -654,7 +653,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $matrix
+     * @param  array<string, mixed>  $matrix
      */
     private function matrixHasTasks(array $matrix): bool
     {

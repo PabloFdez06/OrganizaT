@@ -23,8 +23,7 @@ class RecursosController extends Controller
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleAsyncSectionCache $asyncCache,
         private readonly MoodleAccessUrlService $accessUrl,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -280,6 +279,7 @@ class RecursosController extends Controller
                 $folderKey = mb_strtolower($name);
                 $standaloneFoldersByUnit[$unitName] ??= [];
                 $standaloneFoldersByUnit[$unitName][$folderKey] = $normalizedResource;
+
                 continue;
             }
 
@@ -294,6 +294,7 @@ class RecursosController extends Controller
                     ...$normalizedResource,
                     'folderName' => null,
                 ];
+
                 continue;
             }
 

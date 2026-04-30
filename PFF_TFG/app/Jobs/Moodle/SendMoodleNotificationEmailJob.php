@@ -25,7 +25,6 @@ class SendMoodleNotificationEmailJob implements ShouldQueue
 
     public int $timeout = 120;
 
-
     /**
      * @var array<int, int>
      */
@@ -37,8 +36,7 @@ class SendMoodleNotificationEmailJob implements ShouldQueue
     public function __construct(
         public readonly User $user,
         public readonly array $notification,
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

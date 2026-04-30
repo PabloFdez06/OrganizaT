@@ -12,7 +12,7 @@ class AssignmentsParser
      */
     public function parse(string $html): array
     {
-        $doc = new DOMDocument();
+        $doc = new DOMDocument;
         @$doc->loadHTML($html);
 
         $xpath = new DOMXPath($doc);

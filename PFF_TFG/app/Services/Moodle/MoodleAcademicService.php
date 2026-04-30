@@ -18,8 +18,7 @@ class MoodleAcademicService
         private readonly ResourcesParser $resourcesParser,
         private readonly SpanishDateParser $dateParser,
         private readonly MoodleAcademicRules $rules,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<int, array<string, mixed>>

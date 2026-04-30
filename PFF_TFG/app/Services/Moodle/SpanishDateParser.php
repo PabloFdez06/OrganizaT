@@ -32,11 +32,13 @@ class SpanishDateParser
 
         if (preg_match('/(?:en\s+)?(\d{1,3})\s*d[ií]a(?:s)?/u', $normalized, $relativeDays)) {
             $days = (int) $relativeDays[1];
+
             return CarbonImmutable::now()->addDays($days)->endOfDay()->toIso8601String();
         }
 
         if (preg_match('/(?:en\s+)?(\d{1,3})\s*hora(?:s)?/u', $normalized, $relativeHours)) {
             $hours = (int) $relativeHours[1];
+
             return CarbonImmutable::now()->addHours($hours)->toIso8601String();
         }
 

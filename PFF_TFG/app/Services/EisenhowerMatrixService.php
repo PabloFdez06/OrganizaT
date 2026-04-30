@@ -5,7 +5,7 @@ namespace App\Services;
 class EisenhowerMatrixService
 {
     /**
-     * @param array<int, array<string, mixed>> $tasks
+     * @param  array<int, array<string, mixed>>  $tasks
      * @return array<string, array<int, array<string, string|null>>>
      */
     public function classify(array $tasks): array
@@ -170,7 +170,7 @@ class EisenhowerMatrixService
     }
 
     /**
-     * @param array<string, array<int, array<string, string|null>>> $matrix
+     * @param  array<string, array<int, array<string, string|null>>>  $matrix
      */
     private function taskAlreadyIncluded(array $matrix, string $title, string $course): bool
     {

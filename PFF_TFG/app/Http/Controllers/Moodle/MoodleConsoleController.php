@@ -17,8 +17,7 @@ class MoodleConsoleController extends Controller
     public function __construct(
         private readonly MoodleAcademicService $academicService,
         private readonly MoodleEphemeralSessionService $sessionService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {

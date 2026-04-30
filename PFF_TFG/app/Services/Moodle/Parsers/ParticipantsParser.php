@@ -9,7 +9,7 @@ class ParticipantsParser
 {
     public function extractTutor(string $html): ?string
     {
-        $doc = new DOMDocument();
+        $doc = new DOMDocument;
         @$doc->loadHTML($html);
 
         $xpath = new DOMXPath($doc);

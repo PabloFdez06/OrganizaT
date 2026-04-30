@@ -18,8 +18,7 @@ class MoodleConnectionController extends Controller
         private readonly MoodleCasClient $client,
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleUserAcademicCache $cache,
-    ) {
-    }
+    ) {}
 
     public function connect(Request $request): JsonResponse|RedirectResponse
     {

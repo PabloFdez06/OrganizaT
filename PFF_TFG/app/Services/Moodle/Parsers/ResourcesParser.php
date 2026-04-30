@@ -18,7 +18,7 @@ class ResourcesParser
             return [];
         }
 
-        $doc = new DOMDocument();
+        $doc = new DOMDocument;
         @$doc->loadHTML($html);
 
         $xpath = new DOMXPath($doc);
@@ -81,7 +81,7 @@ class ResourcesParser
             return [];
         }
 
-        $doc = new DOMDocument();
+        $doc = new DOMDocument;
         @$doc->loadHTML($html);
 
         $xpath = new DOMXPath($doc);
@@ -118,6 +118,7 @@ class ResourcesParser
                 if ($sectionCandidate !== '') {
                     $currentSection = $sectionCandidate;
                 }
+
                 continue;
             }
 
@@ -183,7 +184,7 @@ class ResourcesParser
     }
 
     /**
-     * @param  \DOMNodeList<\DOMElement>|null  $links
+     * @param  \DOMNodeList<DOMElement>|null  $links
      * @param  array<int, string>  $texts
      */
     private function extractPreferredIndexUrl(?\DOMNodeList $links, array $texts, string $moduleType): string

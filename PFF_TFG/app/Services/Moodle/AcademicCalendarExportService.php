@@ -8,8 +8,7 @@ class AcademicCalendarExportService
 {
     public function __construct(
         private readonly MoodleAccessUrlService $accessUrl,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<int, array<string, mixed>>  $tasks

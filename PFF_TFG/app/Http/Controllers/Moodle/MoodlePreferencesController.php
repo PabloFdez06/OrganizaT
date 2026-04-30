@@ -13,8 +13,7 @@ class MoodlePreferencesController extends Controller
 {
     public function __construct(
         private readonly MoodleEphemeralSessionService $sessionService,
-    ) {
-    }
+    ) {}
 
     /**
      * @var array<string, bool|int>

@@ -12,7 +12,7 @@ class GradesParser
      */
     public function parse(string $html): array
     {
-        $doc = new DOMDocument();
+        $doc = new DOMDocument;
         @$doc->loadHTML($html);
 
         $xpath = new DOMXPath($doc);
@@ -100,21 +100,25 @@ class GradesParser
 
             if (str_contains($text, 'item')) {
                 $map['item'] = $index;
+
                 continue;
             }
 
             if (str_contains($text, 'calificaci')) {
                 $map['calificacion'] = $index;
+
                 continue;
             }
 
             if (str_contains($text, 'rango')) {
                 $map['rango'] = $index;
+
                 continue;
             }
 
             if (str_contains($text, 'porcentaje')) {
                 $map['porcentaje'] = $index;
+
                 continue;
             }
 
@@ -127,9 +131,9 @@ class GradesParser
     }
 
     /**
-     * @param array<int, string> $values
-     * @param array<string, int> $headerMap
-     * @param array<int, string> $keys
+     * @param  array<int, string>  $values
+     * @param  array<string, int>  $headerMap
+     * @param  array<int, string>  $keys
      */
     private function valueAt(array $values, array $headerMap, array $keys): ?string
     {

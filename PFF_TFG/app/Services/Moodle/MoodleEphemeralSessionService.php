@@ -13,8 +13,7 @@ class MoodleEphemeralSessionService
 
     public function __construct(
         private readonly MoodleCasClient $client,
-    ) {
-    }
+    ) {}
 
     public function hasActiveSession(?User $user): bool
     {

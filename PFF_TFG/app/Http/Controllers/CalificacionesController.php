@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\Moodle\FetchCalificacionesJob;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleAcademicRules;
 use App\Services\Moodle\MoodleAccessUrlService;
 use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleEphemeralSessionService;
-use App\Services\Moodle\SpanishDateParser;
 use App\Services\Moodle\MoodleUserAcademicCache;
+use App\Services\Moodle\SpanishDateParser;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,8 +30,7 @@ class CalificacionesController extends Controller
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleAsyncSectionCache $asyncCache,
         private readonly MoodleAccessUrlService $accessUrl,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -244,6 +243,7 @@ class CalificacionesController extends Controller
 
             if (! $isDelivered && ($days === null || $days >= 0)) {
                 $upcoming[] = $item;
+
                 continue;
             }
 
@@ -474,7 +474,7 @@ class CalificacionesController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $item
+     * @param  array<string, mixed>  $item
      * @return array{grade:?string, feedback:?string, isNumeric:bool}
      */
     private function resolveGradeReportEntry(array $item): array
@@ -531,6 +531,7 @@ class CalificacionesController extends Controller
 
         if (preg_match('/([0-9]+(?:[\.,][0-9]+)?)\s*$/', $rangeText, $rangeMatch) === 1) {
             $denominator = $this->rules->normalizeNumberToken(str_replace(',', '.', $rangeMatch[1]));
+
             return $grade.'/'.$denominator;
         }
 
@@ -663,5 +664,4 @@ class CalificacionesController extends Controller
 
         return null;
     }
-
 }

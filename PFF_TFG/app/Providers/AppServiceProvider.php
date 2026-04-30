@@ -26,9 +26,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-	if (app()->isProduction()) {
-	URL::forceScheme('https');	
-	}
+        if (app()->isProduction()) {
+            URL::forceScheme('https');
+        }
     }
 
     /**

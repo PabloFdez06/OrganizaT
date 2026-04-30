@@ -9,7 +9,7 @@ use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 
-class FortifyRedirectResponse implements LoginResponseContract, RegisterResponseContract, LogoutResponseContract
+class FortifyRedirectResponse implements LoginResponseContract, LogoutResponseContract, RegisterResponseContract
 {
     public function toResponse($request)
     {

@@ -16,7 +16,7 @@ it('parses grade rows and normalizes numbers', function (): void {
     </table>
     HTML;
 
-    $items = (new GradesParser())->parse($html);
+    $items = (new GradesParser)->parse($html);
 
     expect($items)->toHaveCount(1);
     expect($items[0]['item'])->toBe('Examen parcial');

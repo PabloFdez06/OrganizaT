@@ -13,8 +13,7 @@ class MoodleNotificationsController extends Controller
     public function __construct(
         private readonly MoodleNotificationCenter $notificationCenter,
         private readonly MoodleUserAcademicCache $cache,
-    ) {
-    }
+    ) {}
 
     public function markAllAsRead(Request $request): RedirectResponse
     {

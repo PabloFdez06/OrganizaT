@@ -14,8 +14,7 @@ class HandleInertiaRequests extends Middleware
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleUserAcademicCache $cache,
         private readonly MoodleNotificationCenter $notificationCenter,
-    ) {
-    }
+    ) {}
 
     /**
      * The root template that's loaded on the first page visit.

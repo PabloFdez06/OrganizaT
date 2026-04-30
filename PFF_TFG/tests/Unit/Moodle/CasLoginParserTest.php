@@ -14,7 +14,7 @@ it('parses hidden fields and session markers from cas html', function (): void {
     </body></html>
     HTML;
 
-    $parser = new CasLoginParser();
+    $parser = new CasLoginParser;
 
     expect($parser->parseHiddenFields($html))->toMatchArray([
         'lt' => 'LT-123',
@@ -27,7 +27,7 @@ it('parses hidden fields and session markers from cas html', function (): void {
 });
 
 it('detects invalid credentials patterns', function (): void {
-    $parser = new CasLoginParser();
+    $parser = new CasLoginParser;
 
     expect($parser->looksLikeInvalidCredentials('https://cas.local/login', '<div class="error">Authentication failed</div>'))
         ->toBeTrue();

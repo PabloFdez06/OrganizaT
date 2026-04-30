@@ -19,8 +19,7 @@ class MoodleNotificationMail extends Mailable
     public function __construct(
         public array $notification,
         public User $user,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

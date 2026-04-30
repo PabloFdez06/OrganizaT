@@ -5,13 +5,13 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Jobs\Moodle\SendMoodleNotificationEmailJob;
-use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleUserAcademicCache;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
@@ -23,8 +23,7 @@ class SecurityController extends Controller
     public function __construct(
         private readonly MoodleUserAcademicCache $cache,
         private readonly MoodleEphemeralSessionService $sessionService,
-    ) {
-    }
+    ) {}
 
     /**
      * Show the user's configuration settings page.

@@ -11,8 +11,7 @@ class MoodleSession
         public string $sesskey,
         public ?int $userid,
         public array $trace = [],
-    ) {
-    }
+    ) {}
 
     public function close(): void
     {

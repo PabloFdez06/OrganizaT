@@ -15,8 +15,7 @@ class MoodleDataController extends Controller
     public function __construct(
         private readonly MoodleAcademicService $academicService,
         private readonly MoodleEphemeralSessionService $sessionService,
-    ) {
-    }
+    ) {}
 
     public function asignaturas(Request $request): JsonResponse
     {
@@ -143,5 +142,4 @@ class MoodleDataController extends Controller
             }
         }
     }
-
 }

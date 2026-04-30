@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\Moodle\FetchTareasJob;
+use App\Services\Moodle\AcademicCalendarExportService;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
-use App\Services\Moodle\AcademicCalendarExportService;
 use App\Services\Moodle\MoodleAcademicRules;
 use App\Services\Moodle\MoodleAccessUrlService;
 use App\Services\Moodle\MoodleAsyncSectionCache;
@@ -14,8 +14,8 @@ use App\Services\Moodle\MoodleUserAcademicCache;
 use App\Services\Moodle\SpanishDateParser;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -31,8 +31,7 @@ class TareasController extends Controller
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleAsyncSectionCache $asyncCache,
         private readonly MoodleAccessUrlService $accessUrl,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): InertiaResponse
     {

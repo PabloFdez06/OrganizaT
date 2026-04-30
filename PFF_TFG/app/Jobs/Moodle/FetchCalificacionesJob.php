@@ -26,8 +26,7 @@ class FetchCalificacionesJob implements ShouldQueue
 
     public function __construct(
         public readonly int $userId,
-    ) {
-    }
+    ) {}
 
     public function handle(
         MoodleUserAcademicCache $academicCache,

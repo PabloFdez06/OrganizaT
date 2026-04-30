@@ -10,15 +10,18 @@ use Illuminate\Support\Facades\Cache;
 class MoodleNotificationCenter
 {
     private const MAX_ITEMS = 8;
+
     private const EVENTS_TTL_SECONDS = 1209600;
+
     private const SNAPSHOT_TTL_SECONDS = 1209600;
+
     private const DISMISSED_TTL_SECONDS = 1209600;
+
     private const EMAILED_TTL_SECONDS = 1209600;
 
     public function __construct(
         private readonly MoodleAccessUrlService $accessUrl,
-    ) {
-    }
+    ) {}
 
     public function markAllAsRead(User $user): void
     {

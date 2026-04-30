@@ -4,9 +4,6 @@ namespace App\Services\Moodle;
 
 class MoodleAccessUrlService
 {
-    /**
-     * @param  string|null  $url
-     */
     public function toAccessibleUrl(?string $url, ?string $module = null): ?string
     {
         $absolute = $this->toAbsoluteUrl($url, $module);
@@ -26,9 +23,6 @@ class MoodleAccessUrlService
         return route('moodle.media', ['url' => $absolute]);
     }
 
-    /**
-     * @param  string|null  $url
-     */
     public function toAbsoluteUrl(?string $url, ?string $module = null): ?string
     {
         if (! is_string($url)) {

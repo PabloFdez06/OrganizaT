@@ -21,11 +21,10 @@ class MoodleUserAcademicCache
         private readonly SpanishDateParser $dateParser,
         private readonly MoodleAcademicRules $rules,
         private readonly MoodleEphemeralSessionService $sessionService,
-    ) {
-    }
+    ) {}
 
     /**
-        * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, messages: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
+     * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, messages: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
      */
     public function getForUser(User $user): array
     {
@@ -69,7 +68,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-        * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, messages: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
+     * @return array{courses: array<int, array<string, mixed>>, tasks: array<int, array<string, mixed>>, messages: array<int, array<string, mixed>>, gradeReport: array<int, array<string, mixed>>, profileAvatarUrl: ?string, studentName: ?string, studentEmail: ?string, academicCourse: ?string, academicYear: ?string}
      */
     private function buildAcademicPayload(User $user): array
     {
@@ -243,7 +242,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-     * @param array{cached_at:int,data:array<string,mixed>}|null $envelope
+     * @param  array{cached_at:int,data:array<string,mixed>}|null  $envelope
      */
     private function isEnvelopeFresh(?array $envelope, int $ttlSeconds): bool
     {
@@ -255,7 +254,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-     * @param array{cached_at:int,data:array<string,mixed>}|null $envelope
+     * @param  array{cached_at:int,data:array<string,mixed>}|null  $envelope
      */
     private function isEnvelopeWithinStale(?array $envelope, int $staleTtlSeconds): bool
     {
@@ -267,7 +266,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-     * @param array{cached_at:int,data:array<string,mixed>}|null $envelope
+     * @param  array{cached_at:int,data:array<string,mixed>}|null  $envelope
      * @return array<string,mixed>
      */
     private function extractEnvelopeData(?array $envelope): array
@@ -280,7 +279,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-     * @param callable():array<string,mixed> $producer
+     * @param  callable():array<string,mixed>  $producer
      */
     private function scheduleAsyncRefresh(
         string $lockKey,
@@ -311,7 +310,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-     * @param callable():array<string,mixed> $producer
+     * @param  callable():array<string,mixed>  $producer
      * @return array<string,mixed>
      */
     private function recomputeWithLock(
@@ -488,7 +487,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-     * @param array<int, array<string, array{hasGradeSignal:bool, feedback:string}>> $reportByCourseAndName
+     * @param  array<int, array<string, array{hasGradeSignal:bool, feedback:string}>>  $reportByCourseAndName
      * @return array{hasGradeSignal:bool, feedback:string}|null
      */
     private function findGradeReportMatch(int $courseId, string $taskKey, array $reportByCourseAndName): ?array
@@ -531,7 +530,7 @@ class MoodleUserAcademicCache
     }
 
     /**
-     * @param array<string, mixed> $item
+     * @param  array<string, mixed>  $item
      */
     private function gradeReportItemHasGradeSignal(array $item): bool
     {
@@ -582,6 +581,7 @@ class MoodleUserAcademicCache
 
             if (preg_match('/<img[^>]+class="[^"]*userpicture[^"]*"[^>]+src="([^"]+)"/i', $html, $match) === 1) {
                 $src = html_entity_decode((string) $match[1], ENT_QUOTES | ENT_HTML5);
+
                 return $src !== '' ? $src : null;
             }
         }

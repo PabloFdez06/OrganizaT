@@ -32,8 +32,7 @@ class CheckUserMoodleNotificationsJob implements ShouldQueue
 
     public function __construct(
         public readonly int $userId,
-    ) {
-    }
+    ) {}
 
     public function handle(
         MoodleEphemeralSessionService $sessionService,

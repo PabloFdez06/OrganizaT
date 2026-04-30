@@ -23,7 +23,7 @@ it('parses assignments table including section reuse', function (): void {
     </table>
     HTML;
 
-    $items = (new AssignmentsParser())->parse($html);
+    $items = (new AssignmentsParser)->parse($html);
 
     expect($items)->toHaveCount(2);
     expect($items[0]['tema'])->toBe('Tema 1');

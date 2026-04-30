@@ -15,8 +15,7 @@ class MoodleMediaController extends Controller
     public function __construct(
         private readonly MoodleCasClient $client,
         private readonly MoodleEphemeralSessionService $sessionService,
-    ) {
-    }
+    ) {}
 
     public function show(Request $request): Response
     {

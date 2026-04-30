@@ -3,14 +3,14 @@
 use App\Http\Controllers\AsignaturasController;
 use App\Http\Controllers\CalificacionesController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\RecursosController;
-use App\Http\Controllers\TareasController;
 use App\Http\Controllers\Moodle\MoodleConnectionController;
 use App\Http\Controllers\Moodle\MoodleConsoleController;
 use App\Http\Controllers\Moodle\MoodleDataController;
 use App\Http\Controllers\Moodle\MoodleMediaController;
 use App\Http\Controllers\Moodle\MoodleNotificationsController;
 use App\Http\Controllers\Moodle\MoodlePreferencesController;
+use App\Http\Controllers\RecursosController;
+use App\Http\Controllers\TareasController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;

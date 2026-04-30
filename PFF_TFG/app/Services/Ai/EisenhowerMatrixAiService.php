@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 class EisenhowerMatrixAiService
 {
     /**
-     * @param array<int, array<string, mixed>> $tasks
+     * @param  array<int, array<string, mixed>>  $tasks
      * @return array{matrix: array<string, array<int, array<string, string|null>>>, explanation: ?string, provider: string}
      */
     public function analyze(
@@ -15,8 +15,7 @@ class EisenhowerMatrixAiService
         bool $includeExplanation = false,
         ?string $userApiKey = null,
         ?string $userPreferences = null,
-    ): array
-    {
+    ): array {
         $apiKey = trim((string) ($userApiKey ?? config('services.ai.api_key', '')));
         $baseUrl = rtrim((string) config('services.ai.base_url', 'https://api.openai.com/v1'), '/');
         $model = (string) config('services.ai.model', 'gpt-4o-mini');
@@ -98,19 +97,19 @@ PROMPT;
                     ->withOptions(['verify' => $verifySsl]);
 
                 $response = $request->post($baseUrl.'/v1beta/models/'.$model.':generateContent?key='.$apiKey, [
-                        'contents' => [
-                            [
-                                'role' => 'user',
-                                'parts' => [
-                                    ['text' => $systemPrompt."\n\n".$userPrompt],
-                                ],
+                    'contents' => [
+                        [
+                            'role' => 'user',
+                            'parts' => [
+                                ['text' => $systemPrompt."\n\n".$userPrompt],
                             ],
                         ],
-                        'generationConfig' => [
-                            'temperature' => 0.1,
-                            'responseMimeType' => 'application/json',
-                        ],
-                    ]);
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.1,
+                        'responseMimeType' => 'application/json',
+                    ],
+                ]);
             } else {
                 $request = Http::withToken($apiKey)
                     ->acceptJson()
@@ -118,14 +117,14 @@ PROMPT;
                     ->withOptions(['verify' => $verifySsl]);
 
                 $response = $request->post($baseUrl.'/chat/completions', [
-                        'model' => $model,
-                        'temperature' => 0.1,
-                        'response_format' => ['type' => 'json_object'],
-                        'messages' => [
-                            ['role' => 'system', 'content' => $systemPrompt],
-                            ['role' => 'user', 'content' => $userPrompt],
-                        ],
-                    ]);
+                    'model' => $model,
+                    'temperature' => 0.1,
+                    'response_format' => ['type' => 'json_object'],
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userPrompt],
+                    ],
+                ]);
             }
 
             if (! $response->ok()) {
@@ -175,7 +174,7 @@ PROMPT;
     }
 
     /**
-     * @param array<string, mixed>|null $payload
+     * @param  array<string, mixed>|null  $payload
      */
     private function extractProviderError(?array $payload): string
     {
@@ -218,8 +217,8 @@ PROMPT;
     }
 
     /**
-     * @param array<string, mixed> $decoded
-     * @param array<int, array<string, mixed>> $tasks
+     * @param  array<string, mixed>  $decoded
+     * @param  array<int, array<string, mixed>>  $tasks
      * @return array<string, array<int, array<string, string|null>>>
      */
     private function hydrateMatrixFromAi(array $decoded, array $tasks): array
@@ -304,7 +303,7 @@ PROMPT;
     }
 
     /**
-     * @param array<string, array<int, array<string, mixed>>> $taskMap
+     * @param  array<string, array<int, array<string, mixed>>>  $taskMap
      * @return array<string, mixed>|null
      */
     private function consumeTaskByTitle(array &$taskMap, string $title): ?array

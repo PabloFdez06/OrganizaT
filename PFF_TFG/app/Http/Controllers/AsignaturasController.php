@@ -21,8 +21,7 @@ class AsignaturasController extends Controller
         private readonly MoodleUserAcademicCache $cache,
         private readonly MoodleEphemeralSessionService $sessionService,
         private readonly MoodleAsyncSectionCache $asyncCache,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): Response
     {
