@@ -1,14 +1,13 @@
 import { Form, Head, router, usePage } from '@inertiajs/react';
 import { BellRing, CircleHelp, Mail, Monitor, Moon, Palette, Settings, ShieldAlert, Sun, UserRound, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { connect } from '@/actions/App/Http/Controllers/Moodle/MoodleConnectionController';
-import { updateBackgroundNotifications } from '@/actions/App/Http/Controllers/Moodle/MoodlePreferencesController';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAppearance } from '@/hooks/use-appearance';
-import type { Appearance } from '@/hooks/use-appearance';
+import { useAppearance, type Appearance } from '@/hooks/use-appearance';
+import { connect } from '@/actions/App/Http/Controllers/Moodle/MoodleConnectionController';
+import { updateBackgroundNotifications } from '@/actions/App/Http/Controllers/Moodle/MoodlePreferencesController';
 import { disable, enable } from '@/routes/two-factor';
 
 type UserProfile = {

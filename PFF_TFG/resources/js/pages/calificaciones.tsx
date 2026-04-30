@@ -1,7 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { downloadReport } from '@/actions/App/Http/Controllers/CalificacionesController';
 import AcademiaHeader from '@/components/academia-header';
 import AlertError from '@/components/alert-error';
 import FeedbackContent from '@/components/feedback-content';
@@ -9,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { formatFeedbackToBlocks } from '@/lib/feedback-parser';
+import { downloadReport } from '@/actions/App/Http/Controllers/CalificacionesController';
 
 type SubjectTask = {
     name: string;
