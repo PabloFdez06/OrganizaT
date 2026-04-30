@@ -15,7 +15,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  WORKING_DIR: PabloFdez_TFG/PFF_TFG
+  WORKING_DIR: PFF_TFG
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: PabloFdez_TFG/PFF_TFG
+        working-directory: PFF_TFG
 
     steps:
       - name: Checkout
@@ -87,8 +87,8 @@ jobs:
       - name: Build and push app image
         uses: docker/build-push-action@v6
         with:
-          context: PabloFdez_TFG/PFF_TFG
-          file: PabloFdez_TFG/PFF_TFG/Dockerfile
+          context: PFF_TFG
+          file: PFF_TFG/Dockerfile
           target: runtime
           push: true
           tags: |
@@ -100,8 +100,8 @@ jobs:
       - name: Build and push nginx image
         uses: docker/build-push-action@v6
         with:
-          context: PabloFdez_TFG/PFF_TFG
-          file: PabloFdez_TFG/PFF_TFG/Dockerfile
+          context: PFF_TFG
+          file: PFF_TFG/Dockerfile
           target: nginx
           push: true
           tags: |
