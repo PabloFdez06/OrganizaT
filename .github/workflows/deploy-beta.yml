@@ -1,4 +1,4 @@
-name: CI/CD Deploy Beta
+name: CI/CD Deploy Beta 
 
 on:
   push:
