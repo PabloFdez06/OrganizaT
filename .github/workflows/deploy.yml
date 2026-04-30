@@ -15,15 +15,18 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  REPO_LOWER: ${{ github.repository_owner }}/organizat
   APP_IMAGE: ghcr.io/${{ github.repository_owner }}/organizat-app
   NGINX_IMAGE: ghcr.io/${{ github.repository_owner }}/organizat-nginx
   IMAGE_TAG: ${{ github.sha }}
+  WORKING_DIR: PabloFdez_TFG/PFF_TFG
 
 jobs:
   ci:
     name: Lint, types and tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
 
     steps:
       - name: Checkout
@@ -33,7 +36,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: 'npm'
+          cache-dependency-path: '${{ env.WORKING_DIR }}/package-lock.json'
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -41,21 +45,10 @@ jobs:
           php-version: 8.4
           coverage: none
 
-      - name: Cache Composer
-        uses: actions/cache@v4
-        with:
-          path: |
-            vendor
-            ~/.composer/cache
-          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
-          restore-keys: |
-            composer-${{ runner.os }}-
-
-      - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Install Node dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+          npm ci
 
       - name: Static checks
         run: |
@@ -88,8 +81,8 @@ jobs:
       - name: Build and push app image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ${{ env.WORKING_DIR }}
+          file: ${{ env.WORKING_DIR }}/Dockerfile
           target: runtime
           push: true
           tags: |
@@ -101,8 +94,8 @@ jobs:
       - name: Build and push nginx image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ${{ env.WORKING_DIR }}
+          file: ${{ env.WORKING_DIR }}/Dockerfile
           target: nginx
           push: true
           tags: |
@@ -128,7 +121,8 @@ jobs:
           script: |
             set -eu
 
-            cd app
+            # Move to the subfolder where the app actually lives
+            cd ${{ env.WORKING_DIR }}
 
             git fetch --all --prune
             git switch deploy-beta
@@ -140,6 +134,7 @@ jobs:
             export NGINX_IMAGE="${{ env.NGINX_IMAGE }}"
             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
 
+            # Update .env
             if grep -q '^APP_IMAGE=' .env; then
               sed -i "s|^APP_IMAGE=.*|APP_IMAGE=${APP_IMAGE}|" .env
             else
@@ -165,5 +160,3 @@ jobs:
             docker compose -f docker-compose.beta.yml exec -T app php artisan optimize:clear
             docker compose -f docker-compose.beta.yml exec -T app php artisan optimize
             docker compose -f docker-compose.beta.yml exec -T app php artisan queue:restart
-
-            docker compose -f docker-compose.beta.yml ps
