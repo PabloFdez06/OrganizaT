@@ -185,6 +185,7 @@ export default function Dashboard({
             const timelineActions = timelineActionsRef.current;
 
             if (!leftColumn || !heroCard || !timelineContainer || !timelineList) {
+
                 return;
             }
 

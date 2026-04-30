@@ -261,6 +261,7 @@ export default function TwoFactorSetupModal({
         buttonText: string;
     }>(() => {
         if (twoFactorEnabled) {
+
             return {
                 title: 'Two-factor authentication enabled',
                 description:
@@ -270,6 +271,7 @@ export default function TwoFactorSetupModal({
         }
 
         if (showVerificationStep) {
+
             return {
                 title: 'Verify authentication code',
                 description:
@@ -289,6 +291,7 @@ export default function TwoFactorSetupModal({
     const handleModalNextStep = useCallback(() => {
         if (requiresConfirmation) {
             setShowVerificationStep(true);
+
             return;
         }
 
