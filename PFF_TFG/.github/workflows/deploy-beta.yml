@@ -1,9 +1,10 @@
-name: CI/CD Deploy Beta 
+name: CI/CD Deploy Beta
 
 on:
   push:
     branches:
       - deploy-beta
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,13 +15,20 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  PROJECT_DIR: PFF_TFG
   REGISTRY: ghcr.io
   IMAGE_TAG: ${{ github.sha }}
+  COMPOSER_PROCESS_TIMEOUT: 0
+  COMPOSER_NO_INTERACTION: 1
+  COMPOSER_NO_AUDIT: 1
 
 jobs:
   ci:
     name: Quality checks
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PFF_TFG
 
     steps:
       - name: Checkout
@@ -38,10 +46,19 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: '**/package-lock.json'
+          cache-dependency-path: PFF_TFG/package-lock.json
+
+      - name: Verify project files
+        run: |
+          test -f composer.json
+          test -f package.json
+          test -f package-lock.json
+          test -f artisan
+          test -f Dockerfile
+          test -f docker-compose.beta.yml
 
       - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --prefer-dist --optimize-autoloader
 
       - name: Install Node dependencies
         run: npm ci
@@ -74,7 +91,6 @@ jobs:
         id: meta
         run: |
           OWNER_LC=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
-          echo "owner_lc=${OWNER_LC}" >> "$GITHUB_OUTPUT"
           echo "app_image=ghcr.io/${OWNER_LC}/organizat-app" >> "$GITHUB_OUTPUT"
           echo "nginx_image=ghcr.io/${OWNER_LC}/organizat-nginx" >> "$GITHUB_OUTPUT"
 
@@ -91,8 +107,8 @@ jobs:
       - name: Build and push app image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./PFF_TFG
+          file: ./PFF_TFG/Dockerfile
           target: runtime
           push: true
           tags: |
@@ -104,8 +120,8 @@ jobs:
       - name: Build and push nginx image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./PFF_TFG
+          file: ./PFF_TFG/Dockerfile
           target: nginx
           push: true
           tags: |

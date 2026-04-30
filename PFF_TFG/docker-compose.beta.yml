@@ -1,5 +1,5 @@
 name: organizat-beta
-#
+
 x-laravel-service: &laravel-service
   env_file:
     - ./.env
@@ -27,7 +27,18 @@ services:
   worker:
     <<: *laravel-service
     image: ${APP_IMAGE}:${IMAGE_TAG}
-    command: ["php", "artisan", "queue:work", "--queue=default,mail", "--sleep=1", "--tries=3", "--timeout=300", "--max-time=3600", "--no-interaction"]
+    command:
+      [
+        "php",
+        "artisan",
+        "queue:work",
+        "--queue=default,mail",
+        "--sleep=1",
+        "--tries=3",
+        "--timeout=300",
+        "--max-time=3600",
+        "--no-interaction"
+      ]
     depends_on:
       app:
         condition: service_healthy
@@ -90,7 +101,12 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - if [ -n "$${REDIS_PASSWORD}" ] && [ "$${REDIS_PASSWORD}" != "null" ]; then redis-cli -a "$${REDIS_PASSWORD}" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi
+        - >
+          if [ -n "$${REDIS_PASSWORD}" ] && [ "$${REDIS_PASSWORD}" != "null" ]; then
+            redis-cli -a "$${REDIS_PASSWORD}" ping | grep -q PONG;
+          else
+            redis-cli ping | grep -q PONG;
+          fi
       interval: 30s
       timeout: 5s
       retries: 3
