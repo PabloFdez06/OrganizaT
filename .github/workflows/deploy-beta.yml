@@ -34,6 +34,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify repo structure
+        run: |
+          pwd
+          ls -la ..
+          ls -la .
+          test -f composer.json
+          test -f package.json
+          test -f package-lock.json
+          test -f artisan
+          test -f Dockerfile
+          test -f docker-compose.beta.yml
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -45,25 +57,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
-      - name: Verify project files
-        run: |
-          test -f composer.json
-          test -f package.json
-          test -f artisan
-          test -f Dockerfile
-          test -f docker-compose.beta.yml
+          cache: npm
+          cache-dependency-path: PFF_TFG/package-lock.json
 
       - name: Install PHP dependencies
         run: composer install --prefer-dist --optimize-autoloader
 
       - name: Install Node dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+        run: npm ci
 
       - name: Prepare Laravel test environment
         run: |
@@ -88,6 +89,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Verify build context
+        run: |
+          test -f PFF_TFG/Dockerfile
+          test -f PFF_TFG/docker-compose.beta.yml
+          test -f PFF_TFG/package.json
+          test -f PFF_TFG/composer.json
 
       - name: Normalize owner
         id: meta
@@ -188,6 +196,7 @@ jobs:
               echo "IMAGE_TAG=$IMAGE_TAG" >> .env
             fi
 
+            docker compose -f docker-compose.beta.yml config >/dev/null
             docker compose -f docker-compose.beta.yml pull app worker scheduler nginx
             docker compose -f docker-compose.beta.yml up -d app worker scheduler nginx
 
