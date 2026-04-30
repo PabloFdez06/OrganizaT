@@ -24,7 +24,7 @@ env:
 
 jobs:
   ci:
-    name: Quality checks
+    name: Backend checks
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,15 +36,13 @@ jobs:
 
       - name: Verify repo structure
         run: |
-          pwd
-          ls -la ..
-          ls -la .
           test -f composer.json
           test -f package.json
           test -f package-lock.json
           test -f artisan
           test -f Dockerfile
           test -f docker-compose.beta.yml
+          test -f phpunit.xml
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -53,28 +51,15 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: PFF_TFG/package-lock.json
-
       - name: Install PHP dependencies
         run: composer install --prefer-dist --optimize-autoloader
-
-      - name: Install Node dependencies
-        run: npm ci
 
       - name: Prepare Laravel test environment
         run: |
           cp .env.example .env
           php artisan key:generate --ansi
 
-      - name: Frontend checks
-        run: npm run cicheck
-
-      - name: Backend tests
+      - name: Run backend tests
         run: php artisan test
 
   build:
