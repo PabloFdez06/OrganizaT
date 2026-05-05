@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, router } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -318,25 +318,17 @@ export default function TwoFactorSetupModal({
             return;
         }
 
-        const xsrfMatch = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
-        const xsrfToken = xsrfMatch ? decodeURIComponent(xsrfMatch[1]) : '';
-
-        fetch('/user/two-factor-authentication', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-XSRF-TOKEN': xsrfToken,
-                Accept: 'application/json',
-            },
-        })
-            .then((response) => {
-                if (response.ok) {
+        router.post(
+            '/user/two-factor-authentication',
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
                     fetchSetupData();
-                }
-            })
-            .catch(() => {
-                // POST failed, do not proceed
-            });
+                },
+            },
+        );
     }, [isOpen, qrCodeSvg, twoFactorEnabled, fetchSetupData]);
 
     const handleClose = useCallback(() => {
