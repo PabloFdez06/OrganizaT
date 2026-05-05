@@ -118,6 +118,7 @@
     background: color-mix(in srgb, var(--color-surface) 98%, var(--color-bg) 2%);
     padding: 0;
     box-shadow: 0 1.5rem 2.5rem -1rem color-mix(in srgb, var(--color-text) 20%, transparent);
+    z-index: 50;
 }
 
 .c-academia-header__notifications-head {

@@ -558,6 +558,10 @@
 .p-recursos__resource-link {
     color: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
     display: inline-flex;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
 }
 
 .p-recursos__resource-link:hover {

@@ -97,6 +97,31 @@ function formatPercent(value: number, total: number): number {
     return Math.round((value / total) * 100);
 }
 
+const MOODLE_BASE_URL = import.meta.env.VITE_MOODLE_URL as string | undefined;
+
+function openExternalResourceLink(resourceUrl: string | null): void {
+    if (!resourceUrl) {
+        return;
+    }
+
+    if (MOODLE_BASE_URL) {
+        try {
+            const moodleHostname = new URL(MOODLE_BASE_URL).hostname;
+            const parsed = new URL(resourceUrl);
+
+            if (parsed.hostname === moodleHostname) {
+                window.open(`/moodle/media?url=${encodeURIComponent(resourceUrl)}`, '_blank', 'noopener,noreferrer');
+
+                return;
+            }
+        } catch {
+            // URL relativa o malformada — continúa con apertura directa
+        }
+    }
+
+    window.open(resourceUrl, '_blank', 'noopener,noreferrer');
+}
+
 function getModuleLabel(code: string, index: number): string {
     const numericMatch = code.match(/(\d+)/);
     const moduleNumber = numericMatch ? Number.parseInt(numericMatch[1], 10) : index + 1;
@@ -521,9 +546,20 @@ export default function Recursos({
                                                                                                 <Download size={16} />
                                                                                             </a>
                                                                                         ) : child.url ? (
-                                                                                            <a className="p-recursos__resource-link" href={child.url} target="_blank" rel="noreferrer" aria-label={openResourceLabel(child)}>
-                                                                                                <ExternalLink size={16} />
-                                                                                            </a>
+                                                                                            child.kind === 'external_link' ? (
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    className="p-recursos__resource-link"
+                                                                                                    onClick={() => openExternalResourceLink(child.url)}
+                                                                                                    aria-label={openResourceLabel(child)}
+                                                                                                >
+                                                                                                    <ExternalLink size={16} />
+                                                                                                </button>
+                                                                                            ) : (
+                                                                                                <a className="p-recursos__resource-link" href={child.url} target="_blank" rel="noreferrer" aria-label={openResourceLabel(child)}>
+                                                                                                    <ExternalLink size={16} />
+                                                                                                </a>
+                                                                                            )
                                                                                         ) : (
                                                                                             <span className="p-recursos__resource-disabled" aria-hidden="true">
                                                                                                 <Folder size={16} />
@@ -553,15 +589,26 @@ export default function Recursos({
                                                                             <Download size={16} />
                                                                         </a>
                                                                     ) : resource.url ? (
-                                                                        <a
-                                                                            className="p-recursos__resource-link"
-                                                                            href={resource.url}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            aria-label={openResourceLabel(resource)}
-                                                                        >
-                                                                            <ExternalLink size={16} />
-                                                                        </a>
+                                                                        resource.kind === 'external_link' ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="p-recursos__resource-link"
+                                                                                onClick={() => openExternalResourceLink(resource.url)}
+                                                                                aria-label={openResourceLabel(resource)}
+                                                                            >
+                                                                                <ExternalLink size={16} />
+                                                                            </button>
+                                                                        ) : (
+                                                                            <a
+                                                                                className="p-recursos__resource-link"
+                                                                                href={resource.url}
+                                                                                target="_blank"
+                                                                                rel="noreferrer"
+                                                                                aria-label={openResourceLabel(resource)}
+                                                                            >
+                                                                                <ExternalLink size={16} />
+                                                                            </a>
+                                                                        )
                                                                     ) : (
                                                                         <span className="p-recursos__resource-disabled" aria-hidden="true">
                                                                             <Folder size={16} />
