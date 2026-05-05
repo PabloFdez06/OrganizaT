@@ -782,7 +782,7 @@ class MoodleNotificationCenter
 
         $emailed = $this->getEmailedIds($user);
         $nowIso = CarbonImmutable::now()->toIso8601String();
-        $newItems = [];
+        $newItems = []; 
 
         foreach ($items as $item) {
             if (! is_array($item)) {
