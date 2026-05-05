@@ -99,6 +99,14 @@ function formatPercent(value: number, total: number): number {
 
 const MOODLE_BASE_URL = import.meta.env.VITE_MOODLE_URL as string | undefined;
 
+/**
+ * Abre un enlace de recurso en una nueva pestaña.
+ * - Si la URL pertenece al dominio de Moodle (o ya ha sido proxiada por el backend),
+ *   el backend habrá devuelto `/moodle/media?url=...` y se abre directamente.
+ * - Si la URL es externa (no Moodle), el backend la devuelve tal cual y se abre directamente.
+ * La comprobación de hostname sirve de salvaguarda por si el backend devuelve
+ * una URL de Moodle sin proxiar (caso infrecuente).
+ */
 function openExternalResourceLink(resourceUrl: string | null): void {
     if (!resourceUrl) {
         return;
@@ -115,7 +123,7 @@ function openExternalResourceLink(resourceUrl: string | null): void {
                 return;
             }
         } catch {
-            // URL relativa o malformada — continúa con apertura directa
+            // URL relativa (ya proxiada: /moodle/media?url=...) o malformada — abre directamente
         }
     }
 
