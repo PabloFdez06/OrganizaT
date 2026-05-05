@@ -166,7 +166,33 @@ export default function Security({
     const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
     const { qrCodeSvg, manualSetupKey, errors: twoFactorErrors, clearSetupData, fetchSetupData } = useTwoFactorAuth();
-    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
+    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState<boolean>(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        return new URLSearchParams(window.location.search).has('activate_2fa');
+    });
+
+    const openTwoFactorModal = () => {
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('activate_2fa', '1');
+            window.history.replaceState(null, '', url.toString());
+        }
+
+        setIsTwoFactorModalOpen(true);
+    };
+
+    const closeTwoFactorModal = () => {
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('activate_2fa');
+            window.history.replaceState(null, '', url.toString());
+        }
+
+        setIsTwoFactorModalOpen(false);
+    };
 
     const getSectionFromHash = (): SettingsSection => {
         if (typeof window === 'undefined') {
@@ -964,7 +990,7 @@ export default function Security({
                                                         type="button"
                                                         variant="outline"
                                                         className="p-settings__outline-button"
-                                                        onClick={() => setIsTwoFactorModalOpen(true)}
+                                                        onClick={openTwoFactorModal}
                                                     >
                                                         Gestionar
                                                     </Button>
@@ -994,7 +1020,7 @@ export default function Security({
                                                     aria-checked="false"
                                                     aria-label="Activar verificación en 2 pasos"
                                                     className="p-settings__switch"
-                                                    onClick={() => setIsTwoFactorModalOpen(true)}
+                                                    onClick={openTwoFactorModal}
                                                 >
                                                     <span className="p-settings__switch-thumb" aria-hidden="true" />
                                                 </button>
@@ -1058,7 +1084,7 @@ export default function Security({
 
             <TwoFactorSetupModal
                 isOpen={isTwoFactorModalOpen}
-                onClose={() => setIsTwoFactorModalOpen(false)}
+                onClose={closeTwoFactorModal}
                 twoFactorEnabled={twoFactorEnabled}
                 requiresConfirmation={true}
                 qrCodeSvg={qrCodeSvg}
