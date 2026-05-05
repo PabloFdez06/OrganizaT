@@ -48,6 +48,9 @@ class GradesParser
             $rangeText = $this->valueAt($values, $headerMap, ['rango']);
             $percentageText = $this->valueAt($values, $headerMap, ['porcentaje']);
             $feedbackText = $this->valueAt($values, $headerMap, ['retroalimentacion']);
+            if ($feedbackText !== null) {
+                $feedbackText = trim(str_ireplace('Mostrar comentario', '', $feedbackText));
+            }
 
             if ($item === null) {
                 $item = $values[0] ?? null;

@@ -55,13 +55,23 @@ class AssignmentsParser
 
             $nameCell = $cells->item($nameIndex);
             $link = null;
+            $nombre = null;
             if ($nameCell) {
                 $linkNode = $xpath->query('.//a[@href]', $nameCell)?->item(0);
                 $link = $linkNode?->getAttribute('href');
+                if ($linkNode !== null) {
+                    $nombre = trim(preg_replace('/\s+/u', ' ', $linkNode->textContent ?? ''));
+                }
+            }
+            if ($nombre === null || $nombre === '') {
+                $nombre = $texts[$nameIndex] ?? null;
             }
 
             $feedbackParts = array_filter(
-                array_slice($texts, $gradeIndex + 1),
+                array_map(
+                    static fn (string $value): string => trim(str_ireplace('Mostrar comentario', '', $value)),
+                    array_slice($texts, $gradeIndex + 1)
+                ),
                 static fn (string $value): bool => $value !== ''
             );
 
@@ -69,7 +79,7 @@ class AssignmentsParser
 
             $items[] = [
                 'tema' => $section,
-                'nombre' => $texts[$nameIndex] ?? null,
+                'nombre' => $nombre,
                 'fecha_entrega' => $texts[$dueIndex] ?? null,
                 'estado' => $texts[$statusIndex] ?? null,
                 'calificacion' => $texts[$gradeIndex] ?? null,

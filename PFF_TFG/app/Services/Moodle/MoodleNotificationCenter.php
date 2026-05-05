@@ -781,7 +781,8 @@ class MoodleNotificationCenter
         }
 
         $emailed = $this->getEmailedIds($user);
-        $hasNewDelivery = false;
+        $nowIso = CarbonImmutable::now()->toIso8601String();
+        $newItems = [];
 
         foreach ($items as $item) {
             if (! is_array($item)) {
@@ -800,12 +801,21 @@ class MoodleNotificationCenter
                 continue;
             }
 
-            SendMoodleNotificationEmailJob::dispatch($user, $item);
-            $hasNewDelivery = true;
+            $emailed[$id] = $nowIso;
+            $newItems[] = $item;
         }
 
-        if (! $hasNewDelivery) {
+        if ($newItems === []) {
             return;
+        }
+
+        // Persistir los IDs ANTES de despachar los jobs para evitar el race condition:
+        // si buildForUser se llama dos veces antes de que los jobs se ejecuten,
+        // la segunda llamada ya verá los IDs en caché y no despachará duplicados.
+        Cache::put($this->emailedKey($user), $emailed, now()->addSeconds(self::EMAILED_TTL_SECONDS));
+
+        foreach ($newItems as $item) {
+            SendMoodleNotificationEmailJob::dispatch($user, $item);
         }
     }
 
