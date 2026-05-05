@@ -308,20 +308,24 @@ export default function TwoFactorSetupModal({
     }, [twoFactorEnabled, clearSetupData]);
 
     useEffect(() => {
-        if (!isOpen || qrCodeSvg) return;
-
-        if (twoFactorEnabled) {
-            fetchSetupData();
+        if (!isOpen || qrCodeSvg) {
             return;
         }
 
-        const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+        if (twoFactorEnabled) {
+            fetchSetupData();
+
+            return;
+        }
+
+        const xsrfMatch = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+        const xsrfToken = xsrfMatch ? decodeURIComponent(xsrfMatch[1]) : '';
 
         fetch('/user/two-factor-authentication', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
+                'X-XSRF-TOKEN': xsrfToken,
                 Accept: 'application/json',
             },
         })
