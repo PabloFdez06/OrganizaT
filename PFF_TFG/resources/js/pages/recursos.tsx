@@ -97,33 +97,20 @@ function formatPercent(value: number, total: number): number {
     return Math.round((value / total) * 100);
 }
 
-const MOODLE_BASE_URL = import.meta.env.VITE_MOODLE_URL as string | undefined;
-
-/**
- * Abre un enlace de recurso en una nueva pestaña.
- * - Si la URL pertenece al dominio de Moodle (o ya ha sido proxiada por el backend),
- *   el backend habrá devuelto `/moodle/media?url=...` y se abre directamente.
- * - Si la URL es externa (no Moodle), el backend la devuelve tal cual y se abre directamente.
- * La comprobación de hostname sirve de salvaguarda por si el backend devuelve
- * una URL de Moodle sin proxiar (caso infrecuente).
- */
 function openExternalResourceLink(resourceUrl: string | null): void {
     if (!resourceUrl) {
         return;
     }
 
-    if (MOODLE_BASE_URL) {
-        try {
-            const moodleHostname = new URL(MOODLE_BASE_URL).hostname;
-            const parsed = new URL(resourceUrl);
+    // Si la URL viene envuelta por el proxy (/moodle/media?url=...), extrae la URL real
+    if (resourceUrl.includes('/moodle/media?url=')) {
+        const params = new URLSearchParams(resourceUrl.split('?')[1] ?? '');
+        const targetUrl = params.get('url');
 
-            if (parsed.hostname === moodleHostname) {
-                window.open(`/moodle/media?url=${encodeURIComponent(resourceUrl)}`, '_blank', 'noopener,noreferrer');
+        if (targetUrl) {
+            window.open(targetUrl, '_blank', 'noopener,noreferrer');
 
-                return;
-            }
-        } catch {
-            // URL relativa (ya proxiada: /moodle/media?url=...) o malformada — abre directamente
+            return;
         }
     }
 
