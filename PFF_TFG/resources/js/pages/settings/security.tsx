@@ -7,9 +7,11 @@ import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
-import { disable, enable } from '@/routes/two-factor';
+import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
+import { disable } from '@/routes/two-factor';
 
 type UserProfile = {
     fullName: string | null;
@@ -163,6 +165,8 @@ export default function Security({
     const [backgroundNotificationsProcessing, setBackgroundNotificationsProcessing] = useState(false);
     const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
+    const { qrCodeSvg, manualSetupKey, errors: twoFactorErrors, clearSetupData, fetchSetupData } = useTwoFactorAuth();
+    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
 
     const getSectionFromHash = (): SettingsSection => {
         if (typeof window === 'undefined') {
@@ -827,15 +831,7 @@ export default function Security({
                                             </p>
                                         )}
 
-                                        <PreferenceToggle
-                                            id="channel-push"
-                                            label="Notificaciones push"
-                                            description="Alertas en tiempo real en el navegador"
-                                            checked={preferencesData.push}
-                                            disabled={processing}
-                                            icon="push"
-                                            onToggle={(value) => persistPreference('push', value)}
-                                        />
+
                                     </section>
                                 </article>
                             </section>
@@ -963,44 +959,45 @@ export default function Security({
                                             </p>
 
                                             {twoFactorEnabled ? (
-                                                <Form method="delete" action={disable().url}>
-                                                    {({ processing: disabling }) => (
-                                                        <button
-                                                            type="submit"
-                                                            role="switch"
-                                                            aria-checked="true"
-                                                            aria-label="Desactivar verificación en 2 pasos"
-                                                            className={[
-                                                                'p-settings__switch',
-                                                                'p-settings__switch--on',
-                                                                disabling ? 'p-settings__switch--disabled' : '',
-                                                            ].join(' ')}
-                                                            disabled={disabling}
-                                                        >
-                                                            <span className="p-settings__switch-thumb" aria-hidden="true" />
-                                                        </button>
-                                                    )}
-                                                </Form>
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="p-settings__outline-button"
+                                                        onClick={() => setIsTwoFactorModalOpen(true)}
+                                                    >
+                                                        Gestionar
+                                                    </Button>
+                                                    <Form method="delete" action={disable().url}>
+                                                        {({ processing: disabling }) => (
+                                                            <button
+                                                                type="submit"
+                                                                role="switch"
+                                                                aria-checked="true"
+                                                                aria-label="Desactivar verificación en 2 pasos"
+                                                                className={[
+                                                                    'p-settings__switch',
+                                                                    'p-settings__switch--on',
+                                                                    disabling ? 'p-settings__switch--disabled' : '',
+                                                                ].join(' ')}
+                                                                disabled={disabling}
+                                                            >
+                                                                <span className="p-settings__switch-thumb" aria-hidden="true" />
+                                                            </button>
+                                                        )}
+                                                    </Form>
+                                                </>
                                             ) : (
-                                                <Form method="post" action={enable().url}>
-                                                    {({ processing: enabling }) => (
-                                                        <button
-                                                            type="submit"
-                                                            role="switch"
-                                                            aria-checked="false"
-                                                            aria-label="Activar verificación en 2 pasos"
-                                                            className={[
-                                                                'p-settings__switch',
-                                                                enabling ? 'p-settings__switch--disabled' : '',
-                                                            ]
-                                                                .filter(Boolean)
-                                                                .join(' ')}
-                                                            disabled={enabling}
-                                                        >
-                                                            <span className="p-settings__switch-thumb" aria-hidden="true" />
-                                                        </button>
-                                                    )}
-                                                </Form>
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked="false"
+                                                    aria-label="Activar verificación en 2 pasos"
+                                                    className="p-settings__switch"
+                                                    onClick={() => setIsTwoFactorModalOpen(true)}
+                                                >
+                                                    <span className="p-settings__switch-thumb" aria-hidden="true" />
+                                                </button>
                                             )}
                                         </section>
                                     </article>
@@ -1058,6 +1055,18 @@ export default function Security({
                     </section>
                 </section>
             </main>
+
+            <TwoFactorSetupModal
+                isOpen={isTwoFactorModalOpen}
+                onClose={() => setIsTwoFactorModalOpen(false)}
+                twoFactorEnabled={twoFactorEnabled}
+                requiresConfirmation={true}
+                qrCodeSvg={qrCodeSvg}
+                manualSetupKey={manualSetupKey}
+                clearSetupData={clearSetupData}
+                fetchSetupData={fetchSetupData}
+                errors={twoFactorErrors}
+            />
         </>
     );
 }
