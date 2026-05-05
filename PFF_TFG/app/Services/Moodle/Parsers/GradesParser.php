@@ -56,6 +56,30 @@ class GradesParser
                 $item = $values[0] ?? null;
             }
 
+            // Intentar re-extraer el nombre del item desde el enlace de su celda
+            // excluyendo spans .accesshide que Moodle añade con el tipo de actividad.
+            $itemIndex = $headerMap['item'] ?? 0;
+            $itemCell = $cells->item($itemIndex);
+            if ($itemCell !== null) {
+                $itemLinkNode = $xpath->query('.//a[@href]', $itemCell)?->item(0);
+                if ($itemLinkNode !== null) {
+                    $visibleNodes = $xpath->query(
+                        './/text()[not(ancestor::*[contains(concat(" ", normalize-space(@class), " "), " accesshide ")])]',
+                        $itemLinkNode
+                    );
+                    if ($visibleNodes && $visibleNodes->length > 0) {
+                        $parts = [];
+                        foreach ($visibleNodes as $textNode) {
+                            $parts[] = $textNode->nodeValue ?? '';
+                        }
+                        $extracted = trim(preg_replace('/\s+/u', ' ', implode(' ', $parts)));
+                        if ($extracted !== '') {
+                            $item = $extracted;
+                        }
+                    }
+                }
+            }
+
             if ($gradeText === null) {
                 $gradeText = $values[1] ?? null;
             }

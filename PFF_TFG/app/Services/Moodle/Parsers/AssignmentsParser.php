@@ -60,7 +60,22 @@ class AssignmentsParser
                 $linkNode = $xpath->query('.//a[@href]', $nameCell)?->item(0);
                 $link = $linkNode?->getAttribute('href');
                 if ($linkNode !== null) {
-                    $nombre = trim(preg_replace('/\s+/u', ' ', $linkNode->textContent ?? ''));
+                    // Extraer solo nodos de texto visibles, excluyendo descendientes de .accesshide
+                    // para evitar que Moodle duplique parte del título con texto oculto para lectores.
+                    $visibleNodes = $xpath->query(
+                        './/text()[not(ancestor::*[contains(concat(" ", normalize-space(@class), " "), " accesshide ")])]',
+                        $linkNode
+                    );
+                    if ($visibleNodes && $visibleNodes->length > 0) {
+                        $parts = [];
+                        foreach ($visibleNodes as $textNode) {
+                            $parts[] = $textNode->nodeValue ?? '';
+                        }
+                        $nombre = trim(preg_replace('/\s+/u', ' ', implode(' ', $parts)));
+                    }
+                    if ($nombre === null || $nombre === '') {
+                        $nombre = trim(preg_replace('/\s+/u', ' ', $linkNode->textContent ?? ''));
+                    }
                 }
             }
             if ($nombre === null || $nombre === '') {
