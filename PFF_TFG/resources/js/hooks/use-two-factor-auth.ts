@@ -231,10 +231,6 @@ export const useTwoFactorAuth = ({
     );
 
     const refreshSetupData = useCallback(async (): Promise<void> => {
-        if (status === 'disabled') {
-            return;
-        }
-
         setIsRefreshingSetup(true);
         setErrors({});
 
@@ -272,7 +268,7 @@ export const useTwoFactorAuth = ({
         } finally {
             setIsRefreshingSetup(false);
         }
-    }, [status]);
+    }, []);
 
     const enableTwoFactor = useCallback(async (): Promise<boolean> => {
         if (!await ensurePasswordConfirmed('enable')) {

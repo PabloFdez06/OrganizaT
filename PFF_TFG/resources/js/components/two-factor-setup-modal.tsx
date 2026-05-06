@@ -1,6 +1,6 @@
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { RefreshCw, ScanLine } from 'lucide-react';
-import { useMemo } from 'react';
+import { Check, Copy, KeyRound, RefreshCw, ScanLine, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import AlertError from '@/components/alert-error';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -17,35 +18,8 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { Spinner } from '@/components/ui/spinner';
-import { useAppearance } from '@/hooks/use-appearance';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
 import type { TwoFactorStatus } from '@/hooks/use-two-factor-auth';
-
-function GridScanIcon() {
-    return (
-        <div className="">
-            <div className="">
-                <div className="">
-                    {Array.from({ length: 5 }, (_, i) => (
-                        <div
-                            key={`col-${i + 1}`}
-                            className=""
-                        />
-                    ))}
-                </div>
-                <div className="">
-                    {Array.from({ length: 5 }, (_, i) => (
-                        <div
-                            key={`row-${i + 1}`}
-                            className=""
-                        />
-                    ))}
-                </div>
-                <ScanLine className="" />
-            </div>
-        </div>
-    );
-}
 
 type Props = {
     isOpen: boolean;
@@ -84,10 +58,10 @@ export default function TwoFactorSetupModal({
     onRegenerateCodes,
     onRefresh,
 }: Props) {
-    const { resolvedAppearance } = useAppearance();
     const isPending = status === 'pending';
     const isEnabled = status === 'enabled';
     const shouldShowSetupData = isPending || isEnabled;
+    const [hasCopiedManualKey, setHasCopiedManualKey] = useState(false);
 
     const modalConfig = useMemo<{
         title: string;
@@ -116,43 +90,68 @@ export default function TwoFactorSetupModal({
         };
     }, [isEnabled, isPending]);
 
+    const handleCopyManualSetupKey = async (): Promise<void> => {
+        if (!manualSetupKey) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(manualSetupKey);
+            setHasCopiedManualKey(true);
+
+            window.setTimeout(() => {
+                setHasCopiedManualKey(false);
+            }, 1500);
+        } catch {
+            setHasCopiedManualKey(false);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="">
-                <DialogHeader className="">
-                    <GridScanIcon />
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                <DialogHeader className="space-y-3">
+                    <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground sm:mx-0">
+                        <ScanLine className="h-5 w-5" aria-hidden="true" />
+                    </span>
                     <DialogTitle>{modalConfig.title}</DialogTitle>
-                    <DialogDescription className="">
+                    <DialogDescription>
                         {modalConfig.description}
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="">
+                <section className="space-y-4">
                     {generalError && <AlertError errors={[generalError]} />}
 
+                    {!shouldShowSetupData && (
+                        <section className="rounded-lg border border-dashed border-border bg-muted/20 p-4">
+                            <header className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                                <ShieldAlert className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                                Setup no iniciado
+                            </header>
+                            <p className="text-sm text-muted-foreground">
+                                Activa el 2FA desde la pantalla de seguridad para cargar automaticamente el QR, la clave manual y los codigos de recuperacion.
+                            </p>
+                        </section>
+                    )}
+
                     {shouldShowSetupData && (
-                        <section className="space-y-4" aria-live="polite">
-                            <header>
-                                <h3 className="text-sm font-semibold">Configuración del autenticador</h3>
+                        <section className="space-y-4 rounded-lg border border-border bg-muted/20 p-4" aria-live="polite">
+                            <header className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                                <ShieldCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                                Configuracion del autenticador
                             </header>
 
                             <section className="space-y-2">
-                                <p className="text-sm text-muted-foreground">Escanea este código QR desde tu aplicación TOTP.</p>
-                                <div className="rounded-md border p-4">
+                                <h3 className="text-sm font-medium text-foreground">Codigo QR</h3>
+                                <p className="text-sm text-muted-foreground">Escanealo en tu app autenticadora para vincular el dispositivo.</p>
+                                <div className="rounded-lg border border-border bg-background p-4">
                                     {isRefreshingSetup ? (
                                         <div className="flex justify-center py-8">
                                             <Spinner />
                                         </div>
                                     ) : qrCodeSvg ? (
-                                        <div
-                                            dangerouslySetInnerHTML={{ __html: qrCodeSvg }}
-                                            style={{
-                                                filter:
-                                                    resolvedAppearance === 'dark'
-                                                        ? 'invert(1) brightness(1.5)'
-                                                        : undefined,
-                                            }}
-                                        />
+                                        <div className="flex justify-center" dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
                                     ) : (
                                         <p className="text-sm text-muted-foreground">No se pudo cargar el QR.</p>
                                     )}
@@ -160,18 +159,41 @@ export default function TwoFactorSetupModal({
                             </section>
 
                             <section className="space-y-2">
-                                <p className="text-sm text-muted-foreground">Clave manual (si no puedes escanear QR):</p>
-                                <code className="block rounded-md border bg-muted px-3 py-2 text-sm">{manualSetupKey ?? 'No disponible'}</code>
+                                <h3 className="text-sm font-medium text-foreground">Clave manual</h3>
+                                <p className="text-sm text-muted-foreground">Usala solo si no puedes escanear el QR.</p>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <code className="block rounded-md border border-border bg-background px-3 py-2 text-sm font-mono">
+                                        {manualSetupKey ?? 'No disponible'}
+                                    </code>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => void handleCopyManualSetupKey()}
+                                        disabled={!manualSetupKey}
+                                    >
+                                        {hasCopiedManualKey ? (
+                                            <>
+                                                <Check className="mr-2 h-4 w-4" />
+                                                Copiada
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="mr-2 h-4 w-4" />
+                                                Copiar
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             </section>
 
                             <section className="space-y-2">
-                                <header>
-                                    <h3 className="text-sm font-semibold">Códigos de recuperación</h3>
-                                </header>
+                                <h3 className="text-sm font-medium text-foreground">Codigos de recuperacion</h3>
+                                <p className="text-sm text-muted-foreground">Guarda estos codigos en un lugar seguro para recuperar acceso si pierdes tu dispositivo.</p>
                                 {recoveryCodesList.length > 0 ? (
-                                    <ul className="grid gap-2 text-sm" aria-label="Códigos de recuperación">
+                                    <ul className="grid gap-2 text-sm sm:grid-cols-2" aria-label="Codigos de recuperacion">
                                         {recoveryCodesList.map((recoveryCode) => (
-                                            <li key={recoveryCode} className="rounded-md border bg-muted px-3 py-2 font-mono">
+                                            <li key={recoveryCode} className="rounded-md border border-border bg-background px-3 py-2 font-mono text-xs sm:text-sm">
                                                 {recoveryCode}
                                             </li>
                                         ))}
@@ -181,7 +203,7 @@ export default function TwoFactorSetupModal({
                                 )}
                             </section>
 
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 <Button type="button" variant="outline" onClick={() => void onRefresh()} disabled={isRefreshingSetup || isConfirming || isRegeneratingCodes}>
                                     Actualizar
                                 </Button>
@@ -194,8 +216,13 @@ export default function TwoFactorSetupModal({
                     )}
 
                     {isPending && (
-                        <section className="space-y-3 pt-2">
-                            <label htmlFor="two-factor-confirm-code" className="text-sm font-medium">
+                        <section className="space-y-3 rounded-lg border border-border bg-background p-4">
+                            <header className="space-y-1">
+                                <h3 className="text-sm font-medium text-foreground">Verificacion del codigo TOTP</h3>
+                                <p className="text-sm text-muted-foreground">Introduce el codigo de 6 digitos para confirmar y dejar activo el 2FA.</p>
+                            </header>
+
+                            <label htmlFor="two-factor-confirm-code" className="text-sm font-medium text-foreground">
                                 Código TOTP
                             </label>
                             <InputOTP
@@ -206,38 +233,45 @@ export default function TwoFactorSetupModal({
                                 disabled={isConfirming}
                                 pattern={REGEXP_ONLY_DIGITS}
                                 autoFocus
+                                containerClassName="justify-start"
+                                className="disabled:cursor-not-allowed"
                             >
-                                <InputOTPGroup>
+                                <InputOTPGroup className="gap-2">
                                     {Array.from({ length: OTP_MAX_LENGTH }, (_, index) => (
-                                        <InputOTPSlot key={index} index={index} />
+                                        <InputOTPSlot
+                                            key={index}
+                                            index={index}
+                                            className="h-11 w-10 rounded-md border border-border bg-muted/30 text-center text-base font-semibold text-foreground shadow-sm"
+                                        />
                                     ))}
                                 </InputOTPGroup>
                             </InputOTP>
                             <InputError message={codeError} />
+                        </section>
+                    )}
 
-                            <div className="flex justify-end gap-2">
+                    <DialogFooter>
+                        {isPending ? (
+                            <>
                                 <Button type="button" variant="outline" onClick={onClose} disabled={isConfirming}>
-                                    Cerrar
+                                    Cancelar
                                 </Button>
                                 <Button
                                     type="button"
                                     onClick={() => void onConfirm()}
                                     disabled={isConfirming || code.length !== OTP_MAX_LENGTH}
                                 >
+                                    <KeyRound className="mr-2 h-4 w-4" />
                                     {isConfirming ? 'Confirmando...' : 'Confirmar 2FA'}
                                 </Button>
-                            </div>
-                        </section>
-                    )}
-
-                    {!isPending && (
-                        <div className="flex justify-end pt-2">
+                            </>
+                        ) : (
                             <Button type="button" variant="outline" onClick={onClose}>
                                 Cerrar
                             </Button>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </DialogFooter>
+                </section>
             </DialogContent>
         </Dialog>
     );

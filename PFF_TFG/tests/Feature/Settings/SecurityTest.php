@@ -4,6 +4,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
+use PragmaRX\Google2FA\Google2FA;
 
 test('security page is displayed', function () {
     $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
@@ -38,6 +39,40 @@ test('security page exposes pending two factor state', function () {
             ->component('settings/security')
             ->where('twoFactorEnabled', false)
             ->where('twoFactorPendingConfirmation', true)
+            ->where('auth.user.two_factor_enabled', false)
+            ->where('auth.user.two_factor_pending_confirmation', true)
+        );
+});
+
+test('security page exposes enabled two factor state after confirmation', function () {
+    $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->postJson(route('two-factor.enable'))
+        ->assertOk();
+
+    $secret = decrypt((string) $user->fresh()->two_factor_secret);
+    $validCode = app(Google2FA::class)->getCurrentOtp($secret);
+
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->postJson(route('two-factor.confirm'), [
+            'code' => $validCode,
+        ])
+        ->assertOk();
+
+    $this->actingAs($user)
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('settings/security')
+            ->where('twoFactorEnabled', true)
+            ->where('twoFactorPendingConfirmation', false)
+            ->where('auth.user.two_factor_enabled', true)
+            ->where('auth.user.two_factor_pending_confirmation', false)
         );
 });
 

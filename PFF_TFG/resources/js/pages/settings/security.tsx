@@ -392,6 +392,19 @@ export default function Security({
         });
     };
 
+    const reloadTwoFactorState = useCallback(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        router.visit(`${window.location.pathname}${window.location.search}${window.location.hash}`, {
+            only: ['auth', 'twoFactorEnabled', 'twoFactorPendingConfirmation'],
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    }, []);
+
     const openTwoFactorModal = useCallback(async (enableIfDisabled = false): Promise<boolean> => {
         setTwoFactorFeedback(null);
         clearTwoFactorErrors();
@@ -436,7 +449,8 @@ export default function Security({
             type: 'success',
             message: 'Verificación en 2 pasos desactivada correctamente.',
         });
-    }, [disableTwoFactor]);
+        reloadTwoFactorState();
+    }, [disableTwoFactor, reloadTwoFactorState]);
 
     const handleTwoFactorConfirm = useCallback(async (): Promise<void> => {
         setTwoFactorFeedback(null);
@@ -448,11 +462,13 @@ export default function Security({
         }
 
         setTwoFactorCode('');
+        setIsTwoFactorModalOpen(false);
         setTwoFactorFeedback({
             type: 'success',
             message: 'Verificación en 2 pasos activada y confirmada correctamente.',
         });
-    }, [confirmTwoFactor, twoFactorCode]);
+        reloadTwoFactorState();
+    }, [confirmTwoFactor, twoFactorCode, reloadTwoFactorState]);
 
     const handleRegenerateRecoveryCodes = useCallback(async (): Promise<void> => {
         setTwoFactorFeedback(null);
