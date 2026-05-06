@@ -1,6 +1,6 @@
-import { usePage } from '@inertiajs/react';
-import { useCallback, useState } from 'react';
-import { recoveryCodes } from '@/routes/two-factor';
+import { useState } from 'react';
+import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
+import type { TwoFactorSecretKey, TwoFactorSetupData } from '@/types';
 
 export type UseTwoFactorAuthReturn = {
     qrCodeSvg: string | null;
@@ -18,45 +18,78 @@ export type UseTwoFactorAuthReturn = {
 
 export const OTP_MAX_LENGTH = 6;
 
+const fetchJson = async <T>(url: string): Promise<T> => {
+    const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+    }
+
+    return response.json();
+};
+
 export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
-    const { props } = usePage<{ twoFactorQrCodeSvg?: string | null; twoFactorSecretKey?: string | null }>();
+    const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null);
+    const [manualSetupKey, setManualSetupKey] = useState<string | null>(null);
     const [recoveryCodesList, setRecoveryCodesList] = useState<string[]>([]);
     const [errors, setErrors] = useState<string[]>([]);
 
-    const qrCodeSvg = props.twoFactorQrCodeSvg ?? null;
-    const manualSetupKey = props.twoFactorSecretKey ?? null;
     const hasSetupData = qrCodeSvg !== null && manualSetupKey !== null;
 
-    const clearErrors = useCallback((): void => {
+    const fetchQrCode = async (): Promise<void> => {
+        try {
+            const { svg } = await fetchJson<TwoFactorSetupData>(qrCode.url());
+            setQrCodeSvg(svg);
+        } catch {
+            setErrors((prev) => [...prev, 'Failed to fetch QR code']);
+            setQrCodeSvg(null);
+        }
+    };
+
+    const fetchSetupKey = async (): Promise<void> => {
+        try {
+            const { secretKey: key } = await fetchJson<TwoFactorSecretKey>(
+                secretKey.url(),
+            );
+            setManualSetupKey(key);
+        } catch {
+            setErrors((prev) => [...prev, 'Failed to fetch a setup key']);
+            setManualSetupKey(null);
+        }
+    };
+
+    const clearErrors = (): void => {
         setErrors([]);
-    }, []);
+    };
 
-    // QR code and secret key come from Inertia page props — no fetch needed
-    const fetchQrCode = useCallback(async (): Promise<void> => {}, []);
-    const fetchSetupKey = useCallback(async (): Promise<void> => {}, []);
-    const fetchSetupData = useCallback(async (): Promise<void> => {}, []);
-    const clearSetupData = useCallback((): void => clearErrors(), [clearErrors]);
+    const clearSetupData = (): void => {
+        setManualSetupKey(null);
+        setQrCodeSvg(null);
+        clearErrors();
+    };
 
-    const fetchRecoveryCodes = useCallback(async (): Promise<void> => {
+    const fetchRecoveryCodes = async (): Promise<void> => {
         try {
             clearErrors();
-
-            const response = await fetch(recoveryCodes.url(), {
-                headers: { Accept: 'application/json' },
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to fetch: ${response.status}`);
-            }
-
-            const codes = (await response.json()) as string[];
-
+            const codes = await fetchJson<string[]>(recoveryCodes.url());
             setRecoveryCodesList(codes);
         } catch {
             setErrors((prev) => [...prev, 'Failed to fetch recovery codes']);
             setRecoveryCodesList([]);
         }
-    }, [clearErrors]);
+    };
+
+    const fetchSetupData = async (): Promise<void> => {
+        try {
+            clearErrors();
+            await Promise.all([fetchQrCode(), fetchSetupKey()]);
+        } catch {
+            setQrCodeSvg(null);
+            setManualSetupKey(null);
+        }
+    };
 
     return {
         qrCodeSvg,

@@ -11,7 +11,7 @@ import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
-import { setup, disable } from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import { disable } from '@/routes/two-factor';
 
 type UserProfile = {
     fullName: string | null;
@@ -72,8 +72,6 @@ type Props = {
     quickSubjects: QuickSubjects;
     canManageTwoFactor?: boolean;
     twoFactorEnabled?: boolean;
-    twoFactorPendingConfirmation?: boolean;
-    requiresConfirmation?: boolean;
 };
 
 type PreferenceToggleProps = {
@@ -151,8 +149,6 @@ export default function Security({
     quickSubjects,
     canManageTwoFactor = false,
     twoFactorEnabled = false,
-    twoFactorPendingConfirmation = false,
-    requiresConfirmation = true,
 }: Props) {
     const [showReconnectForm, setShowReconnectForm] = useState(false);
     const pageProps = usePage().props as {
@@ -170,7 +166,7 @@ export default function Security({
     const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
     const { qrCodeSvg, manualSetupKey, errors: twoFactorErrors, clearSetupData, fetchSetupData } = useTwoFactorAuth();
-    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(twoFactorPendingConfirmation);
+    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
 
     const getSectionFromHash = (): SettingsSection => {
         if (typeof window === 'undefined') {
@@ -186,16 +182,7 @@ export default function Security({
         return 'usuario';
     };
 
-    const [activeSection, setActiveSection] = useState<SettingsSection>(
-        () => (twoFactorPendingConfirmation ? 'peligro' : getSectionFromHash()),
-    );
-
-    useEffect(() => {
-        if (twoFactorPendingConfirmation) {
-            setIsTwoFactorModalOpen(true);
-            setActiveSection('peligro');
-        }
-    }, [twoFactorPendingConfirmation]);
+    const [activeSection, setActiveSection] = useState<SettingsSection>(() => getSectionFromHash());
 
     const sidebarItems: SideNavItem[] = [
         {
@@ -968,10 +955,7 @@ export default function Security({
 
                                         <section className="p-settings__two-factor">
                                             <p className="p-settings__two-factor-status">
-                                                Verificación en 2 pasos:{' '}
-                                                <b className="p-settings__two-factor-status-value">
-                                                    {twoFactorEnabled ? 'Activada' : 'Desactivada'}
-                                                </b>
+                                                Verificación en 2 pasos: <b className="p-settings__two-factor-status-value">{twoFactorEnabled ? 'Activada' : 'Desactivada'}</b>
                                             </p>
 
                                             {twoFactorEnabled ? (
@@ -984,12 +968,8 @@ export default function Security({
                                                     >
                                                         Gestionar
                                                     </Button>
-
-                                                    <Form
-                                                        method="delete"
-                                                        action={disable().url}
-                                                    >
-                                                        {({ processing: disabling }: { processing: boolean }) => (
+                                                    <Form method="delete" action={disable().url}>
+                                                        {({ processing: disabling }) => (
                                                             <button
                                                                 type="submit"
                                                                 role="switch"
@@ -999,7 +979,7 @@ export default function Security({
                                                                     'p-settings__switch',
                                                                     'p-settings__switch--on',
                                                                     disabling ? 'p-settings__switch--disabled' : '',
-                                                                ].filter(Boolean).join(' ')}
+                                                                ].join(' ')}
                                                                 disabled={disabling}
                                                             >
                                                                 <span className="p-settings__switch-thumb" aria-hidden="true" />
@@ -1014,7 +994,7 @@ export default function Security({
                                                     aria-checked="false"
                                                     aria-label="Activar verificación en 2 pasos"
                                                     className="p-settings__switch"
-                                                    onClick={() => twoFactorPendingConfirmation ? setIsTwoFactorModalOpen(true) : router.get(setup().url)}
+                                                    onClick={() => setIsTwoFactorModalOpen(true)}
                                                 >
                                                     <span className="p-settings__switch-thumb" aria-hidden="true" />
                                                 </button>
@@ -1080,7 +1060,7 @@ export default function Security({
                 isOpen={isTwoFactorModalOpen}
                 onClose={() => setIsTwoFactorModalOpen(false)}
                 twoFactorEnabled={twoFactorEnabled}
-                requiresConfirmation={requiresConfirmation}
+                requiresConfirmation={true}
                 qrCodeSvg={qrCodeSvg}
                 manualSetupKey={manualSetupKey}
                 clearSetupData={clearSetupData}

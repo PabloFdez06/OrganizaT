@@ -8,9 +8,8 @@ use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
-use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
 
-class FortifyRedirectResponse implements LoginResponseContract, LogoutResponseContract, RegisterResponseContract, TwoFactorLoginResponseContract
+class FortifyRedirectResponse implements LoginResponseContract, LogoutResponseContract, RegisterResponseContract
 {
     public function toResponse($request)
     {

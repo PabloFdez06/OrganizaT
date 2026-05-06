@@ -27,11 +27,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
-
-    // 2FA management – setup/disable/recovery-codes require recent password confirmation
-    Route::middleware('password.confirm')->group(function () {
-        Route::get('settings/security/two-factor/setup', [SecurityController::class, 'setup'])->name('security.two-factor.setup');
-        Route::delete('settings/security/two-factor/disable', [SecurityController::class, 'disable'])->name('security.two-factor.disable');
-        Route::post('settings/security/two-factor/recovery-codes', [SecurityController::class, 'recoveryCodes'])->name('security.two-factor.recovery-codes');
-    });
 });
