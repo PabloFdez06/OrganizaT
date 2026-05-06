@@ -69,6 +69,25 @@ const JSON_HEADERS = {
     'X-Requested-With': 'XMLHttpRequest',
 };
 
+const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+const getCookieValue = (name: string): string | null => {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+
+    const cookiePrefix = `${name}=`;
+    const cookie = document.cookie
+        .split('; ')
+        .find((value) => value.startsWith(cookiePrefix));
+
+    if (!cookie) {
+        return null;
+    }
+
+    return decodeURIComponent(cookie.slice(cookiePrefix.length));
+};
+
 const resolveStatus = (isEnabled: boolean, isPending: boolean): TwoFactorStatus => {
     if (isEnabled) {
         return 'enabled';
@@ -95,10 +114,17 @@ const parseValidationMessage = (
 };
 
 const requestJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
+    const method = (init?.method ?? 'GET').toUpperCase();
+    const xsrfToken = CSRF_SAFE_METHODS.has(method)
+        ? null
+        : getCookieValue('XSRF-TOKEN');
+
     const response = await fetch(url, {
         ...init,
+        credentials: 'same-origin',
         headers: {
             ...JSON_HEADERS,
+            ...(xsrfToken ? { 'X-XSRF-TOKEN': xsrfToken } : {}),
             ...(init?.headers ?? {}),
         },
     });
