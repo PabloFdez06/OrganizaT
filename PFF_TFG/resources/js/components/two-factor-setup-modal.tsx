@@ -1,5 +1,5 @@
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { Check, Copy, KeyRound, RefreshCw, ScanLine, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Check, Copy, RefreshCw, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import AlertError from '@/components/alert-error';
 import InputError from '@/components/input-error';
@@ -8,7 +8,6 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -107,171 +106,222 @@ export default function TwoFactorSetupModal({
         }
     };
 
+    const handleDownloadRecoveryCodes = (): void => {
+        if (recoveryCodesList.length === 0 || typeof window === 'undefined') {
+            return;
+        }
+
+        const fileContent = [
+            'ORGANIZAT - CODIGOS DE RECUPERACION 2FA',
+            `Generado: ${new Date().toISOString()}`,
+            '',
+            ...recoveryCodesList.map((code, index) => `${String(index + 1).padStart(2, '0')}. ${code}`),
+        ].join('\n');
+
+        const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+
+        anchor.href = objectUrl;
+        anchor.download = 'organizat-2fa-recovery-codes.txt';
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(objectUrl);
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-                <DialogHeader className="space-y-3">
-                    <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground sm:mx-0">
-                        <ScanLine className="h-5 w-5" aria-hidden="true" />
-                    </span>
-                    <DialogTitle>{modalConfig.title}</DialogTitle>
-                    <DialogDescription>
+            <DialogContent className="p-settings__two-factor-modal">
+                <header className="p-settings__two-factor-modal-close-row">
+                    <button type="button" className="p-settings__two-factor-modal-close-button" onClick={onClose}>
+                        CLOSE
+                        <X aria-hidden="true" />
+                    </button>
+                </header>
+
+                <DialogHeader className="p-settings__two-factor-modal-header">
+                    <DialogTitle className="p-settings__two-factor-modal-title">{modalConfig.title}</DialogTitle>
+                    <DialogDescription className="p-settings__two-factor-modal-description">
                         {modalConfig.description}
                     </DialogDescription>
                 </DialogHeader>
 
-                <section className="space-y-4">
-                    {generalError && <AlertError errors={[generalError]} />}
+                {generalError && <AlertError errors={[generalError]} />}
 
-                    {!shouldShowSetupData && (
-                        <section className="rounded-lg border border-dashed border-border bg-muted/20 p-4">
-                            <header className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                                <ShieldAlert className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                                Setup no iniciado
-                            </header>
-                            <p className="text-sm text-muted-foreground">
-                                Activa el 2FA desde la pantalla de seguridad para cargar automaticamente el QR, la clave manual y los codigos de recuperacion.
-                            </p>
-                        </section>
-                    )}
+                {!shouldShowSetupData && (
+                    <section className="p-settings__two-factor-empty">
+                        <p>
+                            Activa el 2FA desde la zona de peligro para cargar automaticamente el QR, la clave manual y los codigos de recuperacion.
+                        </p>
+                    </section>
+                )}
 
-                    {shouldShowSetupData && (
-                        <section className="space-y-4 rounded-lg border border-border bg-muted/20 p-4" aria-live="polite">
-                            <header className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                                <ShieldCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                                Configuracion del autenticador
-                            </header>
-
-                            <section className="space-y-2">
-                                <h3 className="text-sm font-medium text-foreground">Codigo QR</h3>
-                                <p className="text-sm text-muted-foreground">Escanealo en tu app autenticadora para vincular el dispositivo.</p>
-                                <div className="rounded-lg border border-border bg-background p-4">
+                {shouldShowSetupData && (
+                    <section className="p-settings__two-factor-layout" aria-live="polite">
+                        <section className="p-settings__two-factor-left-column">
+                            <section className="p-settings__two-factor-qr-card">
+                                <div className="p-settings__two-factor-qr-frame">
                                     {isRefreshingSetup ? (
-                                        <div className="flex justify-center py-8">
+                                        <div className="p-settings__two-factor-loading">
                                             <Spinner />
                                         </div>
                                     ) : qrCodeSvg ? (
-                                        <div className="flex justify-center" dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
+                                        <div className="p-settings__two-factor-qr-image" dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
                                     ) : (
-                                        <p className="text-sm text-muted-foreground">No se pudo cargar el QR.</p>
+                                        <p className="p-settings__two-factor-subtext">No se pudo cargar el QR.</p>
                                     )}
                                 </div>
+
+                                <p className="p-settings__two-factor-label">AUTHENTICATION ID</p>
+                                <p className="p-settings__two-factor-subtext">Escanea con Google Authenticator o Authy</p>
                             </section>
 
-                            <section className="space-y-2">
-                                <h3 className="text-sm font-medium text-foreground">Clave manual</h3>
-                                <p className="text-sm text-muted-foreground">Usala solo si no puedes escanear el QR.</p>
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <code className="block rounded-md border border-border bg-background px-3 py-2 text-sm font-mono">
-                                        {manualSetupKey ?? 'No disponible'}
-                                    </code>
+                            <section className="p-settings__two-factor-manual-section">
+                                <h3 className="p-settings__two-factor-manual-title">MANUAL SETUP</h3>
+                                <div className="p-settings__two-factor-manual-row">
+                                    <code className="p-settings__two-factor-manual-code">{manualSetupKey ?? 'No disponible'}</code>
                                     <Button
                                         type="button"
-                                        size="sm"
-                                        variant="outline"
+                                        variant="default"
+                                        className="p-settings__two-factor-copy-button"
                                         onClick={() => void handleCopyManualSetupKey()}
                                         disabled={!manualSetupKey}
                                     >
                                         {hasCopiedManualKey ? (
                                             <>
-                                                <Check className="mr-2 h-4 w-4" />
-                                                Copiada
+                                                <Check aria-hidden="true" />
+                                                Copiado
                                             </>
                                         ) : (
                                             <>
-                                                <Copy className="mr-2 h-4 w-4" />
+                                                <Copy aria-hidden="true" />
                                                 Copiar
                                             </>
                                         )}
                                     </Button>
                                 </div>
                             </section>
+                        </section>
 
-                            <section className="space-y-2">
-                                <h3 className="text-sm font-medium text-foreground">Codigos de recuperacion</h3>
-                                <p className="text-sm text-muted-foreground">Guarda estos codigos en un lugar seguro para recuperar acceso si pierdes tu dispositivo.</p>
-                                {recoveryCodesList.length > 0 ? (
-                                    <ul className="grid gap-2 text-sm sm:grid-cols-2" aria-label="Codigos de recuperacion">
-                                        {recoveryCodesList.map((recoveryCode) => (
-                                            <li key={recoveryCode} className="rounded-md border border-border bg-background px-3 py-2 font-mono text-xs sm:text-sm">
-                                                {recoveryCode}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground">No hay códigos disponibles.</p>
-                                )}
+                        <section className="p-settings__two-factor-right-column">
+                            <section className="p-settings__two-factor-recovery-card">
+                                <header className="p-settings__two-factor-recovery-header">
+                                    <div>
+                                        <h3 className="p-settings__two-factor-recovery-title">Codigos de recuperacion</h3>
+                                        <p className="p-settings__two-factor-subtext">Guarda estos codigos en un lugar seguro.</p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="p-settings__two-factor-icon-action"
+                                        onClick={() => void onRefresh()}
+                                        disabled={isRefreshingSetup || isConfirming || isRegeneratingCodes}
+                                        aria-label="Actualizar datos de configuracion"
+                                    >
+                                        <RefreshCw aria-hidden="true" />
+                                    </Button>
+                                </header>
+
+                                <div className="p-settings__two-factor-recovery-list-wrapper">
+                                    {recoveryCodesList.length > 0 ? (
+                                        <ul className="p-settings__two-factor-recovery-list" aria-label="Codigos de recuperacion">
+                                            {recoveryCodesList.map((recoveryCode, index) => (
+                                                <li key={recoveryCode} className="p-settings__two-factor-recovery-item">
+                                                    <span className="p-settings__two-factor-recovery-index">
+                                                        {String(index + 1).padStart(2, '0')}
+                                                    </span>
+                                                    <span className="p-settings__two-factor-recovery-code">{recoveryCode}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="p-settings__two-factor-subtext">No hay codigos disponibles.</p>
+                                    )}
+                                </div>
+
+                                <div className="p-settings__two-factor-recovery-actions">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="p-settings__two-factor-recovery-button"
+                                        onClick={() => void onRegenerateCodes()}
+                                        disabled={isRegeneratingCodes || isRefreshingSetup || isConfirming}
+                                    >
+                                        {isRegeneratingCodes ? 'Regenerando...' : 'Regenerar codigos'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        className="p-settings__two-factor-recovery-button p-settings__two-factor-recovery-button--download"
+                                        onClick={handleDownloadRecoveryCodes}
+                                        disabled={recoveryCodesList.length === 0}
+                                    >
+                                        Descargar PDF
+                                    </Button>
+                                </div>
                             </section>
 
-                            <div className="flex flex-wrap gap-2">
-                                <Button type="button" variant="outline" onClick={() => void onRefresh()} disabled={isRefreshingSetup || isConfirming || isRegeneratingCodes}>
-                                    Actualizar
-                                </Button>
-                                <Button type="button" variant="outline" onClick={() => void onRegenerateCodes()} disabled={isRegeneratingCodes || isRefreshingSetup || isConfirming}>
-                                    <RefreshCw className="mr-2 h-4 w-4" />
-                                    {isRegeneratingCodes ? 'Regenerando...' : 'Regenerar códigos'}
-                                </Button>
-                            </div>
+                            {isPending && (
+                                <section className="p-settings__two-factor-verification">
+                                    <h3 className="p-settings__two-factor-verification-title">VERIFICACION DEL CODIGO TOTP</h3>
+
+                                    <label htmlFor="two-factor-confirm-code" className="p-settings__two-factor-verification-label">
+                                        CODIGO DE 6 DIGITOS
+                                    </label>
+                                    <InputOTP
+                                        id="two-factor-confirm-code"
+                                        maxLength={OTP_MAX_LENGTH}
+                                        value={code}
+                                        onChange={onCodeChange}
+                                        disabled={isConfirming}
+                                        pattern={REGEXP_ONLY_DIGITS}
+                                        autoFocus
+                                        containerClassName="p-settings__two-factor-otp"
+                                        className="p-settings__two-factor-otp-input"
+                                    >
+                                        <InputOTPGroup className="p-settings__two-factor-otp-group">
+                                            {Array.from({ length: OTP_MAX_LENGTH }, (_, index) => (
+                                                <InputOTPSlot key={index} index={index} className="p-settings__two-factor-otp-slot" />
+                                            ))}
+                                        </InputOTPGroup>
+                                    </InputOTP>
+                                    <p className="p-settings__two-factor-subtext">Introduce el codigo generado por tu app autenticadora para activar el 2FA.</p>
+                                    <InputError message={codeError} />
+
+                                    <div className="p-settings__two-factor-verification-actions">
+                                        <Button
+                                            type="button"
+                                            variant="default"
+                                            className="p-settings__two-factor-confirm-button"
+                                            onClick={() => void onConfirm()}
+                                            disabled={isConfirming || code.length !== OTP_MAX_LENGTH}
+                                        >
+                                            {isConfirming ? 'Confirmando...' : 'Confirmar 2FA'}
+                                        </Button>
+                                        <button
+                                            type="button"
+                                            className="p-settings__two-factor-cancel-link"
+                                            onClick={onClose}
+                                            disabled={isConfirming}
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </section>
+                            )}
                         </section>
-                    )}
+                    </section>
+                )}
 
-                    {isPending && (
-                        <section className="space-y-3 rounded-lg border border-border bg-background p-4">
-                            <header className="space-y-1">
-                                <h3 className="text-sm font-medium text-foreground">Verificacion del codigo TOTP</h3>
-                                <p className="text-sm text-muted-foreground">Introduce el codigo de 6 digitos para confirmar y dejar activo el 2FA.</p>
-                            </header>
-
-                            <label htmlFor="two-factor-confirm-code" className="text-sm font-medium text-foreground">
-                                Código TOTP
-                            </label>
-                            <InputOTP
-                                id="two-factor-confirm-code"
-                                maxLength={OTP_MAX_LENGTH}
-                                value={code}
-                                onChange={onCodeChange}
-                                disabled={isConfirming}
-                                pattern={REGEXP_ONLY_DIGITS}
-                                autoFocus
-                                containerClassName="justify-start"
-                                className="disabled:cursor-not-allowed"
-                            >
-                                <InputOTPGroup className="gap-2">
-                                    {Array.from({ length: OTP_MAX_LENGTH }, (_, index) => (
-                                        <InputOTPSlot
-                                            key={index}
-                                            index={index}
-                                            className="h-11 w-10 rounded-md border border-border bg-muted/30 text-center text-base font-semibold text-foreground shadow-sm"
-                                        />
-                                    ))}
-                                </InputOTPGroup>
-                            </InputOTP>
-                            <InputError message={codeError} />
-                        </section>
-                    )}
-
-                    <DialogFooter>
-                        {isPending ? (
-                            <>
-                                <Button type="button" variant="outline" onClick={onClose} disabled={isConfirming}>
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="button"
-                                    onClick={() => void onConfirm()}
-                                    disabled={isConfirming || code.length !== OTP_MAX_LENGTH}
-                                >
-                                    <KeyRound className="mr-2 h-4 w-4" />
-                                    {isConfirming ? 'Confirmando...' : 'Confirmar 2FA'}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button type="button" variant="outline" onClick={onClose}>
-                                Cerrar
-                            </Button>
-                        )}
-                    </DialogFooter>
-                </section>
+                {isEnabled && (
+                    <footer className="p-settings__two-factor-enabled-footer">
+                        <Button type="button" variant="outline" onClick={onClose}>
+                            Cerrar
+                        </Button>
+                    </footer>
+                )}
             </DialogContent>
         </Dialog>
     );
