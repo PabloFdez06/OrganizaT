@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { recoveryCodes } from '@/routes/two-factor';
 
 export type UseTwoFactorAuthReturn = {
@@ -27,17 +27,17 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
     const manualSetupKey = props.twoFactorSecretKey ?? null;
     const hasSetupData = qrCodeSvg !== null && manualSetupKey !== null;
 
-    const clearErrors = (): void => {
+    const clearErrors = useCallback((): void => {
         setErrors([]);
-    };
+    }, []);
 
     // QR code and secret key come from Inertia page props — no fetch needed
-    const fetchQrCode = async (): Promise<void> => {};
-    const fetchSetupKey = async (): Promise<void> => {};
-    const fetchSetupData = async (): Promise<void> => {};
-    const clearSetupData = (): void => clearErrors();
+    const fetchQrCode = useCallback(async (): Promise<void> => {}, []);
+    const fetchSetupKey = useCallback(async (): Promise<void> => {}, []);
+    const fetchSetupData = useCallback(async (): Promise<void> => {}, []);
+    const clearSetupData = useCallback((): void => clearErrors(), [clearErrors]);
 
-    const fetchRecoveryCodes = async (): Promise<void> => {
+    const fetchRecoveryCodes = useCallback(async (): Promise<void> => {
         try {
             clearErrors();
 
@@ -56,7 +56,7 @@ export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
             setErrors((prev) => [...prev, 'Failed to fetch recovery codes']);
             setRecoveryCodesList([]);
         }
-    };
+    }, [clearErrors]);
 
     return {
         qrCodeSvg,

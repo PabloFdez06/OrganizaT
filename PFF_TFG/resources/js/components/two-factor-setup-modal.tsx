@@ -321,7 +321,8 @@ export default function TwoFactorSetupModal({
 
         router.post(enableTwoFactor().url, {}, {
             preserveScroll: true,
-            preserveState: false,
+            preserveState: true,
+            only: ['twoFactorQrCodeSvg', 'twoFactorSecretKey', 'twoFactorEnabled'],
         });
     }, [isOpen, qrCodeSvg, twoFactorEnabled, fetchSetupData]);
 
