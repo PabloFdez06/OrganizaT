@@ -6,13 +6,12 @@ import { updateBackgroundNotifications } from '@/actions/App/Http/Controllers/Mo
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
-import { enable, disable } from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import { setup, disable } from '@/actions/App/Http/Controllers/Settings/SecurityController';
 
 type UserProfile = {
     fullName: string | null;
@@ -73,6 +72,7 @@ type Props = {
     quickSubjects: QuickSubjects;
     canManageTwoFactor?: boolean;
     twoFactorEnabled?: boolean;
+    twoFactorPendingConfirmation?: boolean;
     requiresConfirmation?: boolean;
 };
 
@@ -151,6 +151,7 @@ export default function Security({
     quickSubjects,
     canManageTwoFactor = false,
     twoFactorEnabled = false,
+    twoFactorPendingConfirmation = false,
     requiresConfirmation = true,
 }: Props) {
     const [showReconnectForm, setShowReconnectForm] = useState(false);
@@ -170,92 +171,12 @@ export default function Security({
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
     const { qrCodeSvg, manualSetupKey, errors: twoFactorErrors, clearSetupData, fetchSetupData } = useTwoFactorAuth();
     const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
-    const [isPasswordConfirmOpen, setIsPasswordConfirmOpen] = useState(false);
-    const [pendingAction, setPendingAction] = useState<'enable' | 'disable' | null>(null);
-    const [passwordInput, setPasswordInput] = useState('');
-    const [passwordError, setPasswordError] = useState('');
-    const [isConfirmingPassword, setIsConfirmingPassword] = useState(false);
 
-    const handleTwoFactorToggle = () => {
-        setPendingAction(twoFactorEnabled ? 'disable' : 'enable');
-        setPasswordInput('');
-        setPasswordError('');
-        setIsPasswordConfirmOpen(true);
-    };
-
-    const handlePasswordConfirm = async () => {
-        if (!passwordInput.trim()) {
-            setPasswordError('Introduce tu contraseña.');
-
-            return;
+    useEffect(() => {
+        if (twoFactorPendingConfirmation) {
+            setIsTwoFactorModalOpen(true);
         }
-
-        setIsConfirmingPassword(true);
-        setPasswordError('');
-
-        try {
-            const csrfToken =
-                document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
-                    ?.content ?? '';
-
-            const response = await fetch('/user/confirm-password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                body: JSON.stringify({ password: passwordInput }),
-            });
-
-            if (response.status === 422 || response.status === 401) {
-                setPasswordError('Contraseña incorrecta. Inténtalo de nuevo.');
-
-                return;
-            }
-
-            if (response.status === 423) {
-                setPasswordError('Demasiados intentos. Espera un momento.');
-
-                return;
-            }
-
-            if (!response.ok) {
-                setPasswordError('Error al verificar la contraseña.');
-
-                return;
-            }
-
-            // Contraseña correcta — cerrar dialog y ejecutar acción
-            setIsPasswordConfirmOpen(false);
-            setPasswordInput('');
-
-            const twoFactorPartialProps: string[] = [
-                'twoFactorEnabled',
-                'twoFactorQrCodeSvg',
-                'twoFactorSecretKey',
-                'requiresConfirmation',
-                'canManageTwoFactor',
-            ];
-
-            if (pendingAction === 'enable') {
-                router.post(enable().url, {}, {
-                    preserveScroll: true,
-                    preserveState: true,
-                    only: twoFactorPartialProps,
-                    onSuccess: () => setIsTwoFactorModalOpen(true),
-                });
-            } else {
-                router.delete(disable().url, {
-                    preserveScroll: true,
-                    preserveState: true,
-                    only: twoFactorPartialProps,
-                });
-            }
-        } finally {
-            setIsConfirmingPassword(false);
-        }
-    };
+    }, [twoFactorPendingConfirmation]);
 
     const getSectionFromHash = (): SettingsSection => {
         if (typeof window === 'undefined') {
@@ -1050,31 +971,50 @@ export default function Security({
                                                 </b>
                                             </p>
 
-                                            <button
-                                                type="button"
-                                                role="switch"
-                                                aria-checked={twoFactorEnabled}
-                                                aria-label={twoFactorEnabled
-                                                    ? 'Desactivar verificación en 2 pasos'
-                                                    : 'Activar verificación en 2 pasos'}
-                                                className={[
-                                                    'p-settings__switch',
-                                                    twoFactorEnabled ? 'p-settings__switch--on' : '',
-                                                ].filter(Boolean).join(' ')}
-                                                onClick={handleTwoFactorToggle}
-                                            >
-                                                <span className="p-settings__switch-thumb" aria-hidden="true" />
-                                            </button>
+                                            {twoFactorEnabled ? (
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="p-settings__outline-button"
+                                                        onClick={() => setIsTwoFactorModalOpen(true)}
+                                                    >
+                                                        Gestionar
+                                                    </Button>
 
-                                            {twoFactorEnabled && (
-                                                <Button
+                                                    <Form
+                                                        method="delete"
+                                                        action={disable().url}
+                                                    >
+                                                        {({ processing: disabling }: { processing: boolean }) => (
+                                                            <button
+                                                                type="submit"
+                                                                role="switch"
+                                                                aria-checked="true"
+                                                                aria-label="Desactivar verificación en 2 pasos"
+                                                                className={[
+                                                                    'p-settings__switch',
+                                                                    'p-settings__switch--on',
+                                                                    disabling ? 'p-settings__switch--disabled' : '',
+                                                                ].filter(Boolean).join(' ')}
+                                                                disabled={disabling}
+                                                            >
+                                                                <span className="p-settings__switch-thumb" aria-hidden="true" />
+                                                            </button>
+                                                        )}
+                                                    </Form>
+                                                </>
+                                            ) : (
+                                                <button
                                                     type="button"
-                                                    variant="outline"
-                                                    className="p-settings__outline-button"
-                                                    onClick={() => setIsTwoFactorModalOpen(true)}
+                                                    role="switch"
+                                                    aria-checked="false"
+                                                    aria-label="Activar verificación en 2 pasos"
+                                                    className="p-settings__switch"
+                                                    onClick={() => router.get(setup().url)}
                                                 >
-                                                    Gestionar
-                                                </Button>
+                                                    <span className="p-settings__switch-thumb" aria-hidden="true" />
+                                                </button>
                                             )}
                                         </section>
                                     </article>
@@ -1132,73 +1072,6 @@ export default function Security({
                     </section>
                 </section>
             </main>
-
-            <Dialog open={isPasswordConfirmOpen} onOpenChange={(open) => {
-                if (!open && !isConfirmingPassword) {
-                    setIsPasswordConfirmOpen(false);
-                    setPasswordInput('');
-                    setPasswordError('');
-                }
-            }}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirmar contraseña</DialogTitle>
-                        <DialogDescription>
-                            {pendingAction === 'enable'
-                                ? 'Introduce tu contraseña para activar la verificación en 2 pasos.'
-                                : 'Introduce tu contraseña para desactivar la verificación en 2 pasos.'}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            void handlePasswordConfirm();
-                        }}
-                    >
-                        <div>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '0.75rem' }}>
-                                Compatible con: Google Authenticator, Microsoft Authenticator,
-                                Authy, 1Password y Bitwarden.
-                            </p>
-
-                            <label htmlFor="confirm-password-input">Contraseña actual</label>
-                            <input
-                                id="confirm-password-input"
-                                name="password"
-                                type="password"
-                                value={passwordInput}
-                                onChange={(e) => setPasswordInput(e.target.value)}
-                                autoComplete="current-password"
-                                autoFocus
-                                disabled={isConfirmingPassword}
-                            />
-                            {passwordError && (
-                                <p style={{ color: 'var(--destructive)', fontSize: '0.75rem' }}>
-                                    {passwordError}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsPasswordConfirmOpen(false)}
-                                disabled={isConfirmingPassword}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={isConfirmingPassword || !passwordInput.trim()}
-                            >
-                                {isConfirmingPassword ? 'Verificando...' : 'Confirmar'}
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
 
             <TwoFactorSetupModal
                 isOpen={isTwoFactorModalOpen}

@@ -191,6 +191,7 @@ class SecurityController extends Controller
             // Cheap — always evaluated. These are the props used by 2FA partial reloads.
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'twoFactorEnabled' => $user?->hasEnabledTwoFactorAuthentication() ?? false,
+            'twoFactorPendingConfirmation' => !is_null($user?->two_factor_secret) && is_null($user?->two_factor_confirmed_at),
             'requiresConfirmation' => Fortify::confirmsTwoFactorAuthentication(),
             'twoFactorQrCodeSvg' => $this->getTwoFactorQrCodeSvg($user),
             'twoFactorSecretKey' => $this->getTwoFactorSecretKey($user),
@@ -371,13 +372,13 @@ class SecurityController extends Controller
     }
 
     /**
-     * Enable two-factor authentication for the user.
+     * Enable two-factor authentication for the user (GET, behind password.confirm middleware).
      */
-    public function enable(Request $request, EnableTwoFactorAuthentication $enable): RedirectResponse
+    public function setup(Request $request, EnableTwoFactorAuthentication $enable): RedirectResponse
     {
         $enable($request->user(), false);
 
-        return back()->with('status', 'two-factor-authentication-enabled');
+        return redirect()->route('security.edit');
     }
 
     /**
