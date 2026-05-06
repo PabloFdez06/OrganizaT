@@ -1,107 +1,439 @@
-import { useState } from 'react';
-import { qrCode, recoveryCodes, secretKey } from '@/routes/two-factor';
+import { router } from '@inertiajs/react';
+import { useCallback, useEffect, useState } from 'react';
+import { confirm as confirmPassword, confirmation } from '@/routes/password';
+import {
+    confirm,
+    disable,
+    enable,
+    qrCode,
+    recoveryCodes,
+    regenerateRecoveryCodes,
+    secretKey,
+} from '@/routes/two-factor';
 import type { TwoFactorSecretKey, TwoFactorSetupData } from '@/types';
 
+export const OTP_MAX_LENGTH = 6;
+export const TWO_FACTOR_ACTION_QUERY_KEY = 'two_factor_action';
+
+export type TwoFactorAction = 'enable' | 'disable' | 'regenerate';
+export type TwoFactorStatus = 'disabled' | 'pending' | 'enabled';
+
+type TwoFactorErrors = {
+    general?: string;
+    code?: string;
+    passwordConfirmation?: string;
+};
+
+type UseTwoFactorAuthOptions = {
+    initialEnabled: boolean;
+    initialPending: boolean;
+};
+
 export type UseTwoFactorAuthReturn = {
+    status: TwoFactorStatus;
     qrCodeSvg: string | null;
     manualSetupKey: string | null;
     recoveryCodesList: string[];
-    hasSetupData: boolean;
-    errors: string[];
+    errors: TwoFactorErrors;
+    isRefreshingSetup: boolean;
+    isEnabling: boolean;
+    isConfirming: boolean;
+    isDisabling: boolean;
+    isRegenerating: boolean;
     clearErrors: () => void;
     clearSetupData: () => void;
-    fetchQrCode: () => Promise<void>;
-    fetchSetupKey: () => Promise<void>;
-    fetchSetupData: () => Promise<void>;
-    fetchRecoveryCodes: () => Promise<void>;
+    refreshSetupData: () => Promise<void>;
+    enableTwoFactor: () => Promise<boolean>;
+    confirmTwoFactor: (code: string) => Promise<boolean>;
+    disableTwoFactor: () => Promise<boolean>;
+    regenerateCodes: () => Promise<boolean>;
 };
 
-export const OTP_MAX_LENGTH = 6;
+type ApiErrorPayload = {
+    message?: string;
+    errors?: Record<string, string[]>;
+};
 
-const fetchJson = async <T>(url: string): Promise<T> => {
-    const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
-    });
+class HttpError extends Error {
+    constructor(
+        message: string,
+        public readonly status: number,
+        public readonly payload: ApiErrorPayload | null,
+    ) {
+        super(message);
+    }
+}
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
+const JSON_HEADERS = {
+    Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+};
+
+const resolveStatus = (isEnabled: boolean, isPending: boolean): TwoFactorStatus => {
+    if (isEnabled) {
+        return 'enabled';
     }
 
-    return response.json();
+    if (isPending) {
+        return 'pending';
+    }
+
+    return 'disabled';
 };
 
-export const useTwoFactorAuth = (): UseTwoFactorAuthReturn => {
+const parseValidationMessage = (
+    payload: ApiErrorPayload | null,
+    field: string,
+): string | undefined => {
+    if (!payload?.errors) {
+        return undefined;
+    }
+
+    const message = payload.errors[field]?.[0];
+
+    return typeof message === 'string' ? message : undefined;
+};
+
+const requestJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
+    const response = await fetch(url, {
+        ...init,
+        headers: {
+            ...JSON_HEADERS,
+            ...(init?.headers ?? {}),
+        },
+    });
+
+    const contentType = response.headers.get('content-type') ?? '';
+    const isJson = contentType.includes('application/json');
+    const payload = isJson ? ((await response.json()) as ApiErrorPayload | T) : null;
+
+    if (!response.ok) {
+        throw new HttpError('Two factor request failed', response.status, (payload as ApiErrorPayload) ?? null);
+    }
+
+    return (payload as T) ?? ({} as T);
+};
+
+const buildReturnTo = (action: TwoFactorAction): string => {
+    if (typeof window === 'undefined') {
+        return '/settings/security#peligro';
+    }
+
+    const query = new URLSearchParams(window.location.search);
+    query.set(TWO_FACTOR_ACTION_QUERY_KEY, action);
+
+    const queryString = query.toString();
+
+    return `${window.location.pathname}${queryString !== '' ? `?${queryString}` : ''}#peligro`;
+};
+
+export const useTwoFactorAuth = ({
+    initialEnabled,
+    initialPending,
+}: UseTwoFactorAuthOptions): UseTwoFactorAuthReturn => {
+    const [status, setStatus] = useState<TwoFactorStatus>(() =>
+        resolveStatus(initialEnabled, initialPending),
+    );
     const [qrCodeSvg, setQrCodeSvg] = useState<string | null>(null);
     const [manualSetupKey, setManualSetupKey] = useState<string | null>(null);
     const [recoveryCodesList, setRecoveryCodesList] = useState<string[]>([]);
-    const [errors, setErrors] = useState<string[]>([]);
+    const [errors, setErrors] = useState<TwoFactorErrors>({});
+    const [isRefreshingSetup, setIsRefreshingSetup] = useState(false);
+    const [isEnabling, setIsEnabling] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
+    const [isDisabling, setIsDisabling] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
-    const hasSetupData = qrCodeSvg !== null && manualSetupKey !== null;
+    useEffect(() => {
+        setStatus(resolveStatus(initialEnabled, initialPending));
+    }, [initialEnabled, initialPending]);
 
-    const fetchQrCode = async (): Promise<void> => {
-        try {
-            const { svg } = await fetchJson<TwoFactorSetupData>(qrCode.url());
-            setQrCodeSvg(svg);
-        } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch QR code']);
-            setQrCodeSvg(null);
-        }
-    };
+    const clearErrors = useCallback(() => {
+        setErrors({});
+    }, []);
 
-    const fetchSetupKey = async (): Promise<void> => {
-        try {
-            const { secretKey: key } = await fetchJson<TwoFactorSecretKey>(
-                secretKey.url(),
-            );
-            setManualSetupKey(key);
-        } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch a setup key']);
-            setManualSetupKey(null);
-        }
-    };
-
-    const clearErrors = (): void => {
-        setErrors([]);
-    };
-
-    const clearSetupData = (): void => {
-        setManualSetupKey(null);
+    const clearSetupData = useCallback(() => {
         setQrCodeSvg(null);
-        clearErrors();
-    };
+        setManualSetupKey(null);
+        setRecoveryCodesList([]);
+        setErrors({});
+    }, []);
 
-    const fetchRecoveryCodes = async (): Promise<void> => {
-        try {
-            clearErrors();
-            const codes = await fetchJson<string[]>(recoveryCodes.url());
-            setRecoveryCodesList(codes);
-        } catch {
-            setErrors((prev) => [...prev, 'Failed to fetch recovery codes']);
-            setRecoveryCodesList([]);
+    const redirectToPasswordConfirmation = useCallback((action: TwoFactorAction) => {
+        const returnTo = buildReturnTo(action);
+
+        setErrors({
+            passwordConfirmation:
+                'Confirma tu contraseña para continuar con la acción de seguridad.',
+        });
+
+        router.visit(
+            confirmPassword.url({
+                query: { return: returnTo },
+            }),
+            {
+                preserveState: false,
+                preserveScroll: false,
+            },
+        );
+    }, []);
+
+    const ensurePasswordConfirmed = useCallback(
+        async (action: TwoFactorAction): Promise<boolean> => {
+            try {
+                const result = await requestJson<{ confirmed: boolean }>(
+                    confirmation.url(),
+                );
+
+                if (result.confirmed) {
+                    return true;
+                }
+            } catch {
+                setErrors({
+                    general:
+                        'No se pudo verificar la sesión de confirmación de contraseña. Inténtalo de nuevo.',
+                });
+
+                return false;
+            }
+
+            redirectToPasswordConfirmation(action);
+
+            return false;
+        },
+        [redirectToPasswordConfirmation],
+    );
+
+    const refreshSetupData = useCallback(async (): Promise<void> => {
+        if (status === 'disabled') {
+            return;
         }
-    };
 
-    const fetchSetupData = async (): Promise<void> => {
+        setIsRefreshingSetup(true);
+        setErrors({});
+
         try {
-            clearErrors();
-            await Promise.all([fetchQrCode(), fetchSetupKey()]);
-        } catch {
+            const [qrResponse, secretResponse, codesResponse] = await Promise.all([
+                requestJson<TwoFactorSetupData | Record<string, never>>(qrCode.url()),
+                requestJson<TwoFactorSecretKey | Record<string, never>>(secretKey.url()),
+                requestJson<string[] | Record<string, never>>(recoveryCodes.url()),
+            ]);
+
+            setQrCodeSvg('svg' in qrResponse && typeof qrResponse.svg === 'string' ? qrResponse.svg : null);
+            setManualSetupKey(
+                'secretKey' in secretResponse && typeof secretResponse.secretKey === 'string'
+                    ? secretResponse.secretKey
+                    : null,
+            );
+            setRecoveryCodesList(Array.isArray(codesResponse) ? codesResponse : []);
+        } catch (error) {
+            if (error instanceof HttpError && error.status === 423) {
+                setErrors({
+                    passwordConfirmation:
+                        'Tu confirmación de contraseña expiró. Vuelve a confirmar para gestionar el 2FA.',
+                });
+
+                return;
+            }
+
+            setErrors({
+                general:
+                    'No se pudieron cargar los datos de configuración de 2FA. Inténtalo de nuevo.',
+            });
             setQrCodeSvg(null);
             setManualSetupKey(null);
+            setRecoveryCodesList([]);
+        } finally {
+            setIsRefreshingSetup(false);
         }
-    };
+    }, [status]);
+
+    const enableTwoFactor = useCallback(async (): Promise<boolean> => {
+        if (!await ensurePasswordConfirmed('enable')) {
+            return false;
+        }
+
+        setIsEnabling(true);
+        setErrors({});
+
+        try {
+            await requestJson(enable.url(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+
+            setStatus('pending');
+            await refreshSetupData();
+
+            return true;
+        } catch (error) {
+            if (error instanceof HttpError && error.status === 423) {
+                redirectToPasswordConfirmation('enable');
+
+                return false;
+            }
+
+            setErrors({
+                general:
+                    'No se pudo iniciar la activación de 2FA. Reintenta en unos segundos.',
+            });
+
+            return false;
+        } finally {
+            setIsEnabling(false);
+        }
+    }, [ensurePasswordConfirmed, refreshSetupData, redirectToPasswordConfirmation]);
+
+    const confirmTwoFactor = useCallback(
+        async (code: string): Promise<boolean> => {
+            if (!await ensurePasswordConfirmed('enable')) {
+                return false;
+            }
+
+            setIsConfirming(true);
+            setErrors({});
+
+            try {
+                await requestJson(confirm.url(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code }),
+                });
+
+                setStatus('enabled');
+                await refreshSetupData();
+
+                return true;
+            } catch (error) {
+                if (error instanceof HttpError) {
+                    if (error.status === 423) {
+                        redirectToPasswordConfirmation('enable');
+
+                        return false;
+                    }
+
+                    if (error.status === 422) {
+                        setErrors({
+                            code:
+                                parseValidationMessage(error.payload, 'code') ??
+                                'El código introducido no es válido.',
+                        });
+
+                        return false;
+                    }
+                }
+
+                setErrors({
+                    general:
+                        'No se pudo confirmar el código TOTP. Inténtalo de nuevo.',
+                });
+
+                return false;
+            } finally {
+                setIsConfirming(false);
+            }
+        },
+        [ensurePasswordConfirmed, refreshSetupData, redirectToPasswordConfirmation],
+    );
+
+    const disableTwoFactor = useCallback(async (): Promise<boolean> => {
+        if (!await ensurePasswordConfirmed('disable')) {
+            return false;
+        }
+
+        setIsDisabling(true);
+        setErrors({});
+
+        try {
+            await requestJson(disable.url(), {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            setStatus('disabled');
+            clearSetupData();
+
+            return true;
+        } catch (error) {
+            if (error instanceof HttpError && error.status === 423) {
+                redirectToPasswordConfirmation('disable');
+
+                return false;
+            }
+
+            setErrors({
+                general:
+                    'No se pudo desactivar el 2FA. Inténtalo de nuevo.',
+            });
+
+            return false;
+        } finally {
+            setIsDisabling(false);
+        }
+    }, [ensurePasswordConfirmed, clearSetupData, redirectToPasswordConfirmation]);
+
+    const regenerateCodes = useCallback(async (): Promise<boolean> => {
+        if (!await ensurePasswordConfirmed('regenerate')) {
+            return false;
+        }
+
+        setIsRegenerating(true);
+        setErrors({});
+
+        try {
+            await requestJson(regenerateRecoveryCodes.url(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+
+            await refreshSetupData();
+
+            return true;
+        } catch (error) {
+            if (error instanceof HttpError && error.status === 423) {
+                redirectToPasswordConfirmation('regenerate');
+
+                return false;
+            }
+
+            setErrors({
+                general:
+                    'No se pudieron regenerar los códigos de recuperación. Inténtalo de nuevo.',
+            });
+
+            return false;
+        } finally {
+            setIsRegenerating(false);
+        }
+    }, [ensurePasswordConfirmed, refreshSetupData, redirectToPasswordConfirmation]);
 
     return {
+        status,
         qrCodeSvg,
         manualSetupKey,
         recoveryCodesList,
-        hasSetupData,
         errors,
+        isRefreshingSetup,
+        isEnabling,
+        isConfirming,
+        isDisabling,
+        isRegenerating,
         clearErrors,
         clearSetupData,
-        fetchQrCode,
-        fetchSetupKey,
-        fetchSetupData,
-        fetchRecoveryCodes,
+        refreshSetupData,
+        enableTwoFactor,
+        confirmTwoFactor,
+        disableTwoFactor,
+        regenerateCodes,
     };
 };

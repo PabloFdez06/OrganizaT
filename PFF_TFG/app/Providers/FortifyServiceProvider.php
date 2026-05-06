@@ -76,7 +76,15 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 
-        Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
+        Fortify::confirmPasswordView(function (Request $request) {
+            $returnTo = $this->normalizeLocalReturnTo($request->query('return'));
+
+            if ($returnTo !== null) {
+                $request->session()->put('url.intended', $returnTo);
+            }
+
+            return Inertia::render('auth/confirm-password');
+        });
     }
 
     /**
@@ -93,5 +101,30 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey);
         });
+    }
+
+    private function normalizeLocalReturnTo(mixed $returnTo): ?string
+    {
+        if (! is_string($returnTo)) {
+            return null;
+        }
+
+        $returnTo = trim($returnTo);
+
+        if ($returnTo === '' || ! str_starts_with($returnTo, '/') || str_starts_with($returnTo, '//')) {
+            return null;
+        }
+
+        $parts = parse_url($returnTo);
+
+        if ($parts === false) {
+            return null;
+        }
+
+        if (isset($parts['scheme']) || isset($parts['host']) || isset($parts['port']) || isset($parts['user']) || isset($parts['pass'])) {
+            return null;
+        }
+
+        return $returnTo;
     }
 }

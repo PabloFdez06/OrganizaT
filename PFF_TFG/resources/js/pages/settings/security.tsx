@@ -1,6 +1,6 @@
 import { Form, Head, router, usePage } from '@inertiajs/react';
 import { BellRing, CircleHelp, Mail, Monitor, Moon, Palette, Settings, ShieldAlert, Sun, UserRound, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { connect } from '@/actions/App/Http/Controllers/Moodle/MoodleConnectionController';
 import { updateBackgroundNotifications } from '@/actions/App/Http/Controllers/Moodle/MoodlePreferencesController';
 import InputError from '@/components/input-error';
@@ -10,8 +10,10 @@ import { Input } from '@/components/ui/input';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
-import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
-import { disable } from '@/routes/two-factor';
+import {
+    TWO_FACTOR_ACTION_QUERY_KEY,
+    useTwoFactorAuth,
+} from '@/hooks/use-two-factor-auth';
 
 type UserProfile = {
     fullName: string | null;
@@ -72,6 +74,7 @@ type Props = {
     quickSubjects: QuickSubjects;
     canManageTwoFactor?: boolean;
     twoFactorEnabled?: boolean;
+    twoFactorPendingConfirmation?: boolean;
 };
 
 type PreferenceToggleProps = {
@@ -149,6 +152,7 @@ export default function Security({
     quickSubjects,
     canManageTwoFactor = false,
     twoFactorEnabled = false,
+    twoFactorPendingConfirmation = false,
 }: Props) {
     const [showReconnectForm, setShowReconnectForm] = useState(false);
     const pageProps = usePage().props as {
@@ -165,8 +169,34 @@ export default function Security({
     const [backgroundNotificationsProcessing, setBackgroundNotificationsProcessing] = useState(false);
     const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
-    const { qrCodeSvg, manualSetupKey, errors: twoFactorErrors, clearSetupData, fetchSetupData } = useTwoFactorAuth();
+    const {
+        status: twoFactorStatus,
+        qrCodeSvg,
+        manualSetupKey,
+        recoveryCodesList,
+        errors: twoFactorErrors,
+        isRefreshingSetup,
+        isEnabling,
+        isConfirming,
+        isDisabling,
+        isRegenerating,
+        clearErrors: clearTwoFactorErrors,
+        clearSetupData,
+        refreshSetupData,
+        enableTwoFactor,
+        confirmTwoFactor,
+        disableTwoFactor,
+        regenerateCodes,
+    } = useTwoFactorAuth({
+        initialEnabled: twoFactorEnabled,
+        initialPending: twoFactorPendingConfirmation,
+    });
     const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
+    const [twoFactorCode, setTwoFactorCode] = useState('');
+    const [twoFactorFeedback, setTwoFactorFeedback] = useState<{
+        type: 'success' | 'error';
+        message: string;
+    } | null>(null);
 
     const getSectionFromHash = (): SettingsSection => {
         if (typeof window === 'undefined') {
@@ -361,6 +391,127 @@ export default function Security({
             preserveScroll: false,
         });
     };
+
+    const openTwoFactorModal = useCallback(async (enableIfDisabled = false): Promise<boolean> => {
+        setTwoFactorFeedback(null);
+        clearTwoFactorErrors();
+
+        if (enableIfDisabled && twoFactorStatus === 'disabled') {
+            const enabled = await enableTwoFactor();
+
+            if (!enabled) {
+                return false;
+            }
+
+            setTwoFactorFeedback({
+                type: 'success',
+                message:
+                    '2FA iniciado. Escanea el QR y confirma el código TOTP para activarlo por completo.',
+            });
+        }
+
+        await refreshSetupData();
+        setIsTwoFactorModalOpen(true);
+
+        return true;
+    }, [
+        clearTwoFactorErrors,
+        twoFactorStatus,
+        enableTwoFactor,
+        refreshSetupData,
+    ]);
+
+    const handleTwoFactorDisable = useCallback(async (): Promise<void> => {
+        setTwoFactorFeedback(null);
+
+        const disabled = await disableTwoFactor();
+
+        if (!disabled) {
+            return;
+        }
+
+        setTwoFactorCode('');
+        setIsTwoFactorModalOpen(false);
+        setTwoFactorFeedback({
+            type: 'success',
+            message: 'Verificación en 2 pasos desactivada correctamente.',
+        });
+    }, [disableTwoFactor]);
+
+    const handleTwoFactorConfirm = useCallback(async (): Promise<void> => {
+        setTwoFactorFeedback(null);
+
+        const confirmed = await confirmTwoFactor(twoFactorCode);
+
+        if (!confirmed) {
+            return;
+        }
+
+        setTwoFactorCode('');
+        setTwoFactorFeedback({
+            type: 'success',
+            message: 'Verificación en 2 pasos activada y confirmada correctamente.',
+        });
+    }, [confirmTwoFactor, twoFactorCode]);
+
+    const handleRegenerateRecoveryCodes = useCallback(async (): Promise<void> => {
+        setTwoFactorFeedback(null);
+
+        const regenerated = await regenerateCodes();
+
+        if (!regenerated) {
+            return;
+        }
+
+        setTwoFactorFeedback({
+            type: 'success',
+            message: 'Códigos de recuperación regenerados correctamente.',
+        });
+    }, [regenerateCodes]);
+
+    useEffect(() => {
+        const syncActionFromQuery = async () => {
+            if (typeof window === 'undefined') {
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const pendingAction = params.get(TWO_FACTOR_ACTION_QUERY_KEY);
+
+            if (pendingAction !== 'enable' && pendingAction !== 'disable' && pendingAction !== 'regenerate') {
+                return;
+            }
+
+            params.delete(TWO_FACTOR_ACTION_QUERY_KEY);
+            const nextQuery = params.toString();
+            window.history.replaceState(
+                null,
+                '',
+                `${window.location.pathname}${nextQuery !== '' ? `?${nextQuery}` : ''}${window.location.hash || '#peligro'}`,
+            );
+
+            if (pendingAction === 'enable') {
+                await openTwoFactorModal(true);
+
+                return;
+            }
+
+            if (pendingAction === 'disable') {
+                await handleTwoFactorDisable();
+
+                return;
+            }
+
+            await openTwoFactorModal(false);
+            await handleRegenerateRecoveryCodes();
+        };
+
+        void syncActionFromQuery();
+    }, [
+        openTwoFactorModal,
+        handleTwoFactorDisable,
+        handleRegenerateRecoveryCodes,
+    ]);
 
     return (
         <>
@@ -955,46 +1106,105 @@ export default function Security({
 
                                         <section className="p-settings__two-factor">
                                             <p className="p-settings__two-factor-status">
-                                                Verificación en 2 pasos: <b className="p-settings__two-factor-status-value">{twoFactorEnabled ? 'Activada' : 'Desactivada'}</b>
+                                                Verificación en 2 pasos:{' '}
+                                                <b className="p-settings__two-factor-status-value">
+                                                    {twoFactorStatus === 'enabled' && 'Activada'}
+                                                    {twoFactorStatus === 'pending' && 'Pendiente de confirmación'}
+                                                    {twoFactorStatus === 'disabled' && 'Desactivada'}
+                                                </b>
                                             </p>
 
-                                            {twoFactorEnabled ? (
+                                            {twoFactorFeedback && (
+                                                <p
+                                                    className={[
+                                                        'p-settings__caption',
+                                                        twoFactorFeedback.type === 'error'
+                                                            ? 'p-settings__flash-message--error'
+                                                            : 'p-settings__flash-message--success',
+                                                    ].join(' ')}
+                                                >
+                                                    {twoFactorFeedback.message}
+                                                </p>
+                                            )}
+
+                                            {(twoFactorErrors.general || twoFactorErrors.passwordConfirmation) && (
+                                                <InputError
+                                                    message={twoFactorErrors.general ?? twoFactorErrors.passwordConfirmation}
+                                                />
+                                            )}
+
+                                            {twoFactorStatus === 'enabled' && (
                                                 <>
                                                     <Button
                                                         type="button"
                                                         variant="outline"
                                                         className="p-settings__outline-button"
-                                                        onClick={() => setIsTwoFactorModalOpen(true)}
+                                                        onClick={() => void openTwoFactorModal(false)}
+                                                        disabled={isRefreshingSetup || isDisabling || isRegenerating}
                                                     >
                                                         Gestionar
                                                     </Button>
-                                                    <Form method="delete" action={disable().url}>
-                                                        {({ processing: disabling }) => (
-                                                            <button
-                                                                type="submit"
-                                                                role="switch"
-                                                                aria-checked="true"
-                                                                aria-label="Desactivar verificación en 2 pasos"
-                                                                className={[
-                                                                    'p-settings__switch',
-                                                                    'p-settings__switch--on',
-                                                                    disabling ? 'p-settings__switch--disabled' : '',
-                                                                ].join(' ')}
-                                                                disabled={disabling}
-                                                            >
-                                                                <span className="p-settings__switch-thumb" aria-hidden="true" />
-                                                            </button>
-                                                        )}
-                                                    </Form>
+
+                                                    <button
+                                                        type="button"
+                                                        role="switch"
+                                                        aria-checked="true"
+                                                        aria-label="Desactivar verificación en 2 pasos"
+                                                        className={[
+                                                            'p-settings__switch',
+                                                            'p-settings__switch--on',
+                                                            isDisabling ? 'p-settings__switch--disabled' : '',
+                                                        ].join(' ')}
+                                                        disabled={isDisabling}
+                                                        onClick={() => void handleTwoFactorDisable()}
+                                                    >
+                                                        <span className="p-settings__switch-thumb" aria-hidden="true" />
+                                                    </button>
                                                 </>
-                                            ) : (
+                                            )}
+
+                                            {twoFactorStatus === 'pending' && (
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        className="p-settings__outline-button"
+                                                        onClick={() => void openTwoFactorModal(false)}
+                                                        disabled={isRefreshingSetup || isConfirming}
+                                                    >
+                                                        Continuar configuración
+                                                    </Button>
+
+                                                    <button
+                                                        type="button"
+                                                        role="switch"
+                                                        aria-checked="true"
+                                                        aria-label="Desactivar verificación en 2 pasos pendiente"
+                                                        className={[
+                                                            'p-settings__switch',
+                                                            'p-settings__switch--on',
+                                                            isDisabling ? 'p-settings__switch--disabled' : '',
+                                                        ].join(' ')}
+                                                        disabled={isDisabling}
+                                                        onClick={() => void handleTwoFactorDisable()}
+                                                    >
+                                                        <span className="p-settings__switch-thumb" aria-hidden="true" />
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {twoFactorStatus === 'disabled' && (
                                                 <button
                                                     type="button"
                                                     role="switch"
                                                     aria-checked="false"
                                                     aria-label="Activar verificación en 2 pasos"
-                                                    className="p-settings__switch"
-                                                    onClick={() => setIsTwoFactorModalOpen(true)}
+                                                    className={[
+                                                        'p-settings__switch',
+                                                        isEnabling ? 'p-settings__switch--disabled' : '',
+                                                    ].join(' ')}
+                                                    onClick={() => void openTwoFactorModal(true)}
+                                                    disabled={isEnabling}
                                                 >
                                                     <span className="p-settings__switch-thumb" aria-hidden="true" />
                                                 </button>
@@ -1058,14 +1268,26 @@ export default function Security({
 
             <TwoFactorSetupModal
                 isOpen={isTwoFactorModalOpen}
-                onClose={() => setIsTwoFactorModalOpen(false)}
-                twoFactorEnabled={twoFactorEnabled}
-                requiresConfirmation={true}
+                onClose={() => {
+                    setIsTwoFactorModalOpen(false);
+                    setTwoFactorCode('');
+                    clearSetupData();
+                    clearTwoFactorErrors();
+                }}
+                status={twoFactorStatus}
                 qrCodeSvg={qrCodeSvg}
                 manualSetupKey={manualSetupKey}
-                clearSetupData={clearSetupData}
-                fetchSetupData={fetchSetupData}
-                errors={twoFactorErrors}
+                recoveryCodesList={recoveryCodesList}
+                code={twoFactorCode}
+                codeError={twoFactorErrors.code}
+                generalError={twoFactorErrors.general ?? twoFactorErrors.passwordConfirmation}
+                isRefreshingSetup={isRefreshingSetup}
+                isConfirming={isConfirming}
+                isRegeneratingCodes={isRegenerating}
+                onCodeChange={setTwoFactorCode}
+                onConfirm={handleTwoFactorConfirm}
+                onRegenerateCodes={handleRegenerateRecoveryCodes}
+                onRefresh={refreshSetupData}
             />
         </>
     );

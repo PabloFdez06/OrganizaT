@@ -60,6 +60,8 @@ class HandleInertiaRequests extends Middleware
                     'two_factor_enabled' => method_exists($user, 'hasEnabledTwoFactorAuthentication')
                         ? $user->hasEnabledTwoFactorAuthentication()
                         : false,
+                    'two_factor_pending_confirmation' => $user->two_factor_secret !== null
+                        && $user->two_factor_confirmed_at === null,
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
                 ] : null,

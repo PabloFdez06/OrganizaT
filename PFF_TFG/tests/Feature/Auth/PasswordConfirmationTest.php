@@ -20,3 +20,17 @@ test('password confirmation requires authentication', function () {
 
     $response->assertRedirect(route('login'));
 });
+
+test('confirmed password redirects to provided safe return path', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('password.confirm', ['return' => '/settings/security#peligro']))
+        ->assertOk();
+
+    $this->actingAs($user)
+        ->post(route('password.confirm.store'), [
+            'password' => 'password',
+        ])
+        ->assertRedirect('/settings/security#peligro');
+});

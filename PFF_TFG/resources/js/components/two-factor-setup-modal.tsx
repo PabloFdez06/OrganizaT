@@ -1,7 +1,6 @@
-import { Form } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
-import { Check, Copy, ScanLine } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RefreshCw, ScanLine } from 'lucide-react';
+import { useMemo } from 'react';
 import AlertError from '@/components/alert-error';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -19,9 +18,8 @@ import {
 } from '@/components/ui/input-otp';
 import { Spinner } from '@/components/ui/spinner';
 import { useAppearance } from '@/hooks/use-appearance';
-import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
-import { confirm } from '@/routes/two-factor';
+import type { TwoFactorStatus } from '@/hooks/use-two-factor-auth';
 
 function GridScanIcon() {
     return (
@@ -49,302 +47,77 @@ function GridScanIcon() {
     );
 }
 
-function TwoFactorSetupStep({
-    qrCodeSvg,
-    manualSetupKey,
-    buttonText,
-    onNextStep,
-    errors,
-}: {
-    qrCodeSvg: string | null;
-    manualSetupKey: string | null;
-    buttonText: string;
-    onNextStep: () => void;
-    errors: string[];
-}) {
-    const { resolvedAppearance } = useAppearance();
-    const [copiedText, copy] = useClipboard();
-    const IconComponent = copiedText === manualSetupKey ? Check : Copy;
-
-    return (
-        <>
-            {errors?.length ? (
-                <AlertError errors={errors} />
-            ) : (
-                <>
-                    <div className="">
-                        <div className="">
-                            <div className="">
-                                {qrCodeSvg ? (
-                                    <div
-                                        className=""
-                                        dangerouslySetInnerHTML={{
-                                            __html: qrCodeSvg,
-                                        }}
-                                        style={{
-                                            filter:
-                                                resolvedAppearance === 'dark'
-                                                    ? 'invert(1) brightness(1.5)'
-                                                    : undefined,
-                                        }}
-                                    />
-                                ) : (
-                                    <Spinner />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="">
-                        <Button className="" onClick={onNextStep}>
-                            {buttonText}
-                        </Button>
-                    </div>
-
-                    <div className="">
-                        <div className="" />
-                        <span className="">
-                            or, enter the code manually
-                        </span>
-                    </div>
-
-                    <div className="">
-                        <div className="">
-                            {!manualSetupKey ? (
-                                <div className="">
-                                    <Spinner />
-                                </div>
-                            ) : (
-                                <>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={manualSetupKey}
-                                        className=""
-                                    />
-                                    <button
-                                        onClick={() => copy(manualSetupKey)}
-                                        className=""
-                                    >
-                                        <IconComponent className="" />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </>
-            )}
-        </>
-    );
-}
-
-function TwoFactorVerificationStep({
-    onClose,
-    onBack,
-}: {
-    onClose: () => void;
-    onBack: () => void;
-}) {
-    const [code, setCode] = useState<string>('');
-    const pinInputContainerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setTimeout(() => {
-            pinInputContainerRef.current?.querySelector('input')?.focus();
-        }, 0);
-    }, []);
-
-    return (
-        <Form
-            method="post"
-            action={confirm().url}
-            onSuccess={() => onClose()}
-            resetOnError
-            resetOnSuccess
-        >
-            {({
-                processing,
-                errors,
-            }: {
-                processing: boolean;
-                errors?: { confirmTwoFactorAuthentication?: { code?: string } };
-            }) => (
-                <>
-                    <div
-                        ref={pinInputContainerRef}
-                        className=""
-                    >
-                        <div className="">
-                            <InputOTP
-                                id="otp"
-                                name="code"
-                                maxLength={OTP_MAX_LENGTH}
-                                onChange={setCode}
-                                disabled={processing}
-                                pattern={REGEXP_ONLY_DIGITS}
-                            >
-                                <InputOTPGroup>
-                                    {Array.from(
-                                        { length: OTP_MAX_LENGTH },
-                                        (_, index) => (
-                                            <InputOTPSlot
-                                                key={index}
-                                                index={index}
-                                            />
-                                        ),
-                                    )}
-                                </InputOTPGroup>
-                            </InputOTP>
-                            <InputError
-                                message={
-                                    errors?.confirmTwoFactorAuthentication?.code
-                                }
-                            />
-                        </div>
-
-                        <div className="">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className=""
-                                onClick={onBack}
-                                disabled={processing}
-                            >
-                                Back
-                            </Button>
-                            <Button
-                                type="submit"
-                                className=""
-                                disabled={
-                                    processing || code.length < OTP_MAX_LENGTH
-                                }
-                            >
-                                Confirm
-                            </Button>
-                        </div>
-                    </div>
-                </>
-            )}
-        </Form>
-    );
-}
-
 type Props = {
     isOpen: boolean;
     onClose: () => void;
-    requiresConfirmation: boolean;
-    twoFactorEnabled: boolean;
+    status: TwoFactorStatus;
     qrCodeSvg: string | null;
     manualSetupKey: string | null;
-    clearSetupData: () => void;
-    fetchSetupData: () => Promise<void>;
-    errors: string[];
+    recoveryCodesList: string[];
+    code: string;
+    codeError?: string;
+    generalError?: string;
+    isRefreshingSetup: boolean;
+    isConfirming: boolean;
+    isRegeneratingCodes: boolean;
+    onCodeChange: (value: string) => void;
+    onConfirm: () => Promise<void>;
+    onRegenerateCodes: () => Promise<void>;
+    onRefresh: () => Promise<void>;
 };
 
 export default function TwoFactorSetupModal({
     isOpen,
     onClose,
-    requiresConfirmation,
-    twoFactorEnabled,
+    status,
     qrCodeSvg,
     manualSetupKey,
-    clearSetupData,
-    fetchSetupData,
-    errors,
+    recoveryCodesList,
+    code,
+    codeError,
+    generalError,
+    isRefreshingSetup,
+    isConfirming,
+    isRegeneratingCodes,
+    onCodeChange,
+    onConfirm,
+    onRegenerateCodes,
+    onRefresh,
 }: Props) {
-    const [showVerificationStep, setShowVerificationStep] =
-        useState<boolean>(false);
+    const { resolvedAppearance } = useAppearance();
+    const isPending = status === 'pending';
+    const isEnabled = status === 'enabled';
+    const shouldShowSetupData = isPending || isEnabled;
 
     const modalConfig = useMemo<{
         title: string;
         description: string;
-        buttonText: string;
     }>(() => {
-        if (twoFactorEnabled) {
-
+        if (isEnabled) {
             return {
-                title: 'Two-factor authentication enabled',
+                title: 'Verificación en 2 pasos activa',
                 description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                    'Tu cuenta está protegida con TOTP. Puedes regenerar códigos de recuperación cuando lo necesites.',
             };
         }
 
-        if (showVerificationStep) {
-
+        if (isPending) {
             return {
-                title: 'Verify authentication code',
+                title: 'Finaliza la activación del 2FA',
                 description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                    'Escanea el QR, guarda los códigos de recuperación y confirma con un código TOTP válido.',
             };
         }
 
         return {
-            title: 'Enable two-factor authentication',
+            title: 'Gestión de 2FA',
             description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+                'Activa la verificación en 2 pasos desde la zona de peligro para ver los datos de configuración.',
         };
-    }, [twoFactorEnabled, showVerificationStep]);
-
-    const handleModalNextStep = useCallback(() => {
-        if (requiresConfirmation) {
-            setShowVerificationStep(true);
-
-            return;
-        }
-
-        clearSetupData();
-        onClose();
-    }, [requiresConfirmation, clearSetupData, onClose]);
-
-    const resetModalState = useCallback(() => {
-        setShowVerificationStep(false);
-
-        if (twoFactorEnabled) {
-            clearSetupData();
-        }
-    }, [twoFactorEnabled, clearSetupData]);
-
-    useEffect(() => {
-        if (!isOpen || qrCodeSvg) {
-return;
-}
-
-        if (twoFactorEnabled) {
-            fetchSetupData();
-
-            return;
-        }
-
-        const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-
-        fetch('/user/two-factor-authentication', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                Accept: 'application/json',
-            },
-        })
-            .then((response) => {
-                if (response.ok) {
-                    fetchSetupData();
-                }
-            })
-            .catch(() => {
-                // POST failed, do not proceed
-            });
-    }, [isOpen, qrCodeSvg, twoFactorEnabled, fetchSetupData]);
-
-    const handleClose = useCallback(() => {
-        resetModalState();
-        onClose();
-    }, [onClose, resetModalState]);
+    }, [isEnabled, isPending]);
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="">
                 <DialogHeader className="">
                     <GridScanIcon />
@@ -355,19 +128,114 @@ return;
                 </DialogHeader>
 
                 <div className="">
-                    {showVerificationStep ? (
-                        <TwoFactorVerificationStep
-                            onClose={onClose}
-                            onBack={() => setShowVerificationStep(false)}
-                        />
-                    ) : (
-                        <TwoFactorSetupStep
-                            qrCodeSvg={qrCodeSvg}
-                            manualSetupKey={manualSetupKey}
-                            buttonText={modalConfig.buttonText}
-                            onNextStep={handleModalNextStep}
-                            errors={errors}
-                        />
+                    {generalError && <AlertError errors={[generalError]} />}
+
+                    {shouldShowSetupData && (
+                        <section className="space-y-4" aria-live="polite">
+                            <header>
+                                <h3 className="text-sm font-semibold">Configuración del autenticador</h3>
+                            </header>
+
+                            <section className="space-y-2">
+                                <p className="text-sm text-muted-foreground">Escanea este código QR desde tu aplicación TOTP.</p>
+                                <div className="rounded-md border p-4">
+                                    {isRefreshingSetup ? (
+                                        <div className="flex justify-center py-8">
+                                            <Spinner />
+                                        </div>
+                                    ) : qrCodeSvg ? (
+                                        <div
+                                            dangerouslySetInnerHTML={{ __html: qrCodeSvg }}
+                                            style={{
+                                                filter:
+                                                    resolvedAppearance === 'dark'
+                                                        ? 'invert(1) brightness(1.5)'
+                                                        : undefined,
+                                            }}
+                                        />
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">No se pudo cargar el QR.</p>
+                                    )}
+                                </div>
+                            </section>
+
+                            <section className="space-y-2">
+                                <p className="text-sm text-muted-foreground">Clave manual (si no puedes escanear QR):</p>
+                                <code className="block rounded-md border bg-muted px-3 py-2 text-sm">{manualSetupKey ?? 'No disponible'}</code>
+                            </section>
+
+                            <section className="space-y-2">
+                                <header>
+                                    <h3 className="text-sm font-semibold">Códigos de recuperación</h3>
+                                </header>
+                                {recoveryCodesList.length > 0 ? (
+                                    <ul className="grid gap-2 text-sm" aria-label="Códigos de recuperación">
+                                        {recoveryCodesList.map((recoveryCode) => (
+                                            <li key={recoveryCode} className="rounded-md border bg-muted px-3 py-2 font-mono">
+                                                {recoveryCode}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No hay códigos disponibles.</p>
+                                )}
+                            </section>
+
+                            <div className="flex gap-2">
+                                <Button type="button" variant="outline" onClick={() => void onRefresh()} disabled={isRefreshingSetup || isConfirming || isRegeneratingCodes}>
+                                    Actualizar
+                                </Button>
+                                <Button type="button" variant="outline" onClick={() => void onRegenerateCodes()} disabled={isRegeneratingCodes || isRefreshingSetup || isConfirming}>
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    {isRegeneratingCodes ? 'Regenerando...' : 'Regenerar códigos'}
+                                </Button>
+                            </div>
+                        </section>
+                    )}
+
+                    {isPending && (
+                        <section className="space-y-3 pt-2">
+                            <label htmlFor="two-factor-confirm-code" className="text-sm font-medium">
+                                Código TOTP
+                            </label>
+                            <InputOTP
+                                id="two-factor-confirm-code"
+                                maxLength={OTP_MAX_LENGTH}
+                                value={code}
+                                onChange={onCodeChange}
+                                disabled={isConfirming}
+                                pattern={REGEXP_ONLY_DIGITS}
+                                autoFocus
+                            >
+                                <InputOTPGroup>
+                                    {Array.from({ length: OTP_MAX_LENGTH }, (_, index) => (
+                                        <InputOTPSlot key={index} index={index} />
+                                    ))}
+                                </InputOTPGroup>
+                            </InputOTP>
+                            <InputError message={codeError} />
+
+                            <div className="flex justify-end gap-2">
+                                <Button type="button" variant="outline" onClick={onClose} disabled={isConfirming}>
+                                    Cerrar
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={() => void onConfirm()}
+                                    disabled={isConfirming || code.length !== OTP_MAX_LENGTH}
+                                >
+                                    {isConfirming ? 'Confirmando...' : 'Confirmar 2FA'}
+                                </Button>
+                            </div>
+                        </section>
+                    )}
+
+                    {!isPending && (
+                        <div className="flex justify-end pt-2">
+                            <Button type="button" variant="outline" onClick={onClose}>
+                                Cerrar
+                            </Button>
+                        </div>
                     )}
                 </div>
             </DialogContent>

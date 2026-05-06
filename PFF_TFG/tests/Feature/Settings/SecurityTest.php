@@ -8,60 +8,40 @@ use Laravel\Fortify\Features;
 test('security page is displayed', function () {
     $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
 
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('security.edit'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/security')
             ->where('canManageTwoFactor', true)
-            ->where('twoFactorEnabled', false),
+            ->where('twoFactorEnabled', false)
+            ->where('twoFactorPendingConfirmation', false)
         );
 });
 
-test('security page requires password confirmation when enabled', function () {
+test('security page exposes pending two factor state', function () {
     $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
 
     $user = User::factory()->create();
 
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
-    $response = $this->actingAs($user)
-        ->get(route('security.edit'));
-
-    $response->assertRedirect(route('password.confirm'));
-});
-
-test('security page does not require password confirmation when disabled', function () {
-    $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
-
-    $user = User::factory()->create();
-
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => false,
-    ]);
+    $user->forceFill([
+        'two_factor_secret' => encrypt('pending-secret'),
+        'two_factor_recovery_codes' => encrypt(json_encode(['code-1'])),
+        'two_factor_confirmed_at' => null,
+    ])->save();
 
     $this->actingAs($user)
         ->get(route('security.edit'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/security'),
+            ->component('settings/security')
+            ->where('twoFactorEnabled', false)
+            ->where('twoFactorPendingConfirmation', true)
         );
 });
 
 test('security page renders without two factor when feature is disabled', function () {
-    $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
-
     config(['fortify.features' => []]);
 
     $user = User::factory()->create();
@@ -72,8 +52,8 @@ test('security page renders without two factor when feature is disabled', functi
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/security')
             ->where('canManageTwoFactor', false)
-            ->missing('twoFactorEnabled')
-            ->missing('requiresConfirmation'),
+            ->where('twoFactorEnabled', false)
+            ->where('twoFactorPendingConfirmation', false),
         );
 });
 

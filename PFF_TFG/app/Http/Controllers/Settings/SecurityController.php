@@ -118,6 +118,9 @@ class SecurityController extends Controller
             'preferences' => $preferences,
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'twoFactorEnabled' => $user?->hasEnabledTwoFactorAuthentication() ?? false,
+            'twoFactorPendingConfirmation' => $user !== null
+                ? $user->two_factor_secret !== null && $user->two_factor_confirmed_at === null
+                : false,
             'cacheConfig' => [
                 'asignaturasMinutes' => $cacheFreshMinutes,
                 'tareasMinutes' => $cacheFreshMinutes,
