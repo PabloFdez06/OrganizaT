@@ -308,10 +308,13 @@ export default function TwoFactorSetupModal({
     }, [twoFactorEnabled, clearSetupData]);
 
     useEffect(() => {
-        if (!isOpen || qrCodeSvg) return;
+        if (!isOpen || qrCodeSvg) {
+return;
+}
 
         if (twoFactorEnabled) {
             fetchSetupData();
+
             return;
         }
 
