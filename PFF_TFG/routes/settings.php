@@ -27,4 +27,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    // 2FA management – require recent password confirmation
+    Route::middleware('password.confirm')->group(function () {
+        Route::post('settings/security/two-factor/enable', [SecurityController::class, 'enable'])->name('security.two-factor.enable');
+        Route::delete('settings/security/two-factor/disable', [SecurityController::class, 'disable'])->name('security.two-factor.disable');
+        Route::post('settings/security/two-factor/recovery-codes', [SecurityController::class, 'recoveryCodes'])->name('security.two-factor.recovery-codes');
+    });
 });

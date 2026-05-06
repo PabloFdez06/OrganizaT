@@ -11,7 +11,7 @@ import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
-import { disable } from '@/routes/two-factor';
+import { disable as disableTwoFactor } from '@/actions/App/Http/Controllers/Settings/SecurityController';
 
 type UserProfile = {
     fullName: string | null;
@@ -72,6 +72,7 @@ type Props = {
     quickSubjects: QuickSubjects;
     canManageTwoFactor?: boolean;
     twoFactorEnabled?: boolean;
+    requiresConfirmation?: boolean;
 };
 
 type PreferenceToggleProps = {
@@ -149,6 +150,7 @@ export default function Security({
     quickSubjects,
     canManageTwoFactor = false,
     twoFactorEnabled = false,
+    requiresConfirmation = true,
 }: Props) {
     const [showReconnectForm, setShowReconnectForm] = useState(false);
     const pageProps = usePage().props as {
@@ -994,7 +996,7 @@ export default function Security({
                                                     >
                                                         Gestionar
                                                     </Button>
-                                                    <Form method="delete" action={disable().url}>
+                                                    <Form method="delete" action={disableTwoFactor().url}>
                                                         {({ processing: disabling }) => (
                                                             <button
                                                                 type="submit"
@@ -1086,7 +1088,7 @@ export default function Security({
                 isOpen={isTwoFactorModalOpen}
                 onClose={closeTwoFactorModal}
                 twoFactorEnabled={twoFactorEnabled}
-                requiresConfirmation={true}
+                requiresConfirmation={requiresConfirmation}
                 qrCodeSvg={qrCodeSvg}
                 manualSetupKey={manualSetupKey}
                 clearSetupData={clearSetupData}

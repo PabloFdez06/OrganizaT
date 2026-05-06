@@ -14,6 +14,7 @@ use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -27,6 +28,7 @@ class FortifyServiceProvider extends ServiceProvider
         $this->app->singleton(LoginResponseContract::class, FortifyRedirectResponse::class);
         $this->app->singleton(LogoutResponseContract::class, FortifyRedirectResponse::class);
         $this->app->singleton(RegisterResponseContract::class, FortifyRedirectResponse::class);
+        $this->app->singleton(TwoFactorLoginResponseContract::class, FortifyRedirectResponse::class);
     }
 
     /**

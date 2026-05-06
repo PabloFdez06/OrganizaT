@@ -14,7 +14,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
 use Laravel\Fortify\Features;
+use Laravel\Fortify\Fortify;
 
 class SecurityController extends Controller
 {
@@ -118,6 +122,9 @@ class SecurityController extends Controller
             'preferences' => $preferences,
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'twoFactorEnabled' => $user?->hasEnabledTwoFactorAuthentication() ?? false,
+            'requiresConfirmation' => Fortify::confirmsTwoFactorAuthentication(),
+            'twoFactorQrCodeSvg' => $this->getTwoFactorQrCodeSvg($user),
+            'twoFactorSecretKey' => $this->getTwoFactorSecretKey($user),
             'cacheConfig' => [
                 'asignaturasMinutes' => $cacheFreshMinutes,
                 'tareasMinutes' => $cacheFreshMinutes,
@@ -302,6 +309,68 @@ class SecurityController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    /**
+     * Enable two-factor authentication for the user.
+     */
+    public function enable(Request $request, EnableTwoFactorAuthentication $enable): RedirectResponse
+    {
+        $enable($request->user(), false);
+
+        return back()->with('status', 'two-factor-authentication-enabled');
+    }
+
+    /**
+     * Disable two-factor authentication for the user.
+     */
+    public function disable(Request $request, DisableTwoFactorAuthentication $disable): RedirectResponse
+    {
+        $disable($request->user());
+
+        return back()->with('status', 'two-factor-authentication-disabled');
+    }
+
+    /**
+     * Regenerate the user's two-factor authentication recovery codes.
+     */
+    public function recoveryCodes(Request $request, GenerateNewRecoveryCodes $generate): RedirectResponse
+    {
+        $generate($request->user());
+
+        return back()->with('status', 'recovery-codes-generated');
+    }
+
+    /**
+     * Get the QR code SVG for the user's 2FA setup if a secret exists.
+     */
+    private function getTwoFactorQrCodeSvg(mixed $user): ?string
+    {
+        if (is_null($user?->two_factor_secret)) {
+            return null;
+        }
+
+        try {
+            return $user->twoFactorQrCodeSvg();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Get the plain-text secret key for the user's 2FA setup if a secret exists.
+     */
+    private function getTwoFactorSecretKey(mixed $user): ?string
+    {
+        if (is_null($user?->two_factor_secret)) {
+            return null;
+        }
+
+        try {
+            return Fortify::currentEncrypter()->decrypt($user->two_factor_secret);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

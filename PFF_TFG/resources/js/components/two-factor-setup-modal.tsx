@@ -21,6 +21,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
+import { enable as enableTwoFactor } from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import { confirm } from '@/routes/two-factor';
 
 function GridScanIcon() {
@@ -318,17 +319,10 @@ export default function TwoFactorSetupModal({
             return;
         }
 
-        router.post(
-            '/user/two-factor-authentication',
-            {},
-            {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: () => {
-                    fetchSetupData();
-                },
-            },
-        );
+        router.post(enableTwoFactor().url, {}, {
+            preserveScroll: true,
+            preserveState: false,
+        });
     }, [isOpen, qrCodeSvg, twoFactorEnabled, fetchSetupData]);
 
     const handleClose = useCallback(() => {
