@@ -322,6 +322,9 @@ export default function TwoFactorSetupModal({
         router.post(enableTwoFactor().url, {}, {
             preserveScroll: true,
             preserveState: true,
+            // Partial reload: only request the 2FA props so Moodle closures are never
+            // evaluated on this lightweight request, avoiding 502 timeouts.
+            only: ['twoFactorEnabled', 'twoFactorQrCodeSvg', 'twoFactorSecretKey', 'requiresConfirmation', 'canManageTwoFactor'],
         });
     }, [isOpen, qrCodeSvg, twoFactorEnabled, fetchSetupData]);
 

@@ -35,106 +35,165 @@ class SecurityController extends Controller
     public function edit(Request $request): Response
     {
         $user = $request->user();
-        $moodleConnected = $this->sessionService->hasActiveSession($user);
-        $courses = [];
-
-        $profile = [
-            'fullName' => $user?->name,
-            'email' => $user?->email,
-            'course' => null,
-            'academicYear' => null,
-            'avatarUrl' => null,
-        ];
-
-        $syncStatus = [
-            'lastSyncLabel' => null,
-            'message' => null,
-        ];
-
-        if (! $moodleConnected && is_string($user?->moodle_username) && trim((string) $user->moodle_username) !== '') {
-            $syncStatus['message'] = self::MOODLE_SESSION_EXPIRED_MESSAGE;
-        }
-
-        if ($moodleConnected) {
-            try {
-                $payload = $this->cache->getForUser($user);
-
-                $profile['fullName'] = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
-                    ? (string) $payload['studentName']
-                    : $profile['fullName'];
-                $profile['email'] = is_string($payload['studentEmail'] ?? null) && trim((string) $payload['studentEmail']) !== ''
-                    ? (string) $payload['studentEmail']
-                    : $profile['email'];
-                $profile['course'] = is_string($payload['academicCourse'] ?? null) && trim((string) $payload['academicCourse']) !== ''
-                    ? (string) $payload['academicCourse']
-                    : null;
-                $profile['academicYear'] = is_string($payload['academicYear'] ?? null) && trim((string) $payload['academicYear']) !== ''
-                    ? (string) $payload['academicYear']
-                    : null;
-                $profile['avatarUrl'] = is_string($payload['profileAvatarUrl'] ?? null) && trim((string) $payload['profileAvatarUrl']) !== ''
-                    ? (string) $payload['profileAvatarUrl']
-                    : null;
-                $courses = is_array($payload['courses'] ?? null) ? $payload['courses'] : [];
-                $syncStatus['lastSyncLabel'] = now()->format('H:i');
-            } catch (MoodleAuthenticationException|MoodleRequestException $exception) {
-                $syncStatus['message'] = $exception->getMessage();
-            } catch (\Throwable) {
-                $syncStatus['message'] = 'No se pudo obtener la sincronización de Moodle en este momento.';
-            }
-        }
-
-        $savedPreferences = is_array($user?->moodle_notification_preferences)
-            ? $user->moodle_notification_preferences
-            : [];
-
-        $preferences = array_merge($this->defaultPreferences(), $savedPreferences);
 
         $cacheFreshMinutes = max(1, (int) ceil(max(60, (int) config('services.moodle.cache_ttl_seconds', 300)) / 60));
         $cacheStaleMinutes = max($cacheFreshMinutes, (int) ceil(max(60, (int) config('services.moodle.cache_stale_ttl_seconds', 900)) / 60));
 
-        $availableQuickSubjects = collect($courses)
-            ->map(function (array $course): array {
-                return [
-                    'id' => (int) ($course['id'] ?? 0),
-                    'title' => trim((string) ($course['nombre'] ?? 'Asignatura')),
+        // Memoised Moodle data loader — runs at most once per request, only when a Moodle prop is needed.
+        // Wrapping Moodle props in closures means Inertia skips them entirely on 2FA partial reloads,
+        // preventing expensive Moodle API calls (and the resulting 502) on those lightweight requests.
+        $moodleData = null;
+        $loadMoodleData = function () use ($user, &$moodleData): array {
+            if ($moodleData !== null) {
+                return $moodleData;
+            }
+
+            $connected = $this->sessionService->hasActiveSession($user);
+
+            if (! $connected) {
+                $moodleData = [
+                    'connected' => false,
+                    'payload' => [],
+                    'syncMessage' => is_string($user?->moodle_username) && trim((string) $user->moodle_username) !== ''
+                        ? self::MOODLE_SESSION_EXPIRED_MESSAGE
+                        : null,
+                    'syncLabel' => null,
                 ];
-            })
-            ->filter(fn (array $course): bool => $course['id'] > 0 && $course['title'] !== '')
-            ->values()
-            ->all();
 
-        $selectedQuickSubjects = collect(is_array($user?->dashboard_quick_subject_ids) ? $user->dashboard_quick_subject_ids : [])
-            ->map(fn (mixed $value): int => (int) $value)
-            ->filter(fn (int $value): bool => $value > 0)
-            ->unique()
-            ->values()
-            ->all();
+                return $moodleData;
+            }
 
-        if (count($selectedQuickSubjects) !== 4) {
-            $selectedQuickSubjects = [];
-        }
+            try {
+                $payload = $this->cache->getForUser($user);
+                $moodleData = [
+                    'connected' => true,
+                    'payload' => is_array($payload) ? $payload : [],
+                    'syncMessage' => null,
+                    'syncLabel' => now()->format('H:i'),
+                ];
+            } catch (MoodleAuthenticationException|MoodleRequestException $exception) {
+                $moodleData = [
+                    'connected' => true,
+                    'payload' => [],
+                    'syncMessage' => $exception->getMessage(),
+                    'syncLabel' => null,
+                ];
+            } catch (\Throwable) {
+                $moodleData = [
+                    'connected' => true,
+                    'payload' => [],
+                    'syncMessage' => 'No se pudo obtener la sincronización de Moodle en este momento.',
+                    'syncLabel' => null,
+                ];
+            }
+
+            return $moodleData;
+        };
 
         return Inertia::render('settings/security', [
-            'moodleConnected' => $moodleConnected,
-            'moodleBackgroundNotifications' => (bool) ($user?->moodle_background_notifications ?? false),
-            'profile' => $profile,
-            'syncStatus' => $syncStatus,
-            'preferences' => $preferences,
+            // ── Moodle-related props (closures) ─────────────────────────────────────
+            // These are only evaluated when the prop is actually included in the response.
+            // On 2FA partial reloads (only: [twoFactorEnabled, ...]) they are skipped entirely.
+            'moodleConnected' => fn () => $loadMoodleData()['connected'],
+
+            'moodleBackgroundNotifications' => fn () => (bool) ($user?->moodle_background_notifications ?? false),
+
+            'profile' => function () use ($user, $loadMoodleData): array {
+                $data = $loadMoodleData();
+                $payload = $data['payload'];
+
+                $profile = [
+                    'fullName' => $user?->name,
+                    'email' => $user?->email,
+                    'course' => null,
+                    'academicYear' => null,
+                    'avatarUrl' => null,
+                ];
+
+                if ($data['connected'] && ! empty($payload)) {
+                    $profile['fullName'] = is_string($payload['studentName'] ?? null) && trim((string) $payload['studentName']) !== ''
+                        ? (string) $payload['studentName']
+                        : $profile['fullName'];
+                    $profile['email'] = is_string($payload['studentEmail'] ?? null) && trim((string) $payload['studentEmail']) !== ''
+                        ? (string) $payload['studentEmail']
+                        : $profile['email'];
+                    $profile['course'] = is_string($payload['academicCourse'] ?? null) && trim((string) $payload['academicCourse']) !== ''
+                        ? (string) $payload['academicCourse']
+                        : null;
+                    $profile['academicYear'] = is_string($payload['academicYear'] ?? null) && trim((string) $payload['academicYear']) !== ''
+                        ? (string) $payload['academicYear']
+                        : null;
+                    $profile['avatarUrl'] = is_string($payload['profileAvatarUrl'] ?? null) && trim((string) $payload['profileAvatarUrl']) !== ''
+                        ? (string) $payload['profileAvatarUrl']
+                        : null;
+                }
+
+                return $profile;
+            },
+
+            'syncStatus' => function () use ($loadMoodleData): array {
+                $data = $loadMoodleData();
+
+                return [
+                    'lastSyncLabel' => $data['syncLabel'],
+                    'message' => $data['syncMessage'],
+                ];
+            },
+
+            'preferences' => function () use ($user): array {
+                $saved = is_array($user?->moodle_notification_preferences)
+                    ? $user->moodle_notification_preferences
+                    : [];
+
+                return array_merge($this->defaultPreferences(), $saved);
+            },
+
+            'cacheConfig' => fn () => [
+                'asignaturasMinutes' => $cacheFreshMinutes,
+                'tareasMinutes' => $cacheFreshMinutes,
+                'staleMinutes' => $cacheStaleMinutes,
+            ],
+
+            'quickSubjects' => function () use ($user, $loadMoodleData): array {
+                $data = $loadMoodleData();
+                $courses = $data['connected'] && ! empty($data['payload']) && is_array($data['payload']['courses'] ?? null)
+                    ? $data['payload']['courses']
+                    : [];
+
+                $availableQuickSubjects = collect($courses)
+                    ->map(fn (array $course): array => [
+                        'id' => (int) ($course['id'] ?? 0),
+                        'title' => trim((string) ($course['nombre'] ?? 'Asignatura')),
+                    ])
+                    ->filter(fn (array $course): bool => $course['id'] > 0 && $course['title'] !== '')
+                    ->values()
+                    ->all();
+
+                $selectedQuickSubjects = collect(is_array($user?->dashboard_quick_subject_ids) ? $user->dashboard_quick_subject_ids : [])
+                    ->map(fn (mixed $value): int => (int) $value)
+                    ->filter(fn (int $value): bool => $value > 0)
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                if (count($selectedQuickSubjects) !== 4) {
+                    $selectedQuickSubjects = [];
+                }
+
+                return [
+                    'available' => $availableQuickSubjects,
+                    'selected' => $selectedQuickSubjects,
+                    'selectionLimit' => 4,
+                ];
+            },
+
+            // ── 2FA props (eager) ────────────────────────────────────────────────────
+            // Cheap — always evaluated. These are the props used by 2FA partial reloads.
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'twoFactorEnabled' => $user?->hasEnabledTwoFactorAuthentication() ?? false,
             'requiresConfirmation' => Fortify::confirmsTwoFactorAuthentication(),
             'twoFactorQrCodeSvg' => $this->getTwoFactorQrCodeSvg($user),
             'twoFactorSecretKey' => $this->getTwoFactorSecretKey($user),
-            'cacheConfig' => [
-                'asignaturasMinutes' => $cacheFreshMinutes,
-                'tareasMinutes' => $cacheFreshMinutes,
-                'staleMinutes' => $cacheStaleMinutes,
-            ],
-            'quickSubjects' => [
-                'available' => $availableQuickSubjects,
-                'selected' => $selectedQuickSubjects,
-                'selectionLimit' => 4,
-            ],
         ]);
     }
 
