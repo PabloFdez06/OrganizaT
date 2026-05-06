@@ -1,4 +1,4 @@
-import { Form, router } from '@inertiajs/react';
+import { Form } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -21,7 +21,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useClipboard } from '@/hooks/use-clipboard';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
-import { enable as enableTwoFactor } from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import { confirm } from '@/routes/two-factor';
 
 function GridScanIcon() {
@@ -315,17 +314,7 @@ export default function TwoFactorSetupModal({
 
         if (twoFactorEnabled) {
             fetchSetupData();
-
-            return;
         }
-
-        router.post(enableTwoFactor().url, {}, {
-            preserveScroll: true,
-            preserveState: true,
-            // Partial reload: only request the 2FA props so Moodle closures are never
-            // evaluated on this lightweight request, avoiding 502 timeouts.
-            only: ['twoFactorEnabled', 'twoFactorQrCodeSvg', 'twoFactorSecretKey', 'requiresConfirmation', 'canManageTwoFactor'],
-        });
     }, [isOpen, qrCodeSvg, twoFactorEnabled, fetchSetupData]);
 
     const handleClose = useCallback(() => {
