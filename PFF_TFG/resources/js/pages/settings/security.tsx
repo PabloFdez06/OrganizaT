@@ -170,13 +170,7 @@ export default function Security({
     const [selectedQuickSubjects, setSelectedQuickSubjects] = useState<number[]>(quickSubjects.selected);
     const [quickSubjectsProcessing, setQuickSubjectsProcessing] = useState(false);
     const { qrCodeSvg, manualSetupKey, errors: twoFactorErrors, clearSetupData, fetchSetupData } = useTwoFactorAuth();
-    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(false);
-
-    useEffect(() => {
-        if (twoFactorPendingConfirmation) {
-            setIsTwoFactorModalOpen(true);
-        }
-    }, [twoFactorPendingConfirmation]);
+    const [isTwoFactorModalOpen, setIsTwoFactorModalOpen] = useState(twoFactorPendingConfirmation);
 
     const getSectionFromHash = (): SettingsSection => {
         if (typeof window === 'undefined') {
@@ -192,7 +186,16 @@ export default function Security({
         return 'usuario';
     };
 
-    const [activeSection, setActiveSection] = useState<SettingsSection>(() => getSectionFromHash());
+    const [activeSection, setActiveSection] = useState<SettingsSection>(
+        () => (twoFactorPendingConfirmation ? 'peligro' : getSectionFromHash()),
+    );
+
+    useEffect(() => {
+        if (twoFactorPendingConfirmation) {
+            setIsTwoFactorModalOpen(true);
+            setActiveSection('peligro');
+        }
+    }, [twoFactorPendingConfirmation]);
 
     const sidebarItems: SideNavItem[] = [
         {
@@ -1011,7 +1014,7 @@ export default function Security({
                                                     aria-checked="false"
                                                     aria-label="Activar verificación en 2 pasos"
                                                     className="p-settings__switch"
-                                                    onClick={() => router.get(setup().url)}
+                                                    onClick={() => twoFactorPendingConfirmation ? setIsTwoFactorModalOpen(true) : router.get(setup().url)}
                                                 >
                                                     <span className="p-settings__switch-thumb" aria-hidden="true" />
                                                 </button>
