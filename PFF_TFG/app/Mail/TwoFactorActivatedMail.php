@@ -26,9 +26,9 @@ class TwoFactorActivatedMail extends Mailable
 
     public function content(): Content
     {
-        $activatedAt = $this->user->two_factor_confirmed_at?->copy()
-            ->timezone((string) config('app.timezone', 'UTC'))
-            ->format('d/m/Y H:i');
+        $displayTimezone = (string) config('app.display_timezone', 'Europe/Madrid');
+        $confirmationDateTime = $this->user->two_factor_confirmed_at?->copy() ?? now();
+        $confirmationDateTime = $confirmationDateTime->timezone($displayTimezone);
 
         return new Content(
             view: 'emails.security.two-factor-activated',
@@ -36,7 +36,8 @@ class TwoFactorActivatedMail extends Mailable
                 'recipientName' => trim((string) ($this->user->name ?? '')),
                 'appName' => trim((string) config('app.name', 'Campus')),
                 'securityUrl' => url('/settings/security'),
-                'activatedAt' => $activatedAt ?? now()->format('d/m/Y H:i'),
+                'activatedAt' => $confirmationDateTime->format('d/m/Y H:i'),
+                'activatedAtTimezone' => $confirmationDateTime->format('T'),
             ],
         );
     }

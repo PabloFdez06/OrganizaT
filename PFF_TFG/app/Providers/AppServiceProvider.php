@@ -2,17 +2,12 @@
 
 namespace App\Providers;
 
-use App\Listeners\SendTwoFactorActivatedEmail;
-use App\Listeners\SendWelcomeEmailAfterRegistration;
 use Carbon\CarbonImmutable;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,17 +25,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
-        $this->registerEventListeners();
 
         if (app()->isProduction()) {
             URL::forceScheme('https');
         }
-    }
-
-    protected function registerEventListeners(): void
-    {
-        Event::listen(Registered::class, SendWelcomeEmailAfterRegistration::class);
-        Event::listen(TwoFactorAuthenticationConfirmed::class, SendTwoFactorActivatedEmail::class);
     }
 
     /**

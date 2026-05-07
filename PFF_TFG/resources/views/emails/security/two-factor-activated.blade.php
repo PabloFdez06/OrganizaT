@@ -43,7 +43,7 @@
                             Te confirmamos que la verificacion en dos pasos de tu cuenta ha sido activada correctamente.
                         </p>
                         <p style="margin:0 0 18px 0;font-size:14px;line-height:1.65;color:#4b5565;">
-                            Fecha y hora de activacion: <strong>{{ $activatedAt }}</strong>
+                            Fecha y hora de activacion: <strong>{{ $activatedAt }} {{ $activatedAtTimezone }}</strong>
                         </p>
                         <p style="margin:0 0 20px 0;font-size:14px;line-height:1.65;color:#4b5565;">
                             Si no reconoces este cambio, entra de inmediato en la configuracion de seguridad para revisar tu cuenta y actualizar la contrasena.
