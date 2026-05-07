@@ -815,7 +815,7 @@ class MoodleNotificationCenter
         Cache::put($this->emailedKey($user), $emailed, now()->addSeconds(self::EMAILED_TTL_SECONDS));
 
         foreach ($newItems as $item) {
-            SendMoodleNotificationEmailJob::dispatch($user, $item);
+            SendMoodleNotificationEmailJob::dispatch($user, $item)->onQueue('mail');
         }
     }
 

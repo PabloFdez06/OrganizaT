@@ -255,6 +255,8 @@ export const useTwoFactorAuth = ({
                         'Tu confirmación de contraseña expiró. Vuelve a confirmar para gestionar el 2FA.',
                 });
 
+                redirectToPasswordConfirmation('enable');
+
                 return;
             }
 
@@ -268,7 +270,7 @@ export const useTwoFactorAuth = ({
         } finally {
             setIsRefreshingSetup(false);
         }
-    }, []);
+    }, [redirectToPasswordConfirmation]);
 
     const enableTwoFactor = useCallback(async (): Promise<boolean> => {
         if (!await ensurePasswordConfirmed('enable')) {

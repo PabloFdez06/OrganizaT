@@ -315,13 +315,6 @@ export default function TwoFactorSetupModal({
                     </section>
                 )}
 
-                {isEnabled && (
-                    <footer className="p-settings__two-factor-enabled-footer">
-                        <Button type="button" variant="outline" onClick={onClose}>
-                            Cerrar
-                        </Button>
-                    </footer>
-                )}
             </DialogContent>
         </Dialog>
     );
