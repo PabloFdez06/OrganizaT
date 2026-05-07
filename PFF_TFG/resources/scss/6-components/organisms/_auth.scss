@@ -771,9 +771,9 @@
     padding: 1rem 0.75rem;
     background: var(--color-auth-panel-input);
     color: var(--color-auth-panel-text);
-    box-shadow:
+/*     box-shadow:
         inset 0 -0.125rem 0 var(--color-auth-panel-border),
-        inset 2rem -0.125rem 0 var(--color-auth-cta);
+        inset 2rem -0.125rem 0 var(--color-auth-cta); */
 }
 
 .c-two-factor-auth__recovery-input::placeholder {
