@@ -661,3 +661,247 @@
 
 }
 
+.c-two-factor-auth-shell {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: var(--color-auth-shell);
+}
+
+.c-two-factor-auth {
+    width: min(100%, 33.75rem);
+    border: 0.0625rem solid color-mix(in srgb, var(--color-auth-panel-border) 35%, transparent);
+    background: var(--color-auth-panel);
+    box-shadow: 0 1.25rem 1.25rem color-mix(in srgb, var(--color-auth-panel-text) 8%, transparent);
+    display: flex;
+    flex-direction: column;
+}
+
+.c-two-factor-auth__strip {
+    height: 0.25rem;
+    background: var(--color-auth-cta);
+}
+
+.c-two-factor-auth__body {
+    padding: 3rem;
+}
+
+.c-two-factor-auth__eyebrow {
+    margin: 0;
+    color: var(--color-auth-cta);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.125rem;
+    text-transform: uppercase;
+}
+
+.c-two-factor-auth__title {
+    margin: 1rem 0 0;
+    color: var(--color-auth-panel-text);
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1.1;
+    letter-spacing: -0.05625rem;
+    font-weight: 800;
+}
+
+.c-two-factor-auth__description {
+    margin: 1rem 0 0;
+    max-width: 24rem;
+    color: var(--color-auth-panel-muted);
+    font-size: 1rem;
+    line-height: 1.625;
+}
+
+.c-two-factor-auth__form {
+    margin-top: 1.5rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.c-two-factor-auth__otp-section {
+    display: grid;
+    gap: 0.75rem;
+    padding-block: 0.5rem;
+}
+
+.c-two-factor-auth__otp-group {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.c-two-factor-auth__otp-slot {
+    min-height: 3.75rem;
+    display: grid;
+    place-items: center;
+    border: 0.0625rem solid color-mix(in srgb, var(--color-auth-panel-border) 30%, transparent);
+    border-bottom-width: 0.125rem;
+    background: var(--color-auth-panel-input);
+    color: var(--color-auth-panel-text);
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: 700;
+    transition: border-color 160ms ease;
+}
+
+.c-two-factor-auth__otp-slot[data-active='true'] {
+    border-color: var(--color-ring);
+}
+
+.c-two-factor-auth__recovery-field {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.c-two-factor-auth__label {
+    margin: 0;
+    color: var(--color-auth-panel-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.075rem;
+    text-transform: uppercase;
+}
+
+.c-two-factor-auth__recovery-input {
+    border: 0;
+    border-radius: 0;
+    min-height: 3.5625rem;
+    padding: 1rem 0.75rem;
+    background: var(--color-auth-panel-input);
+    color: var(--color-auth-panel-text);
+    box-shadow:
+        inset 0 -0.125rem 0 var(--color-auth-panel-border),
+        inset 2rem -0.125rem 0 var(--color-auth-cta);
+}
+
+.c-two-factor-auth__recovery-input::placeholder {
+    color: color-mix(in srgb, var(--color-auth-panel-border) 55%, transparent);
+}
+
+.c-two-factor-auth__recovery-input:focus {
+    box-shadow:
+        inset 0 -0.125rem 0 var(--color-auth-cta),
+        inset 2rem -0.125rem 0 var(--color-auth-cta);
+}
+
+.c-two-factor-auth__submit {
+    width: 100%;
+    min-height: 3.75rem;
+    border: 0;
+    border-radius: 0;
+    padding: 1rem 2rem;
+    background: var(--color-auth-cta);
+    color: var(--color-auth-cta-text);
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    gap: 0.75rem;
+}
+
+.c-two-factor-auth__submit:hover:not(:disabled) {
+    background: var(--color-auth-cta-hover);
+}
+
+.c-two-factor-auth__submit-arrow {
+    font-size: 0.9rem;
+    letter-spacing: 0;
+}
+
+.c-two-factor-auth__toggle {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+    cursor: pointer;
+}
+
+.c-two-factor-auth__toggle--totp {
+    justify-self: center;
+    margin-top: 0.125rem;
+    color: var(--color-auth-panel-muted);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: -0.03125rem;
+}
+
+.c-two-factor-auth__toggle--recovery {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    color: var(--color-token-64748b);
+    font-size: 0.625rem;
+    font-weight: 400;
+    letter-spacing: 0.0625rem;
+    text-decoration: underline;
+    text-underline-offset: 0.18rem;
+}
+
+.c-two-factor-auth__toggle-arrow {
+    font-size: 0.7rem;
+    letter-spacing: 0;
+}
+
+.c-two-factor-auth__error {
+    margin: 0.2rem 0 0;
+}
+
+.c-two-factor-auth__error--otp {
+    text-align: center;
+}
+
+.c-two-factor-auth__footer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.0625rem 2rem 1rem;
+    border-top: 0.0625rem solid color-mix(in srgb, var(--color-auth-panel-border) 20%, transparent);
+    background: var(--color-auth-panel-input);
+}
+
+.c-two-factor-auth__footer-item {
+    color: var(--color-token-94a3b8);
+    font-size: 0.625rem;
+    font-weight: 400;
+    letter-spacing: -0.03125rem;
+    text-transform: uppercase;
+}
+
+@media (max-width: 40rem) {
+    .c-two-factor-auth__body {
+        padding: 2rem 1.5rem;
+    }
+
+    .c-two-factor-auth__title {
+        font-size: clamp(1.9rem, 8vw, 2.5rem);
+    }
+
+    .c-two-factor-auth__description {
+        max-width: 100%;
+        font-size: 0.96rem;
+        line-height: 1.5;
+    }
+
+    .c-two-factor-auth__otp-group {
+        gap: 0.55rem;
+    }
+
+    .c-two-factor-auth__otp-slot {
+        min-height: 3.2rem;
+        font-size: 1.75rem;
+    }
+
+    .c-two-factor-auth__footer {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding-inline: 1.2rem;
+    }
+}
+

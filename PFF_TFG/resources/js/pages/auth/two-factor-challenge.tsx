@@ -10,7 +10,6 @@ import {
     InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { OTP_MAX_LENGTH } from '@/hooks/use-two-factor-auth';
-import AuthLayout from '@/layouts/auth-layout';
 import { store } from '@/routes/two-factor/login';
 
 export default function TwoFactorChallenge() {
@@ -20,22 +19,25 @@ export default function TwoFactorChallenge() {
     const authConfigContent = useMemo<{
         title: string;
         description: string;
+        buttonText: string;
         toggleText: string;
     }>(() => {
         if (showRecoveryInput) {
             return {
-                title: 'Recovery code',
+                title: 'Código de Recuperación',
                 description:
-                    'Please confirm access to your account by entering one of your emergency recovery codes.',
-                toggleText: 'login using an authentication code',
+                    'Introduce uno de tus códigos de emergencia guardados previamente.',
+                buttonText: 'ACCEDER',
+                toggleText: 'VOLVER AL CÓDIGO DE APLICACIÓN',
             };
         }
 
         return {
-            title: 'Authentication code',
+            title: 'Verificación de Seguridad',
             description:
-                'Enter the authentication code provided by your authenticator application.',
-            toggleText: 'login using a recovery code',
+                'Introduce el código de 6 dígitos de tu aplicación de autenticación para continuar.',
+            buttonText: 'VERIFICAR',
+            toggleText: 'USAR CÓDIGO DE RECUPERACIÓN',
         };
     }, [showRecoveryInput]);
 
@@ -46,87 +48,144 @@ export default function TwoFactorChallenge() {
     };
 
     return (
-        <AuthLayout
-            title={authConfigContent.title}
-            description={authConfigContent.description}
-        >
-            <Head title="Two-factor authentication" />
+        <>
+            <Head title="Verificación de dos factores" />
 
-            <div className="c-auth-form-wrap">
-                <Form
-                    method="post"
-                    action={store().url}
-                    className="c-auth-form"
-                    resetOnError
-                    resetOnSuccess={!showRecoveryInput}
-                >
-                    {({ errors, processing, clearErrors }) => (
-                        <>
+            <main className="c-two-factor-auth-shell">
+                <article className="c-two-factor-auth" aria-labelledby="two-factor-auth-title">
+                    <header className="c-two-factor-auth__strip" aria-hidden="true" />
+
+                    <section className="c-two-factor-auth__body">
+                        <p className="c-two-factor-auth__eyebrow">AUTENTICACIÓN</p>
+
+                        <h1 id="two-factor-auth-title" className="c-two-factor-auth__title">
                             {showRecoveryInput ? (
                                 <>
-                                    <Input
-                                        name="recovery_code"
-                                        type="text"
-                                        placeholder="Enter recovery code"
-                                        autoFocus={showRecoveryInput}
-                                        required
-                                    />
-                                    <InputError
-                                        message={errors.recovery_code}
-                                    />
+                                    Código de
+                                    <br />
+                                    Recuperación
                                 </>
                             ) : (
-                                <div className="c-auth-form__field">
-                                    <div className="c-auth-form__otp">
-                                        <InputOTP
-                                            name="code"
-                                            maxLength={OTP_MAX_LENGTH}
-                                            value={code}
-                                            onChange={(value) => setCode(value)}
-                                            disabled={processing}
-                                            pattern={REGEXP_ONLY_DIGITS}
-                                        >
-                                            <InputOTPGroup>
-                                                {Array.from(
-                                                    { length: OTP_MAX_LENGTH },
-                                                    (_, index) => (
-                                                        <InputOTPSlot
-                                                            key={index}
-                                                            index={index}
-                                                        />
-                                                    ),
-                                                )}
-                                            </InputOTPGroup>
-                                        </InputOTP>
-                                    </div>
-                                    <InputError message={errors.code} />
-                                </div>
+                                authConfigContent.title
                             )}
+                        </h1>
 
-                            <Button
-                                type="submit"
-                                className="c-auth-form__submit"
-                                disabled={processing}
-                            >
-                                Continue
-                            </Button>
+                        <p className="c-two-factor-auth__description">
+                            {authConfigContent.description}
+                        </p>
 
-                            <div className="c-auth-form__alt">
-                                <span>or you can </span>
-                                <button
-                                    type="button"
-                                    className="c-link c-auth-form__toggle"
-                                    onClick={() =>
-                                        toggleRecoveryMode(clearErrors)
-                                    }
-                                >
-                                    {authConfigContent.toggleText}
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </Form>
-            </div>
-        </AuthLayout>
+                        <Form
+                            method="post"
+                            action={store().url}
+                            className="c-two-factor-auth__form"
+                            resetOnError
+                            resetOnSuccess={!showRecoveryInput}
+                        >
+                            {({ errors, processing, clearErrors }) => (
+                                <>
+                                    {showRecoveryInput ? (
+                                        <section className="c-two-factor-auth__recovery-field">
+                                            <label
+                                                htmlFor="recovery-code"
+                                                className="c-two-factor-auth__label"
+                                            >
+                                                CÓDIGO DE RECUPERACIÓN
+                                            </label>
+
+                                            <Input
+                                                id="recovery-code"
+                                                name="recovery_code"
+                                                type="text"
+                                                placeholder="XXXX-XXXX-XXXX"
+                                                autoFocus={showRecoveryInput}
+                                                autoComplete="one-time-code"
+                                                disabled={processing}
+                                                required
+                                                className="c-two-factor-auth__recovery-input"
+                                            />
+
+                                            <InputError
+                                                className="c-two-factor-auth__error"
+                                                message={errors.recovery_code}
+                                            />
+                                        </section>
+                                    ) : (
+                                        <section className="c-two-factor-auth__otp-section" aria-label="Código de autenticación de 6 dígitos">
+                                            <InputOTP
+                                                name="code"
+                                                maxLength={OTP_MAX_LENGTH}
+                                                value={code}
+                                                onChange={(value) => setCode(value)}
+                                                disabled={processing}
+                                                pattern={REGEXP_ONLY_DIGITS}
+                                                autoFocus={!showRecoveryInput}
+                                                containerClassName="c-two-factor-auth__otp-container"
+                                                className="c-two-factor-auth__otp-input"
+                                            >
+                                                <InputOTPGroup className="c-two-factor-auth__otp-group">
+                                                    {Array.from(
+                                                        { length: OTP_MAX_LENGTH },
+                                                        (_, index) => (
+                                                            <InputOTPSlot
+                                                                key={index}
+                                                                index={index}
+                                                                className="c-two-factor-auth__otp-slot"
+                                                            />
+                                                        ),
+                                                    )}
+                                                </InputOTPGroup>
+                                            </InputOTP>
+
+                                            <InputError
+                                                className="c-two-factor-auth__error c-two-factor-auth__error--otp"
+                                                message={errors.code}
+                                            />
+                                        </section>
+                                    )}
+
+                                    <Button
+                                        type="submit"
+                                        className={`c-two-factor-auth__submit${showRecoveryInput ? ' c-two-factor-auth__submit--recovery' : ''}`}
+                                        disabled={processing}
+                                    >
+                                        <span>{authConfigContent.buttonText}</span>
+                                        {showRecoveryInput && (
+                                            <span
+                                                aria-hidden="true"
+                                                className="c-two-factor-auth__submit-arrow"
+                                            >
+                                                →
+                                            </span>
+                                        )}
+                                    </Button>
+
+                                    <button
+                                        type="button"
+                                        className={`c-two-factor-auth__toggle${showRecoveryInput ? ' c-two-factor-auth__toggle--recovery' : ' c-two-factor-auth__toggle--totp'}`}
+                                        onClick={() => toggleRecoveryMode(clearErrors)}
+                                    >
+                                        {showRecoveryInput && (
+                                            <span
+                                                aria-hidden="true"
+                                                className="c-two-factor-auth__toggle-arrow"
+                                            >
+                                                ←
+                                            </span>
+                                        )}
+                                        <span>{authConfigContent.toggleText}</span>
+                                    </button>
+                                </>
+                            )}
+                        </Form>
+                    </section>
+
+                    <footer className="c-two-factor-auth__footer" aria-label="Indicadores de estado tecnico">
+                        <span className="c-two-factor-auth__footer-item">SECURE_ACCESS_V1.0</span>
+                        <span className="c-two-factor-auth__footer-item">ESTADO: PENDIENTE</span>
+                        <span className="c-two-factor-auth__footer-item">ENC: SHA-256</span>
+                    </footer>
+                </article>
+            </main>
+        </>
     );
 }

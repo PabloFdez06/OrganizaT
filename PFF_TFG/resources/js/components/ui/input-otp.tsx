@@ -39,10 +39,11 @@ const InputOTPSlot = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "",
-        isActive && "",
+        isActive && "is-active",
         className
       )}
+      data-active={isActive ? 'true' : 'false'}
+      data-filled={char ? 'true' : 'false'}
       {...props}
     >
       {char}
