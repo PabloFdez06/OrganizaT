@@ -69,8 +69,8 @@ class ErrorReportController extends Controller
     {
         $defaultMailer = trim((string) config('mail.default', 'smtp'));
         $candidates = [
-            trim((string) config('mail.from.address', '')),
             trim((string) config("mail.mailers.{$defaultMailer}.username", '')),
+            trim((string) config('mail.from.address', '')),
             trim((string) config('mail.mailers.smtp.username', '')),
         ];
 
@@ -92,17 +92,17 @@ class ErrorReportController extends Controller
     private function resolveDeliveryMailer(): ?string
     {
         $defaultMailer = trim((string) config('mail.default', 'smtp'));
-
-        if ($defaultMailer !== '' && ! in_array($defaultMailer, ['log', 'array'], true)) {
-            return $defaultMailer;
-        }
-
         $smtpHost = trim((string) config('mail.mailers.smtp.host', ''));
         $smtpUsername = trim((string) config('mail.mailers.smtp.username', ''));
         $smtpPassword = trim((string) config('mail.mailers.smtp.password', ''));
 
+        // Prefer SMTP for incident reports to avoid silent fallback mailers.
         if ($smtpHost !== '' && $smtpUsername !== '' && $smtpPassword !== '') {
             return 'smtp';
+        }
+
+        if ($defaultMailer !== '' && ! in_array($defaultMailer, ['log', 'array', 'failover', 'roundrobin'], true)) {
+            return $defaultMailer;
         }
 
         return null;

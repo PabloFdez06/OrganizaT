@@ -82,6 +82,12 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
         : String(new Date(resolvedTimestamp).getUTCFullYear());
 
     useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }
+    }, []);
+
+    useEffect(() => {
         const fallbackUrl = typeof window !== 'undefined' ? window.location.href : '';
         setData('error_url', requestedUrl ?? fallbackUrl);
     }, [requestedUrl, setData]);
@@ -270,12 +276,13 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
                             <Button
                                 type="button"
                                 variant="outline"
+                                className="p-error-404__modal-btn p-error-404__modal-btn--secondary"
                                 onClick={() => handleIncidentModalChange(false)}
                                 disabled={processing}
                             >
                                 Cancelar
                             </Button>
-                            <Button type="submit" disabled={processing}>
+                            <Button type="submit" className="p-error-404__modal-btn p-error-404__modal-btn--primary" disabled={processing}>
                                 {processing && <Spinner className="p-error-404__modal-spinner" />}
                                 Enviar reporte
                             </Button>

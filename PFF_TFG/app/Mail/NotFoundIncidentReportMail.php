@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -27,10 +28,7 @@ class NotFoundIncidentReportMail extends Mailable
         return new Envelope(
             subject: 'Nuevo reporte de incidencia 404 - '.$appName,
             replyTo: [
-                [
-                    'address' => $this->reporterEmail,
-                    'name' => $this->reporterName,
-                ],
+                new Address($this->reporterEmail, $this->reporterName),
             ],
         );
     }
