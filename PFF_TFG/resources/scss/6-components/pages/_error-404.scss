@@ -414,7 +414,8 @@
     }
 
     .p-error-404__action {
-        flex: 1 1 100%;
+        flex: 1 1 calc(50% - 0.325rem);
+        min-width: 0;
     }
 
     .p-error-404__meta {
