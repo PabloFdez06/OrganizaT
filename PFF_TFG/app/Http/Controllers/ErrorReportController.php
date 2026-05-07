@@ -13,16 +13,24 @@ class ErrorReportController extends Controller
     public function store(StoreNotFoundIncidentRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $recipient = $this->resolveIncidentRecipient();
+        $recipients = $this->resolveIncidentRecipients();
 
-        if ($recipient === '') {
+        if ($recipients === []) {
             return back()->withErrors([
                 'incident_report' => 'No se pudo enviar el reporte porque no hay correo de soporte configurado.',
             ]);
         }
 
+        $mailer = $this->resolveDeliveryMailer();
+
+        if ($mailer === null) {
+            return back()->withErrors([
+                'incident_report' => 'No se pudo enviar el reporte porque el mailer no está configurado para entrega real.',
+            ]);
+        }
+
         try {
-            Mail::to($recipient)->send(
+            Mail::mailer($mailer)->to($recipients)->send(
                 new NotFoundIncidentReportMail(
                     reporterName: (string) $validated['name'],
                     reporterEmail: (string) $validated['email'],
@@ -35,6 +43,8 @@ class ErrorReportController extends Controller
             Log::warning('No se pudo enviar el reporte de incidencia 404.', [
                 'error_url' => (string) $validated['error_url'],
                 'reporter_email' => (string) $validated['email'],
+                'mailer' => $mailer,
+                'recipients_count' => count($recipients),
                 'message' => $exception->getMessage(),
             ]);
 
@@ -43,24 +53,58 @@ class ErrorReportController extends Controller
             ]);
         }
 
+        Log::info('Reporte de incidencia 404 enviado correctamente.', [
+            'error_url' => (string) $validated['error_url'],
+            'mailer' => $mailer,
+            'recipients_count' => count($recipients),
+        ]);
+
         return back()->with('success', 'Reporte enviado correctamente. Revisaremos la incidencia lo antes posible.');
     }
 
-    private function resolveIncidentRecipient(): string
+    /**
+     * @return array<int, string>
+     */
+    private function resolveIncidentRecipients(): array
     {
-        $fromAddress = trim((string) config('mail.from.address', ''));
-
-        if ($fromAddress !== '') {
-            return $fromAddress;
-        }
-
         $defaultMailer = trim((string) config('mail.default', 'smtp'));
-        $defaultUsername = trim((string) config("mail.mailers.{$defaultMailer}.username", ''));
+        $candidates = [
+            trim((string) config('mail.from.address', '')),
+            trim((string) config("mail.mailers.{$defaultMailer}.username", '')),
+            trim((string) config('mail.mailers.smtp.username', '')),
+        ];
 
-        if ($defaultUsername !== '') {
-            return $defaultUsername;
+        $recipients = [];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate === '' || ! filter_var($candidate, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+
+            if (! in_array($candidate, $recipients, true)) {
+                $recipients[] = $candidate;
+            }
         }
 
-        return trim((string) config('mail.mailers.smtp.username', ''));
+        return $recipients;
+    }
+
+    private function resolveDeliveryMailer(): ?string
+    {
+        $defaultMailer = trim((string) config('mail.default', 'smtp'));
+
+        if ($defaultMailer !== '' && ! in_array($defaultMailer, ['log', 'array'], true)) {
+            return $defaultMailer;
+        }
+
+        $smtpHost = trim((string) config('mail.mailers.smtp.host', ''));
+        $smtpUsername = trim((string) config('mail.mailers.smtp.username', ''));
+        $smtpPassword = trim((string) config('mail.mailers.smtp.password', ''));
+
+        if ($smtpHost !== '' && $smtpUsername !== '' && $smtpPassword !== '') {
+            return 'smtp';
+        }
+
+        return null;
     }
 }

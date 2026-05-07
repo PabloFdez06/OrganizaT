@@ -269,7 +269,7 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
                         <DialogFooter className="p-error-404__modal-footer">
                             <Button
                                 type="button"
-                                variant="ghost"
+                                variant="outline"
                                 onClick={() => handleIncidentModalChange(false)}
                                 disabled={processing}
                             >
