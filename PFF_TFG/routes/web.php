@@ -3,6 +3,7 @@
 use App\Http\Controllers\AsignaturasController;
 use App\Http\Controllers\CalificacionesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ErrorReportController;
 use App\Http\Controllers\Moodle\MoodleConnectionController;
 use App\Http\Controllers\Moodle\MoodleConsoleController;
 use App\Http\Controllers\Moodle\MoodleDataController;
@@ -23,6 +24,10 @@ Route::get('/', function (): Response|RedirectResponse {
 
     return Inertia::render('welcome');
 })->name('home');
+
+Route::post('errors/not-found/report', [ErrorReportController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('errors.not-found.report');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
