@@ -102,18 +102,6 @@ function openExternalResourceLink(resourceUrl: string | null): void {
         return;
     }
 
-    // Si la URL viene envuelta por el proxy (/moodle/media?url=...), extrae la URL real
-    if (resourceUrl.includes('/moodle/media?url=')) {
-        const params = new URLSearchParams(resourceUrl.split('?')[1] ?? '');
-        const targetUrl = params.get('url');
-
-        if (targetUrl) {
-            window.open(targetUrl, '_blank', 'noopener,noreferrer');
-
-            return;
-        }
-    }
-
     window.open(resourceUrl, '_blank', 'noopener,noreferrer');
 }
 

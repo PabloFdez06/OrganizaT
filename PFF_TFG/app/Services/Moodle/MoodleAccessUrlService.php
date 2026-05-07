@@ -20,6 +20,10 @@ class MoodleAccessUrlService
             return $absolute;
         }
 
+        if ($this->shouldUseRedirectProxy($absolute, $module)) {
+            return route('moodle.redirect', ['url' => $absolute]);
+        }
+
         return route('moodle.media', ['url' => $absolute]);
     }
 
@@ -132,6 +136,10 @@ class MoodleAccessUrlService
             return true;
         }
 
+        if (str_starts_with($normalized, '/moodle/redirect')) {
+            return true;
+        }
+
         if (! preg_match('/^https?:\/\//i', $normalized)) {
             return false;
         }
@@ -142,7 +150,25 @@ class MoodleAccessUrlService
             return false;
         }
 
-        return str_starts_with($normalized, $appUrl.'/moodle/media');
+        return str_starts_with($normalized, $appUrl.'/moodle/media')
+            || str_starts_with($normalized, $appUrl.'/moodle/redirect');
+    }
+
+    private function shouldUseRedirectProxy(string $url, ?string $module = null): bool
+    {
+        $moduleSafe = is_string($module) ? mb_strtolower(trim($module)) : '';
+
+        if ($moduleSafe === 'url') {
+            return true;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+
+        if (! is_string($path) || trim($path) === '') {
+            return false;
+        }
+
+        return str_contains(mb_strtolower($path), '/mod/url/view.php');
     }
 
     /**

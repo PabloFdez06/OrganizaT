@@ -148,6 +148,25 @@ class MoodleCasClient
         ];
     }
 
+    public function resolveFinalUrl(MoodleSession $session, string $path, ?array &$trace = null, string $traceStep = 'resolve_final_url'): ?string
+    {
+        $this->get($session, $path, [], $trace, $traceStep);
+
+        $effectiveUrl = trim((string) curl_getinfo($session->handle, CURLINFO_EFFECTIVE_URL));
+
+        if ($effectiveUrl === '') {
+            return null;
+        }
+
+        $scheme = parse_url($effectiveUrl, PHP_URL_SCHEME);
+
+        if (! is_string($scheme) || ! in_array(mb_strtolower($scheme), ['http', 'https'], true)) {
+            return null;
+        }
+
+        return $effectiveUrl;
+    }
+
     private function initCurl()
     {
         $curl = curl_init();

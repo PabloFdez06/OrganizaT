@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Moodle;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
 use App\Services\Moodle\Exceptions\MoodleRequestException;
 use App\Services\Moodle\MoodleCasClient;
 use App\Services\Moodle\MoodleEphemeralSessionService;
+use App\Services\Moodle\MoodleSession;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -38,21 +41,7 @@ class MoodleMediaController extends Controller
         $session = null;
 
         try {
-            if ($this->sessionService->hasActiveSession($user)) {
-                $session = $this->sessionService->reopenForUser($user);
-            } else {
-                $session = $this->sessionService->restoreSessionFromDatabase($user);
-
-                if ($session) {
-                    $username = is_string($user?->moodle_username ?? null)
-                        ? trim((string) $user->moodle_username)
-                        : '';
-
-                    if ($username !== '') {
-                        $this->sessionService->storeForUser($user, $username, $session);
-                    }
-                }
-            }
+            $session = $this->openSessionForUser($user);
 
             if (! $session) {
                 abort(403, 'Moodle no conectado.');
@@ -70,6 +59,49 @@ class MoodleMediaController extends Controller
         return response($binary['body'])
             ->header('Content-Type', $binary['contentType'])
             ->header('Cache-Control', 'private, max-age=300');
+    }
+
+    public function redirect(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'url' => ['required', 'string', 'max:4096'],
+        ]);
+
+        $user = $request->user();
+
+        if (! $user) {
+            abort(403, 'Moodle no conectado.');
+        }
+
+        $target = $this->resolveAbsoluteUrl((string) $validated['url']);
+
+        if ($target === null || ! $this->isAllowedMoodleUrl($target)) {
+            abort(403, 'URL de recurso no permitida.');
+        }
+
+        $session = null;
+
+        try {
+            $session = $this->openSessionForUser($user);
+
+            if (! $session) {
+                abort(403, 'Moodle no conectado.');
+            }
+
+            $finalUrl = $this->client->resolveFinalUrl($session, $target);
+
+            if (! is_string($finalUrl) || trim($finalUrl) === '') {
+                abort(404, 'No se pudo resolver el destino del recurso.');
+            }
+
+            return redirect()->away($finalUrl);
+        } catch (MoodleAuthenticationException|MoodleRequestException) {
+            abort(404, 'No se pudo recuperar el recurso solicitado.');
+        } finally {
+            if (isset($session)) {
+                $session->close();
+            }
+        }
     }
 
     private function resolveAbsoluteUrl(string $rawUrl): ?string
@@ -142,5 +174,28 @@ class MoodleMediaController extends Controller
         }
 
         return in_array(mb_strtolower($targetHost), $allowedHosts, true);
+    }
+
+    private function openSessionForUser(User $user): ?MoodleSession
+    {
+        if ($this->sessionService->hasActiveSession($user)) {
+            return $this->sessionService->reopenForUser($user);
+        }
+
+        $session = $this->sessionService->restoreSessionFromDatabase($user);
+
+        if (! $session) {
+            return null;
+        }
+
+        $username = is_string($user?->moodle_username ?? null)
+            ? trim((string) $user->moodle_username)
+            : '';
+
+        if ($username !== '') {
+            $this->sessionService->storeForUser($user, $username, $session);
+        }
+
+        return $session;
     }
 }

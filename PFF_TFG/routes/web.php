@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('moodle-console/preferences', [MoodleConsoleController::class, 'updatePreferences'])->name('moodle.console.preferences.update');
     Route::post('moodle-notifications/read-all', [MoodleNotificationsController::class, 'markAllAsRead'])->name('moodle.notifications.read_all');
     Route::get('moodle/media', [MoodleMediaController::class, 'show'])->name('moodle.media');
+    Route::get('moodle/redirect', [MoodleMediaController::class, 'redirect'])->name('moodle.redirect');
 
     Route::post('moodle-connect', [MoodleConnectionController::class, 'connect'])->name('moodle.connect');
     Route::post('moodle-debug', [MoodleConnectionController::class, 'debug'])->name('moodle.debug');

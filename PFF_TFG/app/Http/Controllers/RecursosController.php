@@ -495,7 +495,7 @@ class RecursosController extends Controller
             $resolved = $this->appendQueryParam($normalizedUrl, 'redirect', '1');
         }
 
-        return $this->accessUrl->toAccessibleUrl($resolved);
+        return $this->accessUrl->toAccessibleUrl($resolved, $module);
     }
 
     private function buildDownloadUrl(?string $url, string $kind, ?string $module): ?string
