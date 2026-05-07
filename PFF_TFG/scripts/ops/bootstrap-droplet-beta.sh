@@ -18,6 +18,20 @@ compose() {
     ${DOCKER_CMD} compose -f "${COMPOSE_FILE}" "$@"
 }
 
+run_as_root() {
+    if [ "$(id -u)" -eq 0 ]; then
+        "$@"
+        return
+    fi
+
+    if command -v sudo >/dev/null 2>&1; then
+        sudo "$@"
+        return
+    fi
+
+    return 1
+}
+
 set_env_value() {
     local key="$1"
     local value="$2"
@@ -105,6 +119,30 @@ resolve_docker_command() {
     fi
 
     fail "No se puede acceder al motor Docker."
+}
+
+ensure_redis_overcommit() {
+    if ! command -v sysctl >/dev/null 2>&1; then
+        log "Aviso: sysctl no disponible; no se puede validar vm.overcommit_memory"
+        return
+    fi
+
+    local current_overcommit
+    current_overcommit="$(sysctl -n vm.overcommit_memory 2>/dev/null || true)"
+
+    if [ "${current_overcommit}" = "1" ]; then
+        return
+    fi
+
+    log "Aplicando vm.overcommit_memory=1 para evitar warnings de Redis"
+
+    if ! run_as_root sh -c 'printf "%s\n" "vm.overcommit_memory = 1" > /etc/sysctl.d/99-redis-overcommit.conf'; then
+        log "Aviso: no hay permisos para persistir vm.overcommit_memory en /etc/sysctl.d"
+        return
+    fi
+
+    run_as_root sysctl -w vm.overcommit_memory=1 >/dev/null 2>&1 || true
+    run_as_root sysctl -p /etc/sysctl.d/99-redis-overcommit.conf >/dev/null 2>&1 || true
 }
 
 ensure_env_file() {
@@ -223,6 +261,7 @@ main() {
 
     install_docker_if_missing
     resolve_docker_command
+    ensure_redis_overcommit
     ensure_env_file
     validate_env
     deploy_stack

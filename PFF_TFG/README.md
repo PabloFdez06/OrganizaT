@@ -114,6 +114,9 @@ sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw --force enable
+sudo sysctl -w vm.overcommit_memory=1
+printf '%s\n' 'vm.overcommit_memory = 1' | sudo tee /etc/sysctl.d/99-redis-overcommit.conf >/dev/null
+sudo sysctl -p /etc/sysctl.d/99-redis-overcommit.conf
 ```
 
 ## 7) Parte 12 - Instalar Docker y llevar rama deploy-beta
