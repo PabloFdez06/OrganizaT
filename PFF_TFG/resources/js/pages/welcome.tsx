@@ -313,7 +313,7 @@ export default function Welcome() {
                                                 <span className="p-avatar">MG</span>
                                             </header>
                                             <p className="p-greet">Buenos días,</p>
-                                            <p className="p-name">María García</p>
+                                            <p className="p-name">Pablo Fernandez</p>
                                             <section className="p-stats">
                                                 <StatCard scope="phone" value="4" label="Cursos" highlighted />
                                                 <StatCard scope="phone" value="8.4" label="Nota" />
