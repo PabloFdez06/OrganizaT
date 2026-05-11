@@ -4,13 +4,11 @@ namespace App\Jobs\Moodle;
 
 use App\Mail\MoodleNotificationMail;
 use App\Models\User;
-use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -52,14 +50,6 @@ class SendMoodleNotificationEmailJob implements ShouldQueue
             return;
         }
 
-        $cacheKey = $this->emailedKey($this->user->id);
-        $emailed = Cache::get($cacheKey);
-        $emailedIds = is_array($emailed) ? $emailed : [];
-
-        if (isset($emailedIds[$notificationId])) {
-            return;
-        }
-
         try {
             Mail::to($recipient)->send(new MoodleNotificationMail($this->notification, $this->user));
         } catch (\Throwable $exception) {
@@ -71,14 +61,5 @@ class SendMoodleNotificationEmailJob implements ShouldQueue
 
             throw $exception;
         }
-
-        $emailedIds[$notificationId] = CarbonImmutable::now()->toIso8601String();
-
-        Cache::put($cacheKey, $emailedIds, now()->addSeconds(1209600));
-    }
-
-    private function emailedKey(int $userId): string
-    {
-        return 'moodle:notifications:emailed:'.$userId;
     }
 }
