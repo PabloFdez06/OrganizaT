@@ -27,7 +27,7 @@ import type { FeatureItem, MoodleCourse, StepItem } from '@/components/welcome/l
 import { dashboard, login } from '@/routes';
 
 const marqueeItems = [
-    'Compatible con Moodle 3.x y 4.x',
+    'Compatible con Moodle Andalucia',
     'Disponible en iOS y Android',
     'Acceso web en cualquier navegador',
     'Sin plugins en el servidor',
@@ -222,7 +222,7 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="MoodleConnect" />
+            <Head title="OrganizaT" />
 
             <main className="p-welcome" ref={pageRef}>
                 <span className="cursor" data-cursor aria-hidden="true" />
@@ -230,7 +230,7 @@ export default function Welcome() {
 
                 <header>
                     <nav aria-label="Navegación principal">
-                        <p className="logo">Moodle<span>Connect</span></p>
+                        <p className="logo">Organiza<span>T</span></p>
                         <ul className="nav-right">
                             <li><a href="#feat" className="nav-link">Funciones</a></li>
                             <li><a href="#how" className="nav-link">Cómo funciona</a></li>
@@ -309,7 +309,7 @@ export default function Welcome() {
                                         </section>
                                         <section className="p-body">
                                             <header className="p-toprow">
-                                                <span className="p-appname">MoodleConnect</span>
+                                                <span className="p-appname">OrganizaT</span>
                                                 <span className="p-avatar">MG</span>
                                             </header>
                                             <p className="p-greet">Buenos días,</p>
@@ -401,11 +401,11 @@ export default function Welcome() {
                                     <span className="wb-d" style={{ background: '#ff5f57' }} />
                                     <span className="wb-d" style={{ background: '#febc2e' }} />
                                     <span className="wb-d" style={{ background: '#28c840' }} />
-                                    <span className="wb-url">app.moodleconnect.io / dashboard</span>
+                                    <span className="wb-url">OrganizaT.blete.tech / dashboard</span>
                                 </header>
                                 <section className="wb-body">
                                     <nav className="wb-side" aria-label="Menú lateral demo">
-                                        <p className="wb-logo">MoodleConnect</p>
+                                        <p className="wb-logo">OrganizaT</p>
                                         <p className="wb-item on">Inicio</p>
                                         <p className="wb-item">Cursos</p>
                                         <p className="wb-item">Calendario</p>
@@ -477,14 +477,14 @@ export default function Welcome() {
                 </section>
 
                 <footer>
-                    <p className="f-logo">Moodle<em>Connect</em></p>
+                    <p className="f-logo">Organiza<em>T</em></p>
                     <ul className="f-nav">
                         <li><a href="#">Privacidad</a></li>
                         <li><a href="#">Términos</a></li>
                         <li><a href="#">Soporte</a></li>
                         <li><a href="#">Contacto</a></li>
                     </ul>
-                    <p className="f-copy">2025 MoodleConnect. Todos los derechos reservados.</p>
+                    <p className="f-copy">2026 OrganizaT. Todos los derechos reservados.</p>
                 </footer>
             </main>
         </>
