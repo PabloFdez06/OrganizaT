@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -56,6 +57,8 @@ export default function AcademiaHeader({
     profileAvatarUrl,
     studentName,
 }: AcademiaHeaderProps) {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const mobileMenuId = useId();
     const page = usePage<SharedProps>();
     const notifications = page.props.moodleNotifications;
     const unreadCount = Math.max(0, Number(notifications?.unreadCount ?? 0));
@@ -72,6 +75,33 @@ export default function AcademiaHeader({
         });
     };
 
+    useEffect(() => {
+        if (!mobileMenuOpen) {
+            return;
+        }
+
+        const mediaQuery = window.matchMedia('(min-width: 64rem)');
+        const handleDesktopViewport = (event: MediaQueryListEvent) => {
+            if (event.matches) {
+                setMobileMenuOpen(false);
+            }
+        };
+
+        if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', handleDesktopViewport);
+
+            return () => {
+                mediaQuery.removeEventListener('change', handleDesktopViewport);
+            };
+        }
+
+        mediaQuery.addListener(handleDesktopViewport);
+
+        return () => {
+            mediaQuery.removeListener(handleDesktopViewport);
+        };
+    }, [mobileMenuOpen]);
+
     return (
         <>
             <header className="c-academia-header">
@@ -80,6 +110,17 @@ export default function AcademiaHeader({
                         <Link className="c-academia-header__brand" href="/dashboard">
                             <strong className="c-academia-header__brand-text">Organiza<span className="c-academia-header__brand-accent">T</span></strong>
                         </Link>
+
+                        <button
+                            className="c-academia-header__menu-toggle"
+                            type="button"
+                            aria-expanded={mobileMenuOpen}
+                            aria-controls={mobileMenuId}
+                            aria-label={mobileMenuOpen ? 'Cerrar menu principal' : 'Abrir menu principal'}
+                            onClick={() => setMobileMenuOpen((currentState) => !currentState)}
+                        >
+                            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                        </button>
 
                         <nav className="c-academia-header__nav" aria-label="Secciones principales">
                             {NAV_ITEMS.map((item) => (
@@ -163,6 +204,24 @@ export default function AcademiaHeader({
                         </Link>
                     </section>
                 </section>
+
+                {mobileMenuOpen && (
+                    <nav id={mobileMenuId} className="c-academia-header__mobile-nav" aria-label="Secciones principales en movil">
+                        {NAV_ITEMS.map((item) => (
+                            <Link
+                                key={`mobile-${item.href}`}
+                                href={item.href}
+                                className={[
+                                    'c-academia-header__mobile-nav-link',
+                                    item.href === activePath ? 'c-academia-header__mobile-nav-link--active' : '',
+                                ].filter(Boolean).join(' ')}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
+                    </nav>
+                )}
             </header>
 
             {!moodleConnected && (

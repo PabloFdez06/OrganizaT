@@ -1,3 +1,6 @@
+@use '../../1-settings/breakpoints' as bp;
+@use '../../2-tools/mixins' as mixins;
+
 .c-app-header {
     border-bottom: 1px solid var(--color-border);
     background: color-mix(in srgb, var(--color-surface), transparent 15%);
@@ -62,6 +65,21 @@
     gap: 30px;
 }
 
+.c-academia-header__menu-toggle {
+    display: none;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    place-items: center;
+}
+
+.c-academia-header__menu-toggle:focus-visible {
+    @include mixins.focus-ring;
+}
+
 .c-academia-header__nav-link {
     text-decoration: none;
     text-transform: uppercase;
@@ -76,6 +94,32 @@
 .c-academia-header__nav-link--active {
     color: var(--color-brand);
     border-bottom-color: var(--color-brand);
+}
+
+.c-academia-header__mobile-nav {
+    border-top: 1px solid color-mix(in srgb, var(--color-brand) 9%, var(--color-border) 91%);
+    padding: 0.5rem 0;
+    display: grid;
+    gap: 0.15rem;
+}
+
+.c-academia-header__mobile-nav-link {
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-text);
+    padding: 0.55rem 1rem;
+}
+
+.c-academia-header__mobile-nav-link--active {
+    color: var(--color-brand);
+    background: color-mix(in srgb, var(--color-brand) 10%, transparent);
+}
+
+.c-academia-header__mobile-nav-link:focus-visible {
+    @include mixins.focus-ring;
 }
 
 .c-academia-header__toolbar {
@@ -356,6 +400,65 @@
     background: color-mix(in srgb, var(--color-danger) 18%, transparent);
 }
 
+@media (max-width: 76rem) {
+    .c-academia-header__inner {
+        height: 4rem;
+        gap: 0.75rem;
+    }
+
+    .c-academia-header__left {
+        gap: 1rem;
+    }
+
+    .c-academia-header__brand-text {
+        font-size: 1.65rem;
+    }
+
+    .c-academia-header__nav {
+        gap: 1.1rem;
+    }
+
+    .c-academia-header__nav-link {
+        font-size: 0.69rem;
+        letter-spacing: 0.09em;
+    }
+
+    .c-academia-header__toolbar {
+        gap: 0.55rem;
+    }
+
+    .c-academia-header__student {
+        max-width: 7.75rem;
+    }
+}
+
+@media (max-width: calc(bp.$bp-lg - 0.0625rem)) {
+    .c-academia-header__inner {
+        height: 3.75rem;
+    }
+
+    .c-academia-header__menu-toggle {
+        display: grid;
+    }
+
+    .c-academia-header__nav {
+        display: none;
+    }
+
+    .c-academia-header__left {
+        gap: 0.75rem;
+    }
+
+    .c-academia-header__toolbar {
+        margin-left: auto;
+    }
+
+    .c-academia-header__toolbar-divider,
+    .c-academia-header__student {
+        display: none;
+    }
+}
+
 .dark .c-academia-header {
     border-bottom-color: var(--color-border);
     background: color-mix(in srgb, var(--color-surface) 76%, transparent);
@@ -364,6 +467,8 @@
 .dark .c-academia-header__brand,
 .dark .c-academia-header__nav-link,
 .dark .c-academia-header__icon-btn,
+.dark .c-academia-header__menu-toggle,
+.dark .c-academia-header__mobile-nav-link,
 .dark .c-academia-header__student {
     color: var(--color-text);
 }
