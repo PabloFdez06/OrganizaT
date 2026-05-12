@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class EisenhowerMatrixAiService
@@ -17,20 +18,12 @@ class EisenhowerMatrixAiService
         ?string $userPreferences = null,
     ): array {
         $apiKey = trim((string) ($userApiKey ?? config('services.ai.api_key', '')));
-        $baseUrl = rtrim((string) config('services.ai.base_url', 'https://api.openai.com/v1'), '/');
-        $model = (string) config('services.ai.model', 'gpt-4o-mini');
+        $configuredBaseUrl = rtrim((string) config('services.ai.base_url', ''), '/');
         $timeout = max(15, (int) config('services.ai.timeout', 45));
         $verifySsl = (bool) config('services.ai.verify_ssl', true);
         $preferences = trim((string) ($userPreferences ?? ''));
-        $isGemini = $this->isGeminiProvider($apiKey, $baseUrl, $model);
-
-        if ($isGemini && str_contains($baseUrl, 'api.openai.com')) {
-            $baseUrl = 'https://generativelanguage.googleapis.com';
-        }
-
-        if ($isGemini && str_starts_with($model, 'gpt-')) {
-            $model = 'gemini-1.5-flash';
-        }
+        $provider = $this->detectProvider($apiKey, $configuredBaseUrl);
+        [$baseUrl, $model] = $this->resolveEndpointAndModel($provider);
 
         if ($apiKey === '' || $baseUrl === '') {
             return [
@@ -91,63 +84,35 @@ PROMPT;
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         try {
-            if ($isGemini) {
-                $request = Http::acceptJson()
-                    ->timeout($timeout)
-                    ->withOptions(['verify' => $verifySsl]);
-
-                $response = $request->post($baseUrl.'/v1beta/models/'.$model.':generateContent?key='.$apiKey, [
-                    'contents' => [
-                        [
-                            'role' => 'user',
-                            'parts' => [
-                                ['text' => $systemPrompt."\n\n".$userPrompt],
-                            ],
-                        ],
-                    ],
-                    'generationConfig' => [
-                        'temperature' => 0.1,
-                        'responseMimeType' => 'application/json',
-                    ],
-                ]);
-            } else {
-                $request = Http::withToken($apiKey)
-                    ->acceptJson()
-                    ->timeout($timeout)
-                    ->withOptions(['verify' => $verifySsl]);
-
-                $response = $request->post($baseUrl.'/chat/completions', [
-                    'model' => $model,
-                    'temperature' => 0.1,
-                    'response_format' => ['type' => 'json_object'],
-                    'messages' => [
-                        ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user', 'content' => $userPrompt],
-                    ],
-                ]);
-            }
+            $response = match ($provider) {
+                'anthropic' => $this->callAnthropic($apiKey, $baseUrl, $model, $systemPrompt, $userPrompt, $timeout, $verifySsl),
+                'gemini' => $this->callGemini($apiKey, $baseUrl, $model, $systemPrompt, $userPrompt, $timeout, $verifySsl),
+                default => $this->callOpenAiCompatible($apiKey, $baseUrl, $model, $systemPrompt, $userPrompt, $timeout, $verifySsl),
+            };
 
             if (! $response->ok()) {
                 $status = (int) $response->status();
-                $providerError = $this->extractProviderError($response->json());
+                $providerError = $this->sanitizeErrorMessage($this->extractProviderError($response->json()));
 
                 return [
                     'matrix' => $this->emptyMatrix(),
                     'explanation' => 'No se pudo conectar con la IA ('.$status.'). '.$providerError,
-                    'provider' => 'error',
+                    'provider' => $provider,
                 ];
             }
 
-            $content = $isGemini
-                ? (string) data_get($response->json(), 'candidates.0.content.parts.0.text', '')
-                : (string) data_get($response->json(), 'choices.0.message.content', '');
+            $content = match ($provider) {
+                'anthropic' => (string) data_get($response->json(), 'content.0.text', ''),
+                'gemini' => (string) data_get($response->json(), 'candidates.0.content.parts.0.text', ''),
+                default => (string) data_get($response->json(), 'choices.0.message.content', ''),
+            };
             $decoded = json_decode($this->stripCodeBlock($content), true);
 
             if (! is_array($decoded)) {
                 return [
                     'matrix' => $this->emptyMatrix(),
                     'explanation' => 'La respuesta del proveedor IA no fue un JSON valido.',
-                    'provider' => 'invalid-json',
+                    'provider' => $provider,
                 ];
             }
 
@@ -157,13 +122,13 @@ PROMPT;
             return [
                 'matrix' => $matrix,
                 'explanation' => $explanation,
-                'provider' => $isGemini ? 'gemini' : 'ai',
+                'provider' => $provider,
             ];
         } catch (\Throwable $exception) {
             return [
                 'matrix' => $this->emptyMatrix(),
                 'explanation' => 'No se pudo contactar con el servicio de IA: '.$this->sanitizeErrorMessage($exception->getMessage()),
-                'provider' => 'exception',
+                'provider' => $provider,
             ];
         }
     }
@@ -190,17 +155,157 @@ PROMPT;
         return 'Error de autenticacion o endpoint del proveedor.';
     }
 
-    private function isGeminiProvider(string $apiKey, string $baseUrl, string $model): bool
+    private function detectProvider(string $apiKey, string $configuredBaseUrl): string
     {
+        if (str_starts_with($apiKey, 'sk-ant-')) {
+            return 'anthropic';
+        }
+
+        if (str_starts_with($apiKey, 'sk-or-')) {
+            return 'openrouter';
+        }
+
         if (str_starts_with($apiKey, 'AIza')) {
-            return true;
+            return 'gemini';
         }
 
-        if (str_contains(mb_strtolower($baseUrl), 'generativelanguage.googleapis.com')) {
-            return true;
+        $normalizedBaseUrl = mb_strtolower(trim($configuredBaseUrl));
+
+        if ($normalizedBaseUrl !== '') {
+            if (str_contains($normalizedBaseUrl, 'anthropic.com')) {
+                return 'anthropic';
+            }
+
+            if (str_contains($normalizedBaseUrl, 'generativelanguage.googleapis.com')) {
+                return 'gemini';
+            }
+
+            if (str_contains($normalizedBaseUrl, 'openrouter.ai')) {
+                return 'openrouter';
+            }
+
+            if (! str_contains($normalizedBaseUrl, 'openai.com')) {
+                return 'custom';
+            }
         }
 
-        return str_starts_with(mb_strtolower($model), 'gemini');
+        return 'openai';
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function resolveEndpointAndModel(string $provider): array
+    {
+        $configuredBaseUrl = rtrim((string) config('services.ai.base_url', ''), '/');
+        $configuredModel = trim((string) config('services.ai.model', ''));
+        $normalizedBaseUrl = mb_strtolower($configuredBaseUrl);
+        $normalizedModel = mb_strtolower($configuredModel);
+
+        return match ($provider) {
+            'anthropic' => [
+                'https://api.anthropic.com',
+                $configuredModel !== '' && ! str_starts_with($normalizedModel, 'gpt-')
+                    ? $configuredModel
+                    : 'claude-haiku-4-5-20251001',
+            ],
+            'openrouter' => [
+                'https://openrouter.ai/api/v1',
+                $configuredModel !== '' && ! str_starts_with($normalizedModel, 'gpt-')
+                    ? $configuredModel
+                    : 'openai/gpt-4o-mini',
+            ],
+            'gemini' => [
+                str_contains($normalizedBaseUrl, 'generativelanguage.googleapis.com') && $configuredBaseUrl !== ''
+                    ? $configuredBaseUrl
+                    : 'https://generativelanguage.googleapis.com',
+                str_starts_with($normalizedModel, 'gemini')
+                    ? ($configuredModel !== '' ? $configuredModel : 'gemini-1.5-flash')
+                    : 'gemini-1.5-flash',
+            ],
+            default => [
+                $configuredBaseUrl !== '' ? $configuredBaseUrl : 'https://api.openai.com/v1',
+                $configuredModel !== '' ? $configuredModel : 'gpt-4o-mini',
+            ],
+        };
+    }
+
+    private function callOpenAiCompatible(
+        string $apiKey,
+        string $baseUrl,
+        string $model,
+        string $systemPrompt,
+        string $userPrompt,
+        int $timeout,
+        bool $verifySsl,
+    ): Response {
+        return Http::withToken($apiKey)
+            ->acceptJson()
+            ->timeout($timeout)
+            ->withOptions(['verify' => $verifySsl])
+            ->post($baseUrl.'/chat/completions', [
+                'model' => $model,
+                'temperature' => 0.1,
+                'response_format' => ['type' => 'json_object'],
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user', 'content' => $userPrompt],
+                ],
+            ]);
+    }
+
+    private function callAnthropic(
+        string $apiKey,
+        string $baseUrl,
+        string $model,
+        string $systemPrompt,
+        string $userPrompt,
+        int $timeout,
+        bool $verifySsl,
+    ): Response {
+        return Http::withHeaders([
+            'x-api-key' => $apiKey,
+            'anthropic-version' => '2023-06-01',
+        ])
+            ->acceptJson()
+            ->timeout($timeout)
+            ->withOptions(['verify' => $verifySsl])
+            ->post($baseUrl.'/v1/messages', [
+                'model' => $model,
+                'max_tokens' => 1024,
+                'system' => $systemPrompt,
+                'messages' => [
+                    ['role' => 'user', 'content' => $userPrompt],
+                ],
+            ]);
+    }
+
+    private function callGemini(
+        string $apiKey,
+        string $baseUrl,
+        string $model,
+        string $systemPrompt,
+        string $userPrompt,
+        int $timeout,
+        bool $verifySsl,
+    ): Response {
+        return Http::acceptJson()
+            ->timeout($timeout)
+            ->withOptions(['verify' => $verifySsl])
+            ->post($baseUrl.'/v1beta/models/'.$model.':generateContent?key='.$apiKey, [
+                'contents' => [
+                    [
+                        'role' => 'user',
+                        'parts' => [
+                            ['text' => $systemPrompt."\n\n".$userPrompt],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.1,
+                    'responseMimeType' => 'application/json',
+                ],
+            ]);
     }
 
     private function extractExplanation(array $decoded): ?string
