@@ -6,6 +6,7 @@ use App\Jobs\Moodle\SendMoodleNotificationEmailJob;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class MoodleNotificationCenter
 {
@@ -16,8 +17,6 @@ class MoodleNotificationCenter
     private const SNAPSHOT_TTL_SECONDS = 1209600;
 
     private const DISMISSED_TTL_SECONDS = 1209600;
-
-    private const EMAILED_TTL_SECONDS = 1209600;
 
     public function __construct(
         private readonly MoodleAccessUrlService $accessUrl,
@@ -177,6 +176,13 @@ class MoodleNotificationCenter
             'unreadCount' => $unreadCount,
             'items' => $mapped,
         ];
+    }
+
+    public function pruneEmailedRecords(int $daysOld = 30): int
+    {
+        return DB::table('moodle_notification_emails')
+            ->where('sent_at', '<', now()->subDays($daysOld))
+            ->delete();
     }
 
     /**
@@ -542,11 +548,6 @@ class MoodleNotificationCenter
         return 'moodle:notifications:dismissed:'.$user->id;
     }
 
-    private function emailedKey(User $user): string
-    {
-        return 'moodle:notifications:emailed:'.$user->id;
-    }
-
     /**
      * @return array<string, bool|int>
      */
@@ -775,14 +776,12 @@ class MoodleNotificationCenter
         }
 
         $recipient = trim((string) ($user->email ?? ''));
-
         if ($recipient === '') {
             return;
         }
 
-        $emailed = $this->getEmailedIds($user);
-        $nowIso = CarbonImmutable::now()->toIso8601String();
-        $newItems = []; 
+        $candidateIds = [];
+        $candidateItems = [];
 
         foreach ($items as $item) {
             if (! is_array($item)) {
@@ -793,7 +792,7 @@ class MoodleNotificationCenter
             $isRead = (bool) ($item['isRead'] ?? false);
             $trigger = trim((string) ($item['trigger'] ?? 'system'));
 
-            if ($id === '' || $isRead || isset($emailed[$id])) {
+            if ($id === '' || $isRead) {
                 continue;
             }
 
@@ -801,18 +800,48 @@ class MoodleNotificationCenter
                 continue;
             }
 
-            $emailed[$id] = $nowIso;
-            $newItems[] = $item;
+            $candidateIds[] = $id;
+            $candidateItems[$id] = $item;
+        }
+
+        if ($candidateIds === []) {
+            return;
+        }
+
+        $alreadySent = DB::table('moodle_notification_emails')
+            ->where('user_id', $user->id)
+            ->whereIn('notification_id', $candidateIds)
+            ->pluck('notification_id')
+            ->flip()
+            ->all();
+
+        $newIds = [];
+        $newItems = [];
+
+        foreach ($candidateIds as $id) {
+            if (isset($alreadySent[$id])) {
+                continue;
+            }
+
+            $newIds[] = $id;
+            $newItems[] = $candidateItems[$id];
         }
 
         if ($newItems === []) {
             return;
         }
 
-        // Persistir los IDs ANTES de despachar los jobs para evitar el race condition:
-        // si buildForUser se llama dos veces antes de que los jobs se ejecuten,
-        // la segunda llamada ya verá los IDs en caché y no despachará duplicados.
-        Cache::put($this->emailedKey($user), $emailed, now()->addSeconds(self::EMAILED_TTL_SECONDS));
+        $sentAt = now();
+        $rows = array_map(
+            fn (string $id): array => [
+                'user_id' => $user->id,
+                'notification_id' => $id,
+                'sent_at' => $sentAt,
+            ],
+            $newIds,
+        );
+
+        DB::table('moodle_notification_emails')->insertOrIgnore($rows);
 
         foreach ($newItems as $item) {
             SendMoodleNotificationEmailJob::dispatch($user, $item)->onQueue('mail');
@@ -846,27 +875,4 @@ class MoodleNotificationCenter
         return (bool) ($preferences[$key] ?? true);
     }
 
-    /**
-     * @return array<string, string>
-     */
-    private function getEmailedIds(User $user): array
-    {
-        $cached = Cache::get($this->emailedKey($user));
-
-        if (! is_array($cached)) {
-            return [];
-        }
-
-        $filtered = [];
-
-        foreach ($cached as $id => $value) {
-            if (! is_string($id) || $id === '') {
-                continue;
-            }
-
-            $filtered[$id] = is_string($value) ? $value : CarbonImmutable::now()->toIso8601String();
-        }
-
-        return $filtered;
-    }
 }

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\Moodle\CheckUserMoodleNotificationsJob;
 use App\Models\User;
+use App\Services\Moodle\MoodleNotificationCenter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -26,9 +27,11 @@ class CheckMoodleNotificationsCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(MoodleNotificationCenter $notificationCenter): int
     {
         $processed = 0;
+
+        $notificationCenter->pruneEmailedRecords(30);
 
         User::query()
             ->where('moodle_background_notifications', true)

@@ -8,4 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('moodle:check-notifications')->hourly();
+Schedule::command('moodle:check-notifications')
+    ->hourly()
+    ->withoutOverlapping(10);

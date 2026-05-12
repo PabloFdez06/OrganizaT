@@ -1,7 +1,10 @@
 <?php
 
 use App\Jobs\Moodle\CheckUserMoodleNotificationsJob;
+use App\Jobs\Moodle\SendMoodleNotificationEmailJob;
 use App\Models\User;
+use App\Services\Moodle\MoodleNotificationCenter;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 
 it('updates background notifications preference and clears persisted session when disabled', function (): void {
@@ -59,4 +62,129 @@ it('queues notification checks only for eligible users with active persisted ses
     });
 
     Queue::assertPushed(CheckUserMoodleNotificationsJob::class, 1);
+});
+
+it('stores emailed notification ids in database after dispatch', function (): void {
+    Queue::fake();
+
+    $user = User::factory()->create([
+        'email' => 'moodle-notify@example.com',
+    ]);
+
+    $dueAt = now()->addHours(6)->startOfMinute();
+    $task = [
+        'pendiente' => true,
+        'fecha_iso' => $dueAt->toIso8601String(),
+        'titulo' => 'Entrega final',
+        'asignatura_nombre' => 'Matematicas',
+        'url' => '/course/1',
+    ];
+
+    $expectedId = md5('Matematicas|Entrega final|'.$dueAt->toIso8601String().'|same_day');
+
+    app(MoodleNotificationCenter::class)->buildForUser($user, [$task], [], true);
+
+    $this->assertDatabaseHas('moodle_notification_emails', [
+        'user_id' => $user->id,
+        'notification_id' => $expectedId,
+    ]);
+
+    Queue::assertPushed(SendMoodleNotificationEmailJob::class, 1);
+});
+
+it('does not dispatch duplicate email jobs for the same notification id', function (): void {
+    Queue::fake();
+
+    $user = User::factory()->create([
+        'email' => 'moodle-notify@example.com',
+    ]);
+
+    $dueAt = now()->addHours(6)->startOfMinute();
+    $task = [
+        'pendiente' => true,
+        'fecha_iso' => $dueAt->toIso8601String(),
+        'titulo' => 'Entrega final',
+        'asignatura_nombre' => 'Matematicas',
+        'url' => '/course/1',
+    ];
+
+    $expectedId = md5('Matematicas|Entrega final|'.$dueAt->toIso8601String().'|same_day');
+
+    $notificationCenter = app(MoodleNotificationCenter::class);
+
+    $notificationCenter->buildForUser($user, [$task], [], true);
+    $notificationCenter->buildForUser($user, [$task], [], true);
+
+    $this->assertDatabaseHas('moodle_notification_emails', [
+        'user_id' => $user->id,
+        'notification_id' => $expectedId,
+    ]);
+    $this->assertDatabaseCount('moodle_notification_emails', 1);
+
+    Queue::assertPushed(SendMoodleNotificationEmailJob::class, 1);
+});
+
+it('handles existing emailed id with insertOrIgnore semantics', function (): void {
+    Queue::fake();
+
+    $user = User::factory()->create([
+        'email' => 'moodle-notify@example.com',
+    ]);
+
+    $dueAt = now()->addHours(6)->startOfMinute();
+    $task = [
+        'pendiente' => true,
+        'fecha_iso' => $dueAt->toIso8601String(),
+        'titulo' => 'Entrega final',
+        'asignatura_nombre' => 'Matematicas',
+        'url' => '/course/1',
+    ];
+
+    $expectedId = md5('Matematicas|Entrega final|'.$dueAt->toIso8601String().'|same_day');
+
+    DB::table('moodle_notification_emails')->insert([
+        'user_id' => $user->id,
+        'notification_id' => $expectedId,
+        'sent_at' => now(),
+    ]);
+
+    app(MoodleNotificationCenter::class)->buildForUser($user, [$task], [], true);
+
+    $this->assertDatabaseHas('moodle_notification_emails', [
+        'user_id' => $user->id,
+        'notification_id' => $expectedId,
+    ]);
+    $this->assertDatabaseCount('moodle_notification_emails', 1);
+
+    Queue::assertNotPushed(SendMoodleNotificationEmailJob::class);
+});
+
+it('prunes emailed records older than the configured threshold', function (): void {
+    $user = User::factory()->create();
+
+    DB::table('moodle_notification_emails')->insert([
+        [
+            'user_id' => $user->id,
+            'notification_id' => 'old-id',
+            'sent_at' => now()->subDays(31),
+        ],
+        [
+            'user_id' => $user->id,
+            'notification_id' => 'recent-id',
+            'sent_at' => now()->subDays(5),
+        ],
+    ]);
+
+    $deleted = app(MoodleNotificationCenter::class)->pruneEmailedRecords(30);
+
+    expect($deleted)->toBe(1);
+
+    $this->assertDatabaseMissing('moodle_notification_emails', [
+        'user_id' => $user->id,
+        'notification_id' => 'old-id',
+    ]);
+    $this->assertDatabaseHas('moodle_notification_emails', [
+        'user_id' => $user->id,
+        'notification_id' => 'recent-id',
+    ]);
 });

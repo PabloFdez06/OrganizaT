@@ -8,13 +8,14 @@ use App\Services\Moodle\MoodleAcademicService;
 use App\Services\Moodle\MoodleEphemeralSessionService;
 use App\Services\Moodle\MoodleNotificationCenter;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class CheckUserMoodleNotificationsJob implements ShouldQueue
+class CheckUserMoodleNotificationsJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -33,6 +34,16 @@ class CheckUserMoodleNotificationsJob implements ShouldQueue
     public function __construct(
         public readonly int $userId,
     ) {}
+
+    public function uniqueId(): string
+    {
+        return (string) $this->userId;
+    }
+
+    public function uniqueFor(): int
+    {
+        return 600;
+    }
 
     public function handle(
         MoodleEphemeralSessionService $sessionService,
