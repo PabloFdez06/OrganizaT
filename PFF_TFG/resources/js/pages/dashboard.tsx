@@ -484,6 +484,13 @@ export default function Dashboard({
                                             placeholder="Ejemplo: prioriza Algebra y tareas evaluables de esta semana"
                                         />
 
+                                        {matrixExplanation && !['error', 'unconfigured', 'exception', 'invalid-json', 'ai-idle'].includes(matrixProvider) && (
+                                            <article className="p-dashboard__matrix-feedback" aria-label="Explicacion del analisis IA">
+                                                <small className="p-dashboard__matrix-feedback-label">ENFOQUE APLICADO</small>
+                                                <p className="p-dashboard__matrix-feedback-text">{matrixExplanation}</p>
+                                            </article>
+                                        )}
+
                                         <label className="p-dashboard__matrix-ai-check" htmlFor="matrix-ai-explanation">
                                             <input
                                                 className="p-dashboard__matrix-ai-check-input"
@@ -504,12 +511,6 @@ export default function Dashboard({
                                             {processing ? 'Analizando...' : 'Iniciar analisis IA'}
                                         </button>
                                     </form>
-                                )}
-
-                                {matrixExplanation && (
-                                    <article className="p-dashboard__matrix-explanation" aria-label="Explicacion IA de la matriz">
-                                        <p className="p-dashboard__matrix-explanation-text">{matrixExplanation}</p>
-                                    </article>
                                 )}
 
                                 <section className="p-dashboard__matrix-grid">

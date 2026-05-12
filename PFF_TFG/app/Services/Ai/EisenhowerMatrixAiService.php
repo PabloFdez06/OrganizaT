@@ -64,12 +64,18 @@ Reglas estrictas:
 - Solo usa tareas del input.
 - No inventes ni renombres tareas.
 - Maximo 3 tareas por cuadrante.
-- Devuelve SIEMPRE JSON valido, sin markdown ni texto extra.
+- Devuelve SIEMPRE JSON valido y completo, sin bloques de codigo ni texto fuera del JSON.
+- El campo "explanation" es OBLIGATORIO cuando include_explanation es true: debe ser una cadena de texto, nunca null ni vacio.
 PROMPT;
+
+        $explanationInstruction = $includeExplanation
+            ? 'Rellena el campo "explanation" con 2-4 frases que expliquen: (1) los criterios principales que has usado para clasificar las tareas en cada cuadrante, y (2) como las preferencias del usuario han influido en el resultado. Si no hay preferencias, explica el criterio academico aplicado.'
+            : 'Devuelve "explanation" como null.';
 
         $userPrompt = json_encode([
             'request' => 'Clasifica tareas para la matriz de Eisenhower y devuelve justificacion breve por tarea.',
             'include_explanation' => $includeExplanation,
+            'explanation_instruction' => $explanationInstruction,
             'user_preferences' => $preferences !== '' ? $preferences : null,
             'tasks' => $taskPayload,
             'expected_output_schema' => [
@@ -79,7 +85,7 @@ PROMPT;
                     'delegate' => [['title' => 'string', 'reason' => 'string']],
                     'optimize' => [['title' => 'string', 'reason' => 'string']],
                 ],
-                'explanation' => 'string|null',
+                'explanation' => 'string — obligatorio si include_explanation es true',
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
