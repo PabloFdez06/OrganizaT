@@ -1,4 +1,4 @@
-import { Transition } from '@headlessui/react';
+﻿import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
@@ -7,6 +7,8 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
@@ -29,6 +31,11 @@ export default function Profile({
 }) {
     const { auth } = usePage().props;
 
+    const { clientErrors, handleChange, handleBlur, validateAll } = useFormValidation({
+        name: [rules.required(), rules.minLength(2)],
+        email: [rules.required(), rules.email()],
+    });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Profile settings" />
@@ -49,6 +56,7 @@ export default function Profile({
                         options={{
                             preserveScroll: true,
                         }}
+                        onBefore={() => validateAll()}
                         className=""
                     >
                         {({ processing, recentlySuccessful, errors }) => (
@@ -64,11 +72,13 @@ export default function Profile({
                                         required
                                         autoComplete="name"
                                         placeholder="Full name"
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
                                     />
 
                                     <InputError
                                         className=""
-                                        message={errors.name}
+                                        message={clientErrors.name || translateServerError(errors.name)}
                                     />
                                 </div>
 
@@ -84,11 +94,13 @@ export default function Profile({
                                         required
                                         autoComplete="username"
                                         placeholder="Email address"
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
                                     />
 
                                     <InputError
                                         className=""
-                                        message={errors.email}
+                                        message={clientErrors.email || translateServerError(errors.email)}
                                     />
                                 </div>
 

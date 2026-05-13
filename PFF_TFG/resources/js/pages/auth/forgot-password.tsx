@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+﻿import { Form, Head, Link } from '@inertiajs/react';
 import type { CSSProperties } from 'react';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -6,10 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import { home, login } from '@/routes';
 import { email } from '@/routes/password';
 
 export default function ForgotPassword({ status }: { status?: string }) {
+    const { clientErrors, handleChange, handleBlur, validateAll } = useFormValidation({
+        email: [rules.required(), rules.email()],
+    });
+
     return (
         <>
             <Head title="Forgot password" />
@@ -43,7 +49,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <p className="c-auth-editorial__header-description">Te enviaremos un enlace para restablecer tu acceso.</p>
                         </header>
 
-                        <Form method="post" action={email().url} className="c-auth-form c-auth-form--editorial">
+                        <Form method="post" action={email().url} onBefore={() => validateAll()} className="c-auth-form c-auth-form--editorial">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="c-auth-form__fields">
@@ -58,9 +64,11 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                                 required
                                                 tabIndex={1}
                                                 placeholder="usuario@institucion.edu"
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                             />
 
-                                            <InputError message={errors.email} />
+                                            <InputError message={clientErrors.email || translateServerError(errors.email)} />
                                         </div>
 
                                         <Button

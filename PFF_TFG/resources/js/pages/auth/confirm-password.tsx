@@ -1,14 +1,20 @@
-import { Form, Head, Link } from '@inertiajs/react';
+﻿import { Form, Head, Link } from '@inertiajs/react';
 import type { CSSProperties } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import { home } from '@/routes';
 import { store } from '@/routes/password/confirm';
 
 export default function ConfirmPassword() {
+    const { clientErrors, handleChange, handleBlur, validateAll } = useFormValidation({
+        password: [rules.required()],
+    });
+
     return (
         <>
             <Head title="Confirmar contrasena" />
@@ -48,6 +54,7 @@ export default function ConfirmPassword() {
                             method="post"
                             action={store().url}
                             resetOnSuccess={['password']}
+                            onBefore={() => validateAll()}
                             className="c-auth-form c-auth-form--editorial"
                         >
                             {({ processing, errors }) => (
@@ -62,9 +69,11 @@ export default function ConfirmPassword() {
                                             autoFocus
                                             required
                                             tabIndex={1}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
                                         />
 
-                                        <InputError message={errors.password} />
+                                        <InputError message={clientErrors.password || translateServerError(errors.password)} />
                                     </div>
 
                                     <Button

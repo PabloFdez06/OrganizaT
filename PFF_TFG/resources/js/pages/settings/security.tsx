@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import {
     TWO_FACTOR_ACTION_QUERY_KEY,
     useTwoFactorAuth,
@@ -161,6 +163,17 @@ export default function Security({
     };
     const flash = pageProps.flash ?? {};
     const { appearance, updateAppearance } = useAppearance();
+
+    const {
+        clientErrors: moodleClientErrors,
+        handleChange: handleMoodleChange,
+        handleBlur: handleMoodleBlur,
+        validateAll: validateMoodle,
+        clearClientErrors: clearMoodleErrors,
+    } = useFormValidation({
+        moodle_username: [rules.required('El usuario de Moodle es obligatorio.')],
+        moodle_password: [rules.required('La contraseña de Moodle es obligatoria.')],
+    });
 
     const [preferencesData, setPreferencesData] = useState<Preferences>(preferences);
     const [processing, setProcessing] = useState(false);
@@ -691,8 +704,10 @@ export default function Security({
                                             method="post"
                                             action={connect().url}
                                             className="p-settings__connect-form"
+                                            onBefore={() => validateMoodle()}
                                             onSuccess={() => {
                                                 setShowReconnectForm(false);
+                                                clearMoodleErrors();
                                                 router.reload();
                                             }}
                                         >
@@ -705,8 +720,10 @@ export default function Security({
                                                             name="moodle_username"
                                                             required
                                                             autoComplete="username"
+                                                            onChange={handleMoodleChange}
+                                                            onBlur={handleMoodleBlur}
                                                         />
-                                                        <InputError message={errors.moodle_username} />
+                                                        <InputError message={moodleClientErrors.moodle_username || translateServerError(errors.moodle_username)} />
                                                     </section>
 
                                                     <section className="p-settings__field">
@@ -717,8 +734,10 @@ export default function Security({
                                                             type="password"
                                                             required
                                                             autoComplete="current-password"
+                                                            onChange={handleMoodleChange}
+                                                            onBlur={handleMoodleBlur}
                                                         />
-                                                        <InputError message={errors.moodle_password} />
+                                                        <InputError message={moodleClientErrors.moodle_password || translateServerError(errors.moodle_password)} />
                                                     </section>
 
                                                     <Button

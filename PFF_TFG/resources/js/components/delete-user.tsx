@@ -15,9 +15,15 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
+
+    const { clientErrors, handleChange, handleBlur, validateAll, clearClientErrors } = useFormValidation({
+        password: [rules.required('La contraseña es obligatoria.')],
+    });
 
     return (
         <div className="">
@@ -60,6 +66,7 @@ export default function DeleteUser() {
                             options={{
                                 preserveScroll: true,
                             }}
+                            onBefore={() => validateAll()}
                             onError={() => passwordInput.current?.focus()}
                             resetOnSuccess
                             className=""
@@ -80,18 +87,21 @@ export default function DeleteUser() {
                                             ref={passwordInput}
                                             placeholder="Password"
                                             autoComplete="current-password"
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
                                         />
 
-                                        <InputError message={errors.password} />
+                                        <InputError message={clientErrors.password || translateServerError(errors.password)} />
                                     </div>
 
                                     <DialogFooter className="">
                                         <DialogClose asChild>
                                             <Button
                                                 variant="secondary"
-                                                onClick={() =>
-                                                    resetAndClearErrors()
-                                                }
+                                                onClick={() => {
+                                                    resetAndClearErrors();
+                                                    clearClientErrors();
+                                                }}
                                             >
                                                 Cancel
                                             </Button>

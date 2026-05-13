@@ -15,6 +15,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import { dashboard } from '@/routes';
 
 type NotFoundProps = {
@@ -58,6 +60,18 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
         message: string;
     } | null>(null);
     const closeTimerRef = useRef<number | null>(null);
+
+    const {
+        clientErrors: incidentClientErrors,
+        handleChange: handleIncidentChange,
+        handleBlur: handleIncidentBlur,
+        validateAll: validateIncident,
+        clearClientErrors: clearIncidentClientErrors,
+    } = useFormValidation({
+        name: [rules.required(), rules.minLength(2)],
+        email: [rules.required(), rules.email()],
+        description: [rules.required(), rules.minLength(10, 'La descripción debe tener al menos 10 caracteres.')],
+    });
 
     const {
         data,
@@ -106,6 +120,7 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
         if (!isOpen) {
             setSubmissionFeedback(null);
             clearErrors();
+            clearIncidentClientErrors();
             reset('description');
         }
     };
@@ -113,6 +128,8 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
     const handleReportSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setSubmissionFeedback(null);
+
+        if (!validateIncident()) return;
 
         if (closeTimerRef.current !== null) {
             window.clearTimeout(closeTimerRef.current);
@@ -221,11 +238,15 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
                                 name="name"
                                 type="text"
                                 value={data.name}
-                                onChange={(event) => setData('name', event.target.value)}
+                                onChange={(event) => {
+                                    setData('name', event.target.value);
+                                    handleIncidentChange(event);
+                                }}
+                                onBlur={handleIncidentBlur}
                                 required
                                 disabled={processing}
                             />
-                            <InputError message={errors.name} />
+                            <InputError message={incidentClientErrors.name || translateServerError(errors.name)} />
                         </section>
 
                         <section className="p-error-404__modal-field">
@@ -235,11 +256,15 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
                                 name="email"
                                 type="email"
                                 value={data.email}
-                                onChange={(event) => setData('email', event.target.value)}
+                                onChange={(event) => {
+                                    setData('email', event.target.value);
+                                    handleIncidentChange(event);
+                                }}
+                                onBlur={handleIncidentBlur}
                                 required
                                 disabled={processing}
                             />
-                            <InputError message={errors.email} />
+                            <InputError message={incidentClientErrors.email || translateServerError(errors.email)} />
                         </section>
 
                         <section className="p-error-404__modal-field">
@@ -250,11 +275,15 @@ export default function NotFound({ status = 404, timestamp, serverNode, requeste
                                 className="p-error-404__modal-textarea"
                                 rows={5}
                                 value={data.description}
-                                onChange={(event) => setData('description', event.target.value)}
+                                onChange={(event) => {
+                                    setData('description', event.target.value);
+                                    handleIncidentChange(event);
+                                }}
+                                onBlur={handleIncidentBlur}
                                 required
                                 disabled={processing}
                             />
-                            <InputError message={errors.description} />
+                            <InputError message={incidentClientErrors.description || translateServerError(errors.description)} />
                         </section>
 
                         {submissionFeedback && (

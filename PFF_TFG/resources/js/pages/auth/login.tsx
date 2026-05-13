@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+﻿import { Form, Head, Link } from '@inertiajs/react';
 import type { CSSProperties } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -8,6 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import { home, register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
@@ -23,6 +25,11 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: Props) {
+    const { clientErrors, handleChange, handleBlur, validateAll } = useFormValidation({
+        email: [rules.required(), rules.email()],
+        password: [rules.required()],
+    });
+
     return (
         <>
             <Head title="Log in" />
@@ -60,6 +67,7 @@ export default function Login({
                             method="post"
                             action={store().url}
                             resetOnSuccess={['password']}
+                            onBefore={() => validateAll()}
                             className="c-auth-form c-auth-form--editorial"
                         >
                             {({ processing, errors }) => (
@@ -76,8 +84,10 @@ export default function Login({
                                                 tabIndex={1}
                                                 autoComplete="email"
                                                 placeholder="usuario@institucion.edu"
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                             />
-                                            <InputError message={errors.email} />
+                                            <InputError message={clientErrors.email || translateServerError(errors.email)} />
                                         </div>
 
                                         <div className="c-auth-form__field c-auth-form__field--filled">
@@ -91,8 +101,10 @@ export default function Login({
                                                 tabIndex={2}
                                                 autoComplete="current-password"
                                                 placeholder="************"
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                             />
-                                            <InputError message={errors.password} />
+                                            <InputError message={clientErrors.password || translateServerError(errors.password)} />
                                         </div>
 
                                         <div className="c-auth-form__editorial-actions">

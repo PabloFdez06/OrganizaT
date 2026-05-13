@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import { home } from '@/routes';
 import { update } from '@/routes/password';
 
@@ -15,6 +17,11 @@ type Props = {
 };
 
 export default function ResetPassword({ token, email }: Props) {
+    const { clientErrors, handleChange, handleBlur, validateAll } = useFormValidation({
+        password: [rules.required(), rules.minLength(8)],
+        password_confirmation: [rules.required(), rules.matches('password', 'Las contraseñas no coinciden.')],
+    });
+
     return (
         <>
             <Head title="Reset password" />
@@ -53,6 +60,7 @@ export default function ResetPassword({ token, email }: Props) {
                             action={update().url}
                             transform={(data) => ({ ...data, token, email })}
                             resetOnSuccess={['password', 'password_confirmation']}
+                            onBefore={() => validateAll()}
                             className="c-auth-form c-auth-form--editorial"
                         >
                             {({ processing, errors }) => (
@@ -81,8 +89,10 @@ export default function ResetPassword({ token, email }: Props) {
                                             autoFocus
                                             placeholder="************"
                                             tabIndex={2}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
                                         />
-                                        <InputError message={errors.password} />
+                                        <InputError message={clientErrors.password || translateServerError(errors.password)} />
                                     </div>
 
                                     <div className="c-auth-form__field c-auth-form__field--filled">
@@ -95,8 +105,10 @@ export default function ResetPassword({ token, email }: Props) {
                                             autoComplete="new-password"
                                             placeholder="************"
                                             tabIndex={3}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
                                         />
-                                        <InputError message={errors.password_confirmation} />
+                                        <InputError message={clientErrors.password_confirmation || translateServerError(errors.password_confirmation)} />
                                     </div>
 
                                     <Button

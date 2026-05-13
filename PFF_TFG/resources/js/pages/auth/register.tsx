@@ -7,10 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { rules, useFormValidation } from '@/hooks/use-form-validation';
+import { translateServerError } from '@/lib/error-translator';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
 export default function Register() {
+    const { clientErrors, handleChange, handleBlur, validateAll } = useFormValidation({
+        name: [rules.required(), rules.minLength(2)],
+        email: [rules.required(), rules.email()],
+        password: [rules.required(), rules.minLength(8)],
+        password_confirmation: [rules.required(), rules.matches('password', 'Las contraseñas no coinciden.')],
+    });
+
     return (
         <>
             <Head title="Register" />
@@ -53,6 +62,7 @@ export default function Register() {
                             action={store().url}
                             resetOnSuccess={['password', 'password_confirmation']}
                             disableWhileProcessing
+                            onBefore={() => validateAll()}
                             className="c-auth-form c-auth-form--editorial"
                         >
                             {({ processing, errors }) => (
@@ -69,8 +79,10 @@ export default function Register() {
                                                 autoComplete="name"
                                                 name="name"
                                                 placeholder="Dr. Julian Casablancas"
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                             />
-                                            <InputError message={errors.name} />
+                                            <InputError message={clientErrors.name || translateServerError(errors.name)} />
                                         </div>
 
                                         <div className="c-auth-form__field c-auth-form__field--filled">
@@ -83,8 +95,10 @@ export default function Register() {
                                                 autoComplete="email"
                                                 name="email"
                                                 placeholder="editorial@university.edu"
+                                                onChange={handleChange}
+                                                onBlur={handleBlur}
                                             />
-                                            <InputError message={errors.email} />
+                                            <InputError message={clientErrors.email || translateServerError(errors.email)} />
                                         </div>
 
                                         <section className="c-auth-form__grid-two" aria-label="Credenciales de acceso">
@@ -97,8 +111,10 @@ export default function Register() {
                                                     autoComplete="new-password"
                                                     name="password"
                                                     placeholder="********"
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                 />
-                                                <InputError message={errors.password} />
+                                                <InputError message={clientErrors.password || translateServerError(errors.password)} />
                                             </div>
 
                                             <div className="c-auth-form__field c-auth-form__field--filled">
@@ -110,8 +126,10 @@ export default function Register() {
                                                     autoComplete="new-password"
                                                     name="password_confirmation"
                                                     placeholder="********"
+                                                    onChange={handleChange}
+                                                    onBlur={handleBlur}
                                                 />
-                                                <InputError message={errors.password_confirmation} />
+                                                <InputError message={clientErrors.password_confirmation || translateServerError(errors.password_confirmation)} />
                                             </div>
                                         </section>
 
