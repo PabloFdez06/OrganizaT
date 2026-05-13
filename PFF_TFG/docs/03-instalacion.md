@@ -1,8 +1,8 @@
 
-# 3. Instalacion y preparacion
+# 3. Instalación y preparacion
 
-## Objetivo de esta seccion
-En esta seccion documento como preparo el proyecto en local y como dejo la beta desplegada con Docker Compose, siguiendo exactamente los archivos y scripts reales del repositorio.
+## Objetivo de esta sección
+En esta sección documento como preparo el proyecto en local y como dejo la beta desplegada con Docker Compose, siguiendo exactamente los archivos y scripts reales del repositorio.
 
 ## Requisitos previos
 
@@ -12,7 +12,7 @@ En esta seccion documento como preparo el proyecto en local y como dejo la beta 
 2. Composer v2.
 3. Node.js (en CI uso Node 22 para tests/lint; en workflow de deploy aparece Node 20 para checks frontend).
 4. NPM.
-5. Motor de base de datos segun entorno (SQLite en local por defecto, MySQL en beta).
+5. Motor de base de datos según entorno (SQLite en local por defecto, MySQL en beta).
 
 ### Entorno beta dockerizado
 
@@ -20,7 +20,7 @@ En esta seccion documento como preparo el proyecto en local y como dejo la beta 
 2. Docker Compose plugin.
 3. Archivo .env valido con credenciales reales.
 
-## Estructura de instalacion relevante
+## Estructura de instalación relevante
 Los ficheros que uso para preparar y desplegar son:
 
 1. Dockerfile.
@@ -63,11 +63,11 @@ composer dev
 Notas importantes:
 
 1. El script composer dev ejecuta servidor, cola y vite en paralelo.
-2. Para esta memoria no necesito ejecutar build en cada cambio de documentacion.
+2. Para esta memoria no necesito ejecutar build en cada cambio de documentación.
 
 ## Variables de entorno clave
 
-### Aplicacion
+### Aplicación
 
 1. APP_ENV, APP_KEY, APP_URL.
 2. APP_TIMEZONE.
@@ -78,7 +78,7 @@ Notas importantes:
 2. REDIS_HOST, REDIS_PORT, REDIS_PASSWORD.
 3. SESSION_DRIVER, CACHE_STORE, QUEUE_CONNECTION.
 
-### Integracion Moodle
+### integración Moodle
 
 1. MOODLE_URL o MOODLE_BASE_URL.
 2. MOODLE_CAS_BASE (o CAS_BASE) si CAS va separado.
@@ -89,7 +89,7 @@ Notas importantes:
 1. AI_BASE_URL, AI_API_KEY, AI_MODEL.
 2. MAIL_MAILER, RESEND_API_KEY o SMTP legado.
 
-## Instalacion de beta con Docker Compose
+## Instalación de beta con Docker Compose
 
 ### Opcion recomendada (bootstrap completo)
 
@@ -99,8 +99,8 @@ bash scripts/ops/bootstrap-droplet-beta.sh
 
 Este script automatiza:
 
-1. Instalacion de Docker si falta (Ubuntu).
-2. Validacion estricta de .env para evitar placeholders.
+1. Instalación de Docker si falta (Ubuntu).
+2. Validación estricta de .env para evitar placeholders.
 3. Build y arranque de contenedores.
 4. Generacion de APP_KEY si no existe.
 5. Migraciones, optimize y restart de colas.
@@ -119,7 +119,7 @@ sh scripts/ops/deploy-beta.sh
 sh scripts/ops/inspect-beta.sh
 ```
 
-## Validaciones de instalacion
+## Validaciones de instalación
 
 ```bash
 docker compose -f docker-compose.beta.yml config
@@ -140,19 +140,20 @@ La pipeline definida en GitHub Actions exige como minimo:
 2. Build frontend correcto (npm run build).
 3. Tests backend ejecutables (./vendor/bin/pest).
 
-En rama deploy-beta, la pipeline tambien construye imagenes runtime y nginx y despliega por SSH.
+En rama deploy-beta, la pipeline también construye imagenes runtime y nginx y despliega por SSH.
 
 ## Errores comunes que he contemplado
 
-1. APP_KEY vacia en .env: los scripts la generan automaticamente.
+1. APP_KEY vacía en .env: los scripts la generan automaticamente.
 2. Credenciales de ejemplo en .env: bootstrap corta la ejecucion para no desplegar mal.
-3. Sesion Moodle caducada: la aplicacion informa de reconexion necesaria.
+3. Sesión Moodle caducada: la aplicación informa de reconexión necesaria.
 4. Si no hay mailer real, el reporte de incidencias 404 no se envia y devuelve error controlado.
 
 ## Cierre
 Con este flujo tengo dos rutas reproducibles:
 
 1. Desarrollo local para evolucionar funcionalidad.
-2. Entorno beta dockerizado para validacion y demostracion del proyecto, cual pasara a ser producción.
+2. Entorno beta dockerizado para validación y demostracion del proyecto, cual pasara a ser producción.
+
 
 

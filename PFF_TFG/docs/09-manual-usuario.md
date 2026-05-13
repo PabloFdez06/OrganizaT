@@ -2,29 +2,29 @@
 # 9. Manual de usuario
 
 ## 9.1 Objetivo del manual
-En este manual explico como uso la aplicacion de principio a fin, con los flujos realmente implementados en la version actual.
+En este manual explico como uso la aplicación de principio a fin, con los flujos realmente implementados en la versión actual.
 
 ## 9.2 Acceso inicial
 
-### Registro o inicio de sesion
+### Registro o inicio de sesión
 
-1. Entro a la pagina principal.
+1. Entro a la página principal.
 2. Si no tengo cuenta, me registro.
-3. Si ya tengo cuenta, inicio sesion.
-4. Si lo necesito, recupero contrasena desde el flujo de auth.
+3. Si ya tengo cuenta, inicio sesión.
+4. Si lo necesito, recupero contraseña desde el flujo de auth.
 
 Tras autenticarme, entro al panel protegido.
 
-## 9.3 Conexion con Moodle
+## 9.3 conexión con Moodle
 Para activar datos academicos:
 
 1. Voy a Ajustes > Seguridad.
-2. Introduzco usuario y contrasena Moodle en el formulario de conexion.
-3. Si la conexion es correcta, el sistema guarda sesion temporal y limpia cache previa.
+2. Introduzco usuario y contraseña Moodle en el formulario de conexión.
+3. Si la conexión es correcta, el sistema guarda sesión temporal y limpia cache previa.
 
-Si la sesion Moodle caduca, vere un aviso indicando que debo reconectar.
+Si la sesión Moodle caduca, vere un aviso indicando que debo reconectar.
 
-## 9.4 Navegacion principal
+## 9.4 Navegación principal
 Desde el header principal puedo moverme entre:
 
 1. Dashboard.
@@ -33,14 +33,14 @@ Desde el header principal puedo moverme entre:
 4. Tareas.
 5. Recursos.
 
-Tambien tengo panel de notificaciones y acceso rapido a configuracion.
+también tengo panel de notificaciones y acceso rápido a configuración.
 
 ## 9.5 Uso del Dashboard
 En Dashboard consulto:
 
 1. Prioridad principal (hero).
 2. Timeline de tareas.
-3. Tarjetas rapidas por asignatura.
+3. Tarjetas rápidas por asignatura.
 4. Matriz de Eisenhower.
 
 Puedo usar matriz en modo logico o modo IA (si tengo API key configurada).
@@ -63,7 +63,7 @@ En Tareas tengo:
 3. Detalle por unidad.
 
 ### Exportar calendario
-Puedo descargar un archivo ICS con todas mis tareas desde la accion de exportacion.
+Puedo descargar un archivo ICS con todas mis tareas desde la accion de exportación.
 
 ## 9.8 Uso de Calificaciones
 En Calificaciones consulto:
@@ -82,14 +82,14 @@ En Recursos:
 2. Filtro por tipo de recurso.
 3. Abro o descargo materiales.
 
-El sistema resuelve accesos Moodle mediante rutas seguras de media/redirect para minimizar incidencias de sesion.
+El sistema resuelve accesos Moodle mediante rutas seguras de media/redirect para minimizar incidencias de sesión.
 
 ## 9.10 Notificaciones y preferencias
 
 ### Notificaciones en app
 
 1. Veo contador de pendientes en el icono del header.
-2. Puedo abrir listado y marcar como leidas.
+2. Puedo abrir listado y marcar como leídas.
 
 ### Preferencias
 Desde Seguridad configuro:
@@ -97,12 +97,12 @@ Desde Seguridad configuro:
 1. Recordatorios por ventana temporal.
 2. Canales (email activo y flag de push disponible en preferencias).
 3. Notificaciones en background.
-4. Envio de correo de prueba.
+4. envío de correo de prueba.
 
 ## 9.11 Seguridad de cuenta
 En Ajustes > Seguridad puedo:
 
-1. Cambiar contrasena.
+1. Cambiar contraseña.
 2. Activar o confirmar doble factor.
 3. Desconectar Moodle.
 4. Eliminar cuenta.
@@ -110,34 +110,35 @@ En Ajustes > Seguridad puedo:
 ## 9.12 Reporte de errores 404
 Si accedo a una ruta inexistente:
 
-1. Se muestra pagina 404 con acciones de recuperacion.
-2. Puedo enviar un formulario de incidencia con nombre, email y descripcion.
+1. Se muestra página 404 con acciones de recuperacion.
+2. Puedo enviar un formulario de incidencia con nombre, email y descripción.
 3. El sistema intenta enviar el reporte por correo de soporte.
 
-## 9.13 Mensajes habituales y resolucion
+## 9.13 Mensajes habituales y resolución
 
 ### Caso: no aparecen datos academicos
 
 1. Verifico que Moodle esta conectado.
-2. Si hay mensaje de sesion caducada, reconecto cuenta.
+2. Si hay mensaje de sesión caducada, reconecto cuenta.
 
 ### Caso: no se envia correo de prueba
 
-1. Reviso configuracion de mailer y credenciales.
+1. Reviso configuración de mailer y credenciales.
 2. Compruebo estado de cola worker.
 
 ### Caso: exportaciones fallan
 
-1. Verifico sesion Moodle activa.
+1. Verifico sesión Moodle activa.
 2. Reintento tras refrescar datos.
 
 ## 9.14 Recomendaciones de uso
 
-1. Mantener preferencias de notificaciones ajustadas al ritmo academico.
-2. Revisar dashboard al inicio del dia para priorizar.
+1. Mantener preferencias de notificaciones ajustadas al ritmo académico.
+2. Revisar dashboard al inicio del día para priorizar.
 3. Exportar calendario cuando necesite integrar tareas en agenda externa.
-4. Usar PDF de calificaciones para seguimiento periodico.
+4. Usar PDF de calificaciones para seguimiento periódico.
 5. Permitir persistencia de Cookies para notificaciones en segundo plano.
 6. Activar verificación en 2 pasos para mayor seguridad, sobre todo si activas la persistencia de cookies.
+
 
 

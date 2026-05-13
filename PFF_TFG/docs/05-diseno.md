@@ -1,15 +1,15 @@
 
 # 5. Diseño
 
-## 5.1 Arquitectura de la aplicacion
+## 5.1 Arquitectura de la aplicación
 La arquitectura que he aplicado es MVC con separacion clara de capas:
 
 1. Rutas y controladores en Laravel.
-2. Servicios de dominio para logica Moodle, cache, notificaciones y reglas academicas.
-3. Jobs de cola para carga asincrona por seccion.
+2. Servicios de dominio para lógica Moodle, cache, notificaciones y reglas academicas.
+3. Jobs de cola para carga asíncrona por sección.
 4. Frontend Inertia + React para renderizado y UX.
 
-### Diagrama de arquitectura logica
+### Diagrama de arquitectura lógica
 
 ```mermaid
 flowchart LR
@@ -28,8 +28,10 @@ flowchart LR
 	P --> C
 ```
 
+![diagrama-arquitectura-lógica](image.png)
+
 ## 5.2 Modelo de datos (ER)
-El proyecto se apoya en tablas base de Laravel y ampliaciones en users para integracion Moodle y seguridad.
+El proyecto se apoya en tablas base de Laravel y ampliaciones en users para integración Moodle y seguridad.
 
 ### Entidades principales
 
@@ -124,12 +126,15 @@ erDiagram
 	USERS ||--o{ MOODLE_NOTIFICATION_EMAILS : "user_id"
 	USERS o|--o{ SESSIONS : "user_id (opcional)"
 ```
+![diagrama-entidad-relacion1](image-2.png)
+![diagrama-entidad-relacion2](image-1.png)
+![diagrama-entidad-relacion3](image-3.png)
 
 ## 5.3 Casos de uso
 
 ```mermaid
 flowchart TD
-	A[Estudiante] --> B[Iniciar sesion en app]
+	A[Estudiante] --> B[Iniciar sesión en app]
 	A --> C[Conectar Moodle]
 	A --> D[Consultar dashboard]
 	A --> E[Revisar asignaturas]
@@ -142,7 +147,9 @@ flowchart TD
 	A --> L[Reportar incidencia 404]
 ```
 
-## 5.4 Flujo principal de sincronizacion academica
+![diagrama-casos-de-uso](image-4.png)
+
+## 5.4 Flujo principal de sincronizacion académica
 
 ```mermaid
 sequenceDiagram
@@ -169,6 +176,8 @@ sequenceDiagram
 	end
 ```
 
+![diagrama-sincronizacion-academica](image-5.png)
+
 ## 5.5 Diseño de API y endpoints
 He separado rutas de vista y endpoints JSON de soporte.
 
@@ -178,7 +187,7 @@ He separado rutas de vista y endpoints JSON de soporte.
 2. /settings/security y /settings/profile.
 3. /moodle-console.
 
-### Endpoints de estado asincrono
+### Endpoints de estado asíncrono
 
 1. /dashboard/status
 2. /asignaturas/status
@@ -204,16 +213,17 @@ He separado rutas de vista y endpoints JSON de soporte.
 4. GET /api/calificaciones
 5. GET /api/recursos/{courseId}
 6. GET /api/all-recursos
-7. GET/POST /api/configuracion
+7. GET/POST /api/configuración
 
 ## 5.6 Decisiones de diseño destacadas
 
 1. Capa de acceso Moodle separada en servicios para no contaminar controladores con parsing HTTP/HTML.
-2. Cache por seccion + jobs para mejorar respuesta inicial y controlar errores por dominio.
-3. URLs de recursos Moodle tratadas mediante servicio dedicado para evitar roturas de sesion en navegador.
-4. Persistencia de sesion Moodle en DB solo si el usuario activa notificaciones en background.
+2. Cache por sección + jobs para mejorar respuesta inicial y controlar errores por dominio.
+3. URLs de recursos Moodle tratadas mediante servicio dedicado para evitar roturas de sesión en navegador.
+4. Persistencia de sesión Moodle en DB solo si el usuario activa notificaciones en background.
 
 ## 5.7 Coherencia diseño-desarrollo
-Los diagramas anteriores no son teoricos: corresponden a rutas, clases y metodos reales ya presentes en el proyecto, y son la base que he usado para justificar decisiones en la implementacion.
+Los diagramas anteriores no son teóricos: corresponden a rutas, clases y métodos reales ya presentes en el proyecto, y son la base que he usado para justificar decisiones en la implementación.
+
 
 
