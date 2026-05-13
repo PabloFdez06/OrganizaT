@@ -4,6 +4,16 @@
  */
 
 const EXACT: Record<string, string> = {
+    // Laravel translation keys returned literally when no locale file exists (APP_LOCALE=es, no lang/es/)
+    'auth.failed': 'El correo o la contraseña son incorrectos.',
+    'auth.password': 'La contraseña actual es incorrecta.',
+    'auth.throttle': 'Demasiados intentos de acceso. Por favor, espera unos segundos.',
+    'passwords.reset': 'Tu contraseña ha sido restablecida correctamente.',
+    'passwords.sent': 'Hemos enviado el enlace de recuperación a tu correo.',
+    'passwords.throttled': 'Por favor, espera antes de volver a intentarlo.',
+    'passwords.token': 'El enlace de recuperación no es válido o ha expirado.',
+    'passwords.user': 'No encontramos ninguna cuenta con ese correo.',
+    // English strings (fallback if locale resolution works)
     'These credentials do not match our records.':
         'El correo o la contraseña son incorrectos.',
     'The provided password is incorrect.': 'La contraseña actual es incorrecta.',
