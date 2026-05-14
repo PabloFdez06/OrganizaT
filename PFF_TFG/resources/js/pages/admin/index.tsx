@@ -11,10 +11,9 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import AppLayout from '@/layouts/app-layout';
 import { role as adminUsersRole, deleteMethod as adminUsersDelete } from '@/routes/admin/users';
 import { resolve as adminErrorReportsResolve, deleteMethod as adminErrorReportsDelete } from '@/routes/admin/error_reports';
-import type { BreadcrumbItem, User } from '@/types';
+import type { User } from '@/types';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -67,12 +66,6 @@ type AdminPageProps = {
     users: PaginatedData<AdminUser>;
     errorReports: PaginatedData<ErrorReport>;
 };
-
-// ─── Breadcrumbs ─────────────────────────────────────────────────────────────
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Panel de administración', href: '/admin' },
-];
 
 // ─── Stat cards config ────────────────────────────────────────────────────────
 
@@ -166,7 +159,7 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
     const currentUserId = (auth.user as User).id;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Panel de administración" />
 
             <main className="p-admin">
@@ -369,6 +362,6 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
                 </section>
                 </div>
             </main>
-        </AppLayout>
+        </>
     );
 }
