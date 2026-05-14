@@ -1,5 +1,4 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { XIcon } from "lucide-react"
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -61,10 +60,6 @@ function DialogContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="c-dialog__close" aria-label="Close dialog">
-          <XIcon className="c-dialog__close-icon" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>
   )

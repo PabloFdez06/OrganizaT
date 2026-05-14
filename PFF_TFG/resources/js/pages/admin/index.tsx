@@ -97,8 +97,8 @@ function DeleteConfirmDialog({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={disabled}>
-                    <Trash2 className="h-3.5 w-3.5" />
+                <Button variant="destructive" size="icon" className="p-admin__delete-btn" disabled={disabled}>
+                    <Trash2 />
                 </Button>
             </DialogTrigger>
             <DialogContent>

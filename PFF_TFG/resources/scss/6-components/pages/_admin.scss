@@ -263,6 +263,19 @@
     color: var(--color-danger);
 }
 
+// ── Delete icon button ───────────────────────────────────────────────────────────────
+
+.p-admin__delete-btn {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    border-radius: 2px !important;
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+}
+
 // ── Native role select ────────────────────────────────────────────────────────
 
 .p-admin__role-select {
