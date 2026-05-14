@@ -17,6 +17,10 @@ class FortifyRedirectResponse implements LoginResponseContract, LogoutResponseCo
             return Inertia::location(route('home'));
         }
 
+        if ($request->user()?->isAdmin()) {
+            return Inertia::location('/admin');
+        }
+
         $redirectTo = redirect()->intended(config('fortify.home'))->getTargetUrl();
 
         return Inertia::location($redirectTo);

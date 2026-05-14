@@ -174,7 +174,7 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
                 {/* ── Page heading with amber accent ── */}
                 <header className="p-admin__header">
                     <ShieldCheck className="p-admin__header-icon" aria-hidden="true" />
-                    <div>
+                    <div className="p-admin__header-text">
                         <p className="p-admin__header-eyebrow">Administración</p>
                         <h1 className="p-admin__header-title">Panel de administración</h1>
                     </div>

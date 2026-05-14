@@ -1,5 +1,11 @@
 @use '../../1-settings/tokens' as t;
 
+// ── Override card radius for brutalist admin aesthetic ────────────────────────
+
+.p-admin .c-card {
+    border-radius: 0.2rem;
+}
+
 // ── Page wrapper ──────────────────────────────────────────────────────────────
 
 .p-admin {
@@ -7,6 +13,286 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.p-admin__header {
+    padding: 1rem 1.2rem;
+    border-left: 3px solid var(--color-token-f59e0b);
+    padding-left: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    border-top: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0 0.2rem 0.2rem 0;
+}
+
+.p-admin__header-icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    flex-shrink: 0;
+    color: var(--color-token-f59e0b);
+}
+
+.p-admin__header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.p-admin__header-eyebrow {
+    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--color-token-f59e0b);
+    line-height: 1;
+}
+
+.p-admin__header-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.03em;
+    color: var(--color-text);
+    line-height: 1.1;
+}
+
+// ── Section heading ───────────────────────────────────────────────────────────
+
+.p-admin__section-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-text-muted);
+}
+
+// ── Stats grid ────────────────────────────────────────────────────────────────
+
+.p-admin__stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+
+    @media (min-width: 64rem) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.p-admin__stat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 0 !important; // stat cards have no inner divider
+    padding-bottom: 0.4rem;
+}
+
+.p-admin__stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+}
+
+.p-admin__stat-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.p-admin__stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+.p-admin__table-wrapper {
+    overflow-x: auto;
+    padding: 0 !important; // remove c-card__content default padding
+}
+
+.p-admin__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    color: var(--color-text);
+}
+
+.p-admin__table thead {
+    border-bottom: 2px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface-muted) 60%, transparent);
+}
+
+.p-admin__table th {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.p-admin__table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+.p-admin__table tbody tr:last-child {
+    border-bottom: 0;
+}
+
+.p-admin__table tbody tr:hover {
+    background: color-mix(in srgb, var(--color-surface-muted) 40%, transparent);
+}
+
+.p-admin__table td {
+    padding: 0.65rem 1rem;
+}
+
+.p-admin__table-cell--name {
+    font-weight: 600;
+}
+
+.p-admin__table-cell--muted {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+
+.p-admin__table-cell--mono {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.72rem;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.p-admin__table-cell--truncate {
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+.p-admin__table-cell--center {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 2.5rem 1rem;
+    font-size: 0.82rem;
+}
+
+.p-admin__table-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+// ── Status icons (Moodle / 2FA) ───────────────────────────────────────────────
+
+.p-admin__status-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.p-admin__status-icon--ok {
+    color: var(--color-token-16a34a);
+}
+
+.p-admin__status-icon--off {
+    color: var(--color-border);
+}
+
+// ── Inline status badges ──────────────────────────────────────────────────────
+
+.p-admin__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.2rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    border: 1px solid transparent;
+}
+
+.p-admin__badge--resolved {
+    background: color-mix(in srgb, var(--color-token-16a34a) 12%, transparent);
+    color: var(--color-token-16a34a);
+    border-color: color-mix(in srgb, var(--color-token-16a34a) 30%, transparent);
+}
+
+.p-admin__badge--pending {
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    color: var(--color-danger);
+    border-color: color-mix(in srgb, var(--color-danger) 28%, transparent);
+}
+
+// ── Native role select ────────────────────────────────────────────────────────
+
+.p-admin__role-select {
+    width: 5.5rem;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.78rem;
+    border-radius: 0.2rem;
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+.p-admin__pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    margin-top: 0.75rem;
+}
+
+.p-admin__pagination-btn {
+    appearance: none;
+    border: 1px solid var(--color-border);
+    border-radius: 0.2rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.72rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background-color 140ms ease;
+    font-weight: 500;
+}
+
+.p-admin__pagination-btn:hover:not(:disabled) {
+    background: var(--color-surface-muted);
+}
+
+.p-admin__pagination-btn--active {
+    background: var(--color-text);
+    color: var(--color-surface);
+    border-color: var(--color-text);
+    font-weight: 700;
+}
+
+.p-admin__pagination-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
 }
 
 // ── Header with amber accent ──────────────────────────────────────────────────
