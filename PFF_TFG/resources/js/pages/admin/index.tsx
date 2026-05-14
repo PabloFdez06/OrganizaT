@@ -2,7 +2,6 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { ShieldCheck, Users, Wifi, WifiOff, Shield, Bell, UserPlus, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -171,38 +170,42 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
             <Head title="Panel de administración" />
 
             <main className="p-admin">
-                {/* ── Page heading with amber accent ── */}
-                <header className="p-admin__header">
-                    <ShieldCheck className="p-admin__header-icon" aria-hidden="true" />
-                    <div className="p-admin__header-text">
-                        <p className="p-admin__header-eyebrow">Administración</p>
-                        <h1 className="p-admin__header-title">Panel de administración</h1>
+                {/* ── Page header (estilo settings, sin botón de cierre) ── */}
+                <header className="p-admin__page-header">
+                    <div className="p-admin__page-header-icon" aria-hidden="true">
+                        <ShieldCheck size={16} />
                     </div>
+                    <h1 className="p-admin__page-header-title">Panel de administración</h1>
                 </header>
 
+                <div className="p-admin__body">
                 {/* ── Section 1: Statistics ── */}
                 <section aria-labelledby="stats-title">
-                    <h2 id="stats-title" className="p-admin__section-title">Estadísticas</h2>
+                    <div className="p-admin__section-label">
+                        <span id="stats-title" className="p-admin__section-label-text">Estadísticas</span>
+                        <span className="p-admin__section-label-line" aria-hidden="true" />
+                    </div>
                     <div className="p-admin__stats-grid">
                         {statCards(stats).map(({ label, value, icon: Icon }) => (
-                            <Card key={label} className="c-card">
-                                <CardHeader className="c-card__header p-admin__stat-header">
-                                    <CardTitle className="p-admin__stat-label">{label}</CardTitle>
+                            <div key={label} className="p-admin__stat">
+                                <div className="p-admin__stat-top">
+                                    <span className="p-admin__stat-label">{label}</span>
                                     <Icon className="p-admin__stat-icon" aria-hidden="true" />
-                                </CardHeader>
-                                <CardContent className="c-card__content">
-                                    <p className="p-admin__stat-value">{value}</p>
-                                </CardContent>
-                            </Card>
+                                </div>
+                                <span className="p-admin__stat-value">{value}</span>
+                            </div>
                         ))}
                     </div>
                 </section>
 
                 {/* ── Section 2: User management ── */}
                 <section aria-labelledby="users-title">
-                    <h2 id="users-title" className="p-admin__section-title">Gestión de usuarios</h2>
-                    <Card className="c-card">
-                        <CardContent className="c-card__content p-admin__table-wrapper">
+                    <div className="p-admin__section-label">
+                        <h2 id="users-title" className="p-admin__section-label-text">Gestión de usuarios</h2>
+                        <span className="p-admin__section-label-line" aria-hidden="true" />
+                    </div>
+                    <div className="p-admin__table-card">
+                        <div className="p-admin__table-wrapper">
                             <table className="p-admin__table">
                                 <thead>
                                     <tr>
@@ -278,16 +281,19 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
                                     })}
                                 </tbody>
                             </table>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                     <Pagination links={users.links} />
                 </section>
 
                 {/* ── Section 3: Error reports ── */}
                 <section aria-labelledby="errors-title">
-                    <h2 id="errors-title" className="p-admin__section-title">Reportes de error</h2>
-                    <Card className="c-card">
-                        <CardContent className="c-card__content p-admin__table-wrapper">
+                    <div className="p-admin__section-label">
+                        <h2 id="errors-title" className="p-admin__section-label-text">Reportes de error</h2>
+                        <span className="p-admin__section-label-line" aria-hidden="true" />
+                    </div>
+                    <div className="p-admin__table-card">
+                        <div className="p-admin__table-wrapper">
                             <table className="p-admin__table">
                                 <thead>
                                     <tr>
@@ -350,17 +356,18 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
                                     ))}
                                     {errorReports.data.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="p-admin__table-cell--center">
+                                            <td colSpan={5} className="p-admin__table-cell--empty">
                                                 No hay reportes de error registrados.
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                     <Pagination links={errorReports.links} />
                 </section>
+                </div>
             </main>
         </AppLayout>
     );
