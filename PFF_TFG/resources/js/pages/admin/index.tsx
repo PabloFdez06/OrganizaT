@@ -1,7 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { ShieldCheck, Users, Wifi, WifiOff, Shield, Bell, UserPlus, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,13 +12,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { role as adminUsersRole, deleteMethod as adminUsersDelete } from '@/routes/admin/users';
 import { resolve as adminErrorReportsResolve, deleteMethod as adminErrorReportsDelete } from '@/routes/admin/error_reports';
@@ -149,14 +141,13 @@ function Pagination({ links }: { links: PaginationLink[] }) {
     if (filtered.length <= 1) return null;
 
     return (
-        <nav className="flex flex-wrap gap-1 pt-2" aria-label="Paginación">
+        <nav className="p-admin__pagination" aria-label="Paginación">
             {links.map((link, i) => (
                 <button
                     key={i}
                     className={[
-                        'rounded border px-2.5 py-1 text-xs',
-                        link.active ? 'bg-foreground text-background' : 'bg-background text-foreground',
-                        !link.url ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
+                        'p-admin__pagination-btn',
+                        link.active ? 'p-admin__pagination-btn--active' : '',
                     ]
                         .filter(Boolean)
                         .join(' ')}
@@ -179,32 +170,28 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Panel de administración" />
 
-            <main className="space-y-8 p-4">
+            <main className="p-admin">
                 {/* ── Page heading with amber accent ── */}
-                <header className="flex items-center gap-3 border-l-4 border-amber-500 pl-4">
-                    <ShieldCheck className="h-6 w-6 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                <header className="p-admin__header">
+                    <ShieldCheck className="p-admin__header-icon" aria-hidden="true" />
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                            Administración
-                        </p>
-                        <h1 className="text-2xl font-bold">Panel de administración</h1>
+                        <p className="p-admin__header-eyebrow">Administración</p>
+                        <h1 className="p-admin__header-title">Panel de administración</h1>
                     </div>
                 </header>
 
                 {/* ── Section 1: Statistics ── */}
                 <section aria-labelledby="stats-title">
-                    <h2 id="stats-title" className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                        Estadísticas
-                    </h2>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <h2 id="stats-title" className="p-admin__section-title">Estadísticas</h2>
+                    <div className="p-admin__stats-grid">
                         {statCards(stats).map(({ label, value, icon: Icon }) => (
-                            <Card key={label}>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm font-medium">{label}</CardTitle>
-                                    <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                            <Card key={label} className="c-card">
+                                <CardHeader className="c-card__header p-admin__stat-header">
+                                    <CardTitle className="p-admin__stat-label">{label}</CardTitle>
+                                    <Icon className="p-admin__stat-icon" aria-hidden="true" />
                                 </CardHeader>
-                                <CardContent>
-                                    <p className="text-2xl font-bold">{value}</p>
+                                <CardContent className="c-card__content">
+                                    <p className="p-admin__stat-value">{value}</p>
                                 </CardContent>
                             </Card>
                         ))}
@@ -213,81 +200,78 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
 
                 {/* ── Section 2: User management ── */}
                 <section aria-labelledby="users-title">
-                    <h2 id="users-title" className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                        Gestión de usuarios
-                    </h2>
-                    <Card>
-                        <CardContent className="overflow-x-auto p-0">
-                            <table className="w-full text-sm">
-                                <thead className="border-b">
-                                    <tr className="text-left text-xs text-muted-foreground">
-                                        <th className="px-4 py-3">Nombre</th>
-                                        <th className="px-4 py-3">Email</th>
-                                        <th className="px-4 py-3">Rol</th>
-                                        <th className="px-4 py-3">Moodle</th>
-                                        <th className="px-4 py-3">2FA</th>
-                                        <th className="px-4 py-3">Registrado</th>
-                                        <th className="px-4 py-3">Acciones</th>
+                    <h2 id="users-title" className="p-admin__section-title">Gestión de usuarios</h2>
+                    <Card className="c-card">
+                        <CardContent className="c-card__content p-admin__table-wrapper">
+                            <table className="p-admin__table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Rol</th>
+                                        <th>Moodle</th>
+                                        <th>2FA</th>
+                                        <th>Registrado</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y">
+                                <tbody>
                                     {users.data.map((user) => {
                                         const isSelf = user.id === currentUserId;
 
                                         return (
-                                            <tr key={user.id} className="align-middle">
-                                                <td className="px-4 py-3 font-medium">{user.name}</td>
-                                                <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
-                                                <td className="px-4 py-3">
-                                                    <Select
+                                            <tr key={user.id}>
+                                                <td className="p-admin__table-cell--name">{user.name}</td>
+                                                <td className="p-admin__table-cell--muted">{user.email}</td>
+                                                <td>
+                                                    <select
+                                                        className="p-admin__role-select"
                                                         defaultValue={user.role}
                                                         disabled={isSelf}
-                                                        onValueChange={(value) => {
+                                                        aria-label={`Rol de ${user.name}`}
+                                                        onChange={(e) => {
                                                             router.patch(
                                                                 adminUsersRole(user.id).url,
-                                                                { role: value },
+                                                                { role: e.target.value },
                                                                 { preserveScroll: true },
                                                             );
                                                         }}
                                                     >
-                                                        <SelectTrigger size="sm" className="w-24">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="user">user</SelectItem>
-                                                            <SelectItem value="admin">admin</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
+                                                        <option value="user">user</option>
+                                                        <option value="admin">admin</option>
+                                                    </select>
                                                 </td>
-                                                <td className="px-4 py-3">
+                                                <td>
                                                     {user.moodle_connected ? (
-                                                        <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Conectado" />
+                                                        <CheckCircle2 className="p-admin__status-icon p-admin__status-icon--ok" aria-label="Conectado" />
                                                     ) : (
-                                                        <XCircle className="h-4 w-4 text-muted-foreground" aria-label="No conectado" />
+                                                        <XCircle className="p-admin__status-icon p-admin__status-icon--off" aria-label="No conectado" />
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3">
+                                                <td>
                                                     {user.two_factor_enabled ? (
-                                                        <CheckCircle2 className="h-4 w-4 text-green-500" aria-label="Activo" />
+                                                        <CheckCircle2 className="p-admin__status-icon p-admin__status-icon--ok" aria-label="Activo" />
                                                     ) : (
-                                                        <XCircle className="h-4 w-4 text-muted-foreground" aria-label="Inactivo" />
+                                                        <XCircle className="p-admin__status-icon p-admin__status-icon--off" aria-label="Inactivo" />
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 text-muted-foreground">
+                                                <td className="p-admin__table-cell--muted">
                                                     {new Date(user.created_at).toLocaleDateString('es-ES')}
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <DeleteConfirmDialog
-                                                        title="Eliminar usuario"
-                                                        description={`¿Estás seguro de que quieres eliminar a ${user.name}? Esta acción no se puede deshacer.`}
-                                                        disabled={isSelf}
-                                                        onConfirm={() => {
-                                                            router.delete(
-                                                                adminUsersDelete(user.id).url,
-                                                                { preserveScroll: true },
-                                                            );
-                                                        }}
-                                                    />
+                                                <td>
+                                                    <div className="p-admin__table-actions">
+                                                        <DeleteConfirmDialog
+                                                            title="Eliminar usuario"
+                                                            description={`¿Estás seguro de que quieres eliminar a ${user.name}? Esta acción no se puede deshacer.`}
+                                                            disabled={isSelf}
+                                                            onConfirm={() => {
+                                                                router.delete(
+                                                                    adminUsersDelete(user.id).url,
+                                                                    { preserveScroll: true },
+                                                                );
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -301,72 +285,72 @@ export default function AdminIndex({ stats, users, errorReports }: AdminPageProp
 
                 {/* ── Section 3: Error reports ── */}
                 <section aria-labelledby="errors-title">
-                    <h2 id="errors-title" className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                        Reportes de error
-                    </h2>
-                    <Card>
-                        <CardContent className="overflow-x-auto p-0">
-                            <table className="w-full text-sm">
-                                <thead className="border-b">
-                                    <tr className="text-left text-xs text-muted-foreground">
-                                        <th className="px-4 py-3">URL</th>
-                                        <th className="px-4 py-3">User Agent</th>
-                                        <th className="px-4 py-3">Estado</th>
-                                        <th className="px-4 py-3">Fecha</th>
-                                        <th className="px-4 py-3">Acciones</th>
+                    <h2 id="errors-title" className="p-admin__section-title">Reportes de error</h2>
+                    <Card className="c-card">
+                        <CardContent className="c-card__content p-admin__table-wrapper">
+                            <table className="p-admin__table">
+                                <thead>
+                                    <tr>
+                                        <th>URL</th>
+                                        <th>User Agent</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y">
+                                <tbody>
                                     {errorReports.data.map((report) => (
-                                        <tr key={report.id} className="align-middle">
-                                            <td className="max-w-xs truncate px-4 py-3 font-mono text-xs">
-                                                {report.url}
-                                            </td>
-                                            <td className="max-w-xs truncate px-4 py-3 text-xs text-muted-foreground">
+                                        <tr key={report.id}>
+                                            <td className="p-admin__table-cell--mono">{report.url}</td>
+                                            <td className="p-admin__table-cell--truncate">
                                                 {report.user_agent ?? '—'}
                                             </td>
-                                            <td className="px-4 py-3">
+                                            <td>
                                                 {report.resolved_at ? (
-                                                    <Badge variant="default" className="bg-green-600 text-white dark:bg-green-700">
+                                                    <span className="p-admin__badge p-admin__badge--resolved">
                                                         Resuelto
-                                                    </Badge>
+                                                    </span>
                                                 ) : (
-                                                    <Badge variant="destructive">Pendiente</Badge>
+                                                    <span className="p-admin__badge p-admin__badge--pending">
+                                                        Pendiente
+                                                    </span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-muted-foreground">
+                                            <td className="p-admin__table-cell--muted">
                                                 {new Date(report.created_at).toLocaleDateString('es-ES')}
                                             </td>
-                                            <td className="flex items-center gap-2 px-4 py-3">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        router.patch(
-                                                            adminErrorReportsResolve(report.id).url,
-                                                            {},
-                                                            { preserveScroll: true },
-                                                        );
-                                                    }}
-                                                >
-                                                    {report.resolved_at ? 'Reabrir' : 'Marcar resuelto'}
-                                                </Button>
-                                                <DeleteConfirmDialog
-                                                    title="Eliminar reporte"
-                                                    description="¿Estás seguro de que quieres eliminar este reporte de error? Esta acción no se puede deshacer."
-                                                    onConfirm={() => {
-                                                        router.delete(
-                                                            adminErrorReportsDelete(report.id).url,
-                                                            { preserveScroll: true },
-                                                        );
-                                                    }}
-                                                />
+                                            <td>
+                                                <div className="p-admin__table-actions">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            router.patch(
+                                                                adminErrorReportsResolve(report.id).url,
+                                                                {},
+                                                                { preserveScroll: true },
+                                                            );
+                                                        }}
+                                                    >
+                                                        {report.resolved_at ? 'Reabrir' : 'Marcar resuelto'}
+                                                    </Button>
+                                                    <DeleteConfirmDialog
+                                                        title="Eliminar reporte"
+                                                        description="¿Estás seguro de que quieres eliminar este reporte de error? Esta acción no se puede deshacer."
+                                                        onConfirm={() => {
+                                                            router.delete(
+                                                                adminErrorReportsDelete(report.id).url,
+                                                                { preserveScroll: true },
+                                                            );
+                                                        }}
+                                                    />
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
                                     {errorReports.data.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                            <td colSpan={5} className="p-admin__table-cell--center">
                                                 No hay reportes de error registrados.
                                             </td>
                                         </tr>
