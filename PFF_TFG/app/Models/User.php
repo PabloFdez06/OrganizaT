@@ -23,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
         'moodle_username',
         'moodle_notification_preferences',
         'dashboard_quick_subject_ids',
@@ -67,5 +68,11 @@ class User extends Authenticatable
             && trim($this->moodle_session_data) !== ''
             && $this->moodle_session_expires_at !== null
             && $this->moodle_session_expires_at->isFuture();
+    }
+
+    /** Determine if the user has the admin role. */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 }

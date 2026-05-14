@@ -153,6 +153,66 @@ return $this->notificationCenter->buildForUser($user, $tasks, $messages, true);
 ## 6.11 Balance técnico de desarrollo
 El desarrollo ha estado centrado en resolver un caso real de organización académica, con una base de código mantenible y preparada para evolucion. La mayor complejidad ha estado en la integración Moodle y su gestión de sesión, y ahi es donde más valor técnico he aportado, sin olvidar las notificaciones, que han supuesto un gran reto al enviarlas por mail además de controlar correctamente los jobs y las duplicidades.
 
+## Sistema de Roles (RBAC)
+
+### Roles existentes y su propósito
+
+La aplicación implementa dos roles de usuario mediante una columna `role` de tipo enum en la tabla `users`:
+
+- **`user`** (por defecto): acceso a todas las funcionalidades académicas de la aplicación.
+- **`admin`**: acceso adicional al panel de administración y a las rutas de consola Moodle.
+
+### Middleware EnsureUserIsAdmin y rutas protegidas
+
+El middleware `App\Http\Middleware\EnsureUserIsAdmin` verifica que el usuario autenticado tenga el rol `admin`; en caso contrario devuelve un 403. Está registrado bajo el alias `role.admin` en `bootstrap/app.php`.
+
+Las rutas protegidas exclusivamente para administradores son:
+
+```
+GET  /moodle-console
+POST /moodle-console/preferences
+POST /moodle-debug
+GET  /admin
+PATCH /admin/users/{user}/role
+DELETE /admin/users/{user}
+PATCH  /admin/error-reports/{errorReport}/resolve
+DELETE /admin/error-reports/{errorReport}
+```
+
+### Panel de administración
+
+- **URL**: `/admin`
+- **Acceso**: exclusivo para usuarios con rol `admin`.
+- **Funcionalidades**:
+  - Estadísticas globales de usuarios (total, Moodle conectado, 2FA, notificaciones en background, altas recientes).
+  - Gestión de usuarios: cambio de rol y eliminación (con protección para la propia cuenta).
+  - Gestión de reportes de error 404: marcado como resuelto/pendiente y eliminación.
+
+### Cómo asignar el rol admin
+
+**Mediante el seeder** (entorno fresco o primer despliegue):
+```bash
+php artisan db:seed
+```
+Crea el usuario `admin@admin.com` con rol `admin`.
+
+**Actualización manual en base de datos**:
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'usuario@ejemplo.com';
+```
+
+### Prop compartida auth.role en Inertia
+
+El middleware `HandleInertiaRequests` comparte la clave `auth.role` con todos los componentes React. Uso desde el frontend:
+
+```tsx
+const { auth } = usePage().props;
+const isAdmin = auth.role === 'admin';
+```
+
+Este prop se usa en `AppSidebar` para mostrar u ocultar el enlace al panel de administración.
+
+
 
 
 

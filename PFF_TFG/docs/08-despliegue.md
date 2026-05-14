@@ -92,6 +92,22 @@ sh scripts/ops/deploy-beta.sh
 sh scripts/ops/inspect-beta.sh
 ```
 
+### Inicializar usuario administrador
+
+Tras aplicar las migraciones, ejecutar el seeder para crear el usuario administrador por defecto:
+
+```bash
+php artisan db:seed
+```
+
+Esto crea (o actualiza idempotentemente) el usuario:
+
+- **Email**: `admin@admin.com`
+- **Contraseña por defecto**: `Admin1234!`
+- **Rol**: `admin`
+
+> **Aviso de seguridad**: cambiar la contraseña del usuario admin inmediatamente tras el primer acceso en cualquier entorno accesible públicamente.
+
 ## 8.7 Verificaciones de despliegue
 En scripts y checklist incluyo verificaciones concretas:
 

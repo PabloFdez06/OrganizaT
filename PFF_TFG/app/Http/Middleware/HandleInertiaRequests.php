@@ -65,6 +65,7 @@ class HandleInertiaRequests extends Middleware
                     'created_at' => $user->created_at,
                     'updated_at' => $user->updated_at,
                 ] : null,
+                'role' => $request->user()?->role,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

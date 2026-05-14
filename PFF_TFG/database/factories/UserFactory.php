@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'role' => 'user',
         ];
     }
 
@@ -56,5 +57,13 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
         ]);
+    }
+
+    /**
+     * Indicate that the user has the admin role.
+     */
+    public function admin(): static
+    {
+        return $this->state(['role' => 'admin']);
     }
 }

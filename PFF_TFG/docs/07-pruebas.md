@@ -94,5 +94,57 @@ Punto importante: aunque en CI se habilita xdebug en workflow de tests, actualme
 ## 7.9 Conclusiones de calidad
 Con la suite actual he conseguido una base de control de calidad estable para evitar regresiones graves en las funcionalidades principales. Para una siguiente versión, mi prioridad es reforzar frontend y cobertura cuantitativa reportada para subir madurez de testing. Pero actualmente he de indicar que tengo una "base" bastante solida y que tras cada despliegue, hay una verificación exhaustiva de que todo funciona como deberia.
 
+## Pruebas de Autorización
+
+### Middleware y acceso al panel de administración
+
+El middleware `EnsureUserIsAdmin` (alias `role.admin`) garantiza que únicamente usuarios con rol `admin` accedan a las rutas protegidas. Se deben cubrir los siguientes comportamientos:
+
+- **403 para usuario autenticado sin rol admin**: un usuario con rol `user` que intenta acceder a `/admin` recibe una respuesta 403, sin redirección al login (el usuario ya está autenticado).
+- **200 para usuario con rol admin**: un administrador accede correctamente a `/admin`.
+- **Redirección al login para usuario no autenticado**: las rutas protegidas con `auth` redirigen al login antes de que intervenga `role.admin`.
+
+### Estado `admin()` en UserFactory
+
+El estado `admin()` de `UserFactory` permite crear usuarios administradores en tests:
+
+```php
+$admin = User::factory()->admin()->create();
+$user  = User::factory()->create(); // rol 'user' por defecto
+```
+
+### Casos de prueba sugeridos
+
+```php
+it('redirige al login si no está autenticado al acceder a /admin', function () {
+    $this->get('/admin')->assertRedirect('/login');
+});
+
+it('devuelve 403 a un usuario autenticado sin rol admin', function () {
+    $user = User::factory()->create(); // rol 'user'
+    $this->actingAs($user)->get('/admin')->assertForbidden();
+});
+
+it('permite el acceso a /admin a un administrador', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin)->get('/admin')->assertOk();
+});
+
+it('impide que un admin cambie su propio rol', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin)
+        ->patch("/admin/users/{$admin->id}/role", ['role' => 'user'])
+        ->assertSessionHasErrors('role');
+});
+
+it('impide que un admin elimine su propia cuenta', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin)
+        ->delete("/admin/users/{$admin->id}")
+        ->assertSessionHasErrors('delete');
+});
+```
+
+
 
 

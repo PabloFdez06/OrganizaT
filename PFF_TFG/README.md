@@ -54,6 +54,7 @@ Stack principal:
 2. Frontend: Inertia + React + TypeScript.
 3. Datos e infraestructura beta: MySQL 8.4 + Redis + Nginx + Docker Compose.
 4. Procesamiento asíncrono: `worker` (colas) y `scheduler`.
+5. Control de acceso: RBAC con roles `admin` / `user` y panel de administración en `/admin`.
 
 Diagrama de arquitectura (runtime beta):
 
@@ -255,7 +256,15 @@ Este script hace:
 5. `migrate --force`, `optimize`, `queue:restart`.
 6. Checks de `/up`, Redis, worker y scheduler.
 
-### 9.5 Fallback manual
+### 9.5 Crear usuario administrador
+
+```bash
+php artisan db:seed
+```
+
+Crea el usuario admin por defecto (`admin@admin.com` / `Admin1234!`).
+**Cambiar la contraseña inmediatamente tras el primer acceso.**
+El panel de administración está disponible en `/admin` (solo rol `admin`).
 
 ```bash
 sh scripts/ops/first-boot-beta.sh

@@ -8,11 +8,13 @@ export type User = {
     two_factor_pending_confirmation?: boolean;
     created_at: string;
     updated_at: string;
+    role: 'admin' | 'user';
     [key: string]: unknown;
 };
 
 export type Auth = {
     user: User;
+    role?: 'admin' | 'user' | null;
 };
 
 export type TwoFactorSetupData = {
