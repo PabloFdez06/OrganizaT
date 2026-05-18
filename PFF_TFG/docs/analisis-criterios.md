@@ -1,742 +1,562 @@
-# Análisis de Criterios — OrganizaT (TFG DAW)
-
-> **Rol**: Examinador final de TFG. Evaluación estricta sobre la rúbrica oficial del IES Rafael Alberti (Proyecto Final DAW).
-> Fuente de la rúbrica: [https://ies-rafael-alberti.github.io/proyecto-intermodular-daw/docs/proyectos/proyecto-final/](https://ies-rafael-alberti.github.io/proyecto-intermodular-daw/docs/proyectos/proyecto-final/)
+# EVALUACIÓN COMPLETA — TFG OrganizaT
 
 ---
 
-## Nota previa: entregables mínimos
+## PARTE 1 — RÚBRICA DWEC (Desarrollo Web en Entorno Cliente)
 
-La rúbrica exige estos mínimos para que el proyecto sea evaluado. Si no se cumplen, todos los criterios asociados valen **0**.
+### DWEC-1: Sintaxis moderna del lenguaje — PUNTUACIÓN: 4 / 4 (10 pts)
 
-| Mínimo exigido | Estado |
-|---|---|
-| Prototipo en Figma funcional | ✅ Existe enlace en `docs/04-guia-estilos.md` |
-| Repositorio con cliente y servidor | ✅ Repositorio completo (Laravel + React/TS) |
-| Documentación con los 10 apartados | ✅ `docs/01` a `docs/10` presentes |
-| Aplicación desplegada en URL pública | ✅ https://organizat.blete.tech/ |
+**Evidencia:**
+- **Interfaces/types propios**: `DashboardProps`, `TareasProps`, `CalificacionesProps`, `AsignaturasProps`, `QuickCard`, `TimelineItem`, `MatrixTask`, `EisenhowerMatrix`, `TaskItem`, `SubjectCard`, `CalendarCell`, `FeedbackModalData` — todos definidos localmente en cada página con tipado estricto.
+- **Types centralizados**: `resources/js/types/auth.ts` define `User` con union literal `'admin' | 'user'`, `Auth`, `TwoFactorSetupData`. `global.d.ts` extiende `InertiaConfig` con module augmentation.
+- **Sintaxis moderna**: Arrow functions en todo el código, destructuring de props (`{ moodleConnected, studentName, ... }: DashboardProps`), optional chaining (`navigator?.clipboard`), template literals, `Number.parseInt`, `Number.isNaN`.
+- **Genéricos**: `useRef<HTMLElement | null>(null)`, `useRef<HTMLOListElement | null>(null)`, `useState<number | null>(null)`.
+- **Comentarios**: Presentes en hooks (`use-form-validation.ts` tiene JSDoc completo con ejemplo de uso), ausentes en páginas grandes — aceptable dado que el código es autoexplicativo.
+- **Carencia menor**: No se usan enums TypeScript (se usan union literals, que es la práctica moderna recomendada). No hay clases (correcto en React funcional).
 
-**Todos los mínimos cumplidos → evaluación procede.**
-
----
-
-## Rúbricas por módulo
-
-### 1. DWEC — Desarrollo Web en Entorno Cliente
-
-Escala: **0 (Muy deficiente) · 1 (Insuficiente) · 2 (Suficiente) · 3 (Bien) · 4 (Excelente)**  
-Cada ítem vale el 20% de la nota del módulo DWEC.
+**Justificación**: Uso consistente y correcto de TypeScript moderno en todo el proyecto. Interfaces propias en cada página, genéricos en hooks, module augmentation, union types para roles. Código 100% funcional sin legacy.
 
 ---
 
-#### 1.1 Aplica la sintaxis moderna del lenguaje
+### DWEC-2: Objetos predefinidos del lenguaje — PUNTUACIÓN: 4 / 4 (10 pts)
 
-**Nota obtenida: 3 — Bien**
+**Evidencia:**
+- **Array methods**: `timeline.slice(0, visibleTimelineItems)`, `courseCards.map()`, `Array.from({ length: 3 })`, `tasksByDate[iso] ?? []`, `dayTasks.some(task => task.statusTone === 'expired')`, `spans.reduce((acc, span) => acc + span, 0)`, `Array.from({ length: 42 })` en buildCalendarCells.
+- **Object manipulation**: Spread operator extensivo (`{ ...values, [name]: value }`), `Object.keys` implícito en iteraciones de schema.
+- **Date**: `new Date()`, `date.getFullYear()`, `date.getMonth()`, `date.toLocaleDateString('es-ES', {...})`, `date.setDate()`, manipulación completa de calendario con funciones `parseIsoDate`, `formatLocalIsoDate`, `formatMonthLabel`, `buildMonthDate`, `shiftMonth`.
+- **Promise/async**: `useClipboard` usa `async/await` con `navigator.clipboard.writeText()`.
+- **Generación dinámica JSX**: Tarjetas de asignaturas con `.map()`, calendario con celdas dinámicas, timeline con items dinámicos, skeletons generados con `Array.from`.
+- **API del navegador**: `navigator.clipboard`, `window.setTimeout`, `window.clearTimeout`, `window.innerWidth`, `ResizeObserver`, `window.addEventListener('resize')`.
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **3 — Bien** ✅ | Utiliza la sintaxis moderna en la mayor parte de la aplicación, incluyendo estructuras definidas por el usuario, comentando el código de forma correcta. |
-
-**Justificación**: El proyecto usa TypeScript en todo el frontend, con interfaces y tipos propios definidos (`DashboardProps`, `MatrixTask`, `QuickCard`, etc.), arrow functions, destructuring, optional chaining, módulos ES6 y React 19 con hooks. La sintaxis es consistentemente moderna. Los comentarios existen en SCSS y en algún lugar del TS, pero no están presentes de forma exhaustiva en cada función o componente TSX. Para alcanzar el 4 (Excelente) sería necesario "comentar en todo momento el código de forma clara y concisa", lo que no ocurre aquí.
-
-**Mejora posible**: Añadir JSDoc en funciones clave, hooks personalizados y componentes complejos para alcanzar el nivel Excelente.
-
-**Nota normalizada (0–10): 7,5**
+**Justificación**: Uso extensivo y correcto de Array, Date, Promise, API del navegador. Generación dinámica de JSX compleja (calendario, grids, timelines). Excelente.
 
 ---
 
-#### 1.2 Escribe código identificando y aplicando las funcionalidades aportadas por los objetos predefinidos del lenguaje
+### DWEC-3: Manejo de eventos — PUNTUACIÓN: 3 / 4 (7.5 pts)
 
-**Nota obtenida: 3 — Bien**
+**Evidencia:**
+- **Formularios con validación cliente**: `useFormValidation` hook con reglas (`required`, `email`, `minLength`, `maxLength`, `matches`). Login usa `onBefore={() => validateAll()}` para validar antes de enviar.
+- **Handlers tipados**: `handleChange` tipado como `ChangeEvent<HTMLInputElement | HTMLTextAreaElement>`, `handleBlur` como `FocusEvent<...>`.
+- **Errores servidor + cliente**: `clientErrors.email || translateServerError(errors.email)` — combinación de validación local y errores de Inertia.
+- **Accesibilidad formularios**: `<Label htmlFor="email">`, `required`, `autoComplete`, `tabIndex` ordenados.
+- **Eventos de UI**: onClick implícitos en Links y Buttons, onChange/onBlur en inputs.
+- **Carencia**: No se observan eventos personalizados (CustomEvent), ni event bubbling/delegation explícito, ni handlers de teclado (keydown/keyup) más allá de los nativos del navegador. Los formularios no usan `onSubmit` directo sino el `Form` de Inertia con `onBefore`.
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **3 — Bien** ✅ | Buen uso de los objetos predefinidos para cambiar el aspecto del navegador y el documento, generando textos y etiquetas. |
-
-**Justificación**: El proyecto utiliza los objetos predefinidos de React (`useState`, `useEffect`, `useRef`, `useMemo`), de Inertia (`useForm`, `usePage`, `router`, `Head`, `Link`), y del navegador (`window.Echo` para WebSockets). Los componentes generan dinámicamente nodos JSX (equivalente moderno de crear/modificar etiquetas del DOM). El uso es correcto y amplio, sin explorar al máximo APIs de bajo nivel del navegador (como `IntersectionObserver`, `MutationObserver`, etc.) que justificarían el Excelente.
-
-**Mejora posible**: Explotar más APIs nativas del navegador (Notification API, Clipboard API, Storage API de forma más explícita) para reforzar el conocimiento de objetos predefinidos más allá del framework.
-
-**Nota normalizada (0–10): 7,5**
+**Justificación**: Validación cliente-servidor bien integrada con hook reutilizable. Handlers correctamente tipados. Formularios accesibles. Falta variedad de eventos (keyboard, custom events) para el 4.
 
 ---
 
-#### 1.3 Desarrolla aplicaciones Web interactivas integrando mecanismos de manejo de eventos
+### DWEC-4: Modelo de objetos del documento (DOM) — PUNTUACIÓN: 4 / 4 (10 pts)
 
-**Nota obtenida: 3 — Bien**
+**Evidencia:**
+- **useRef extensivo**: `leftColumnRef`, `heroCardRef`, `timelineContainerRef`, `timelineListRef`, `timelineActionsRef` — todos tipados con `<HTMLElement | null>`.
+- **useEffect con dependencias correctas**: Polling con cleanup (`return () => { cancelled = true; ... }`), ResizeObserver con disconnect, window event listener con removeEventListener. Dependencias explícitas: `[loading, moodleConnected]`, `[timeline.length, hasMoreTimelineItems, visibleTimelineItems, timelineListOffset]`.
+- **Manipulación dinámica**: Cálculo de `timelineMaxHeight` basado en `getBoundingClientRect()`, `window.innerWidth`, offsets dinámicos. Scroll y layout responsive calculado en JS.
+- **ResizeObserver**: Observa cambios de tamaño del leftColumn para recalcular layout.
+- **useState**: Múltiples estados (`timelineMaxHeight`, `timelineListOffset`, `visibleTimelineItems`, `values`, `clientErrors`, `touched`).
+- **Context**: `useSidebar` en sidebar.tsx (contexto de UI).
+- **Animaciones via JS**: Offset dinámico de timeline con `transform: translateY`.
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **3 — Bien** ✅ | Buena integración de los mecanismos de manejo de eventos, validando los formularios de la aplicación. |
-
-**Justificación**: El proyecto integra ampliamente el manejo de eventos: `onSubmit`, `onClick`, `onChange`, `onKeyDown` en todos los formularios y componentes interactivos. La validación de formularios se gestiona mediante `useForm` de Inertia (server-side), con errores mostrados al usuario. La validación client-side es delegada al servidor (errores de `422` retornados por Laravel y mostrados en `errors`), lo que es correcto en el patrón Inertia pero limita la puntuación frente al nivel Excelente, que exige "creación y captura de eventos, validando los formularios".
-
-**Mejora posible**: Añadir validación inline client-side antes del envío (longitud mínima, formato de email, campos requeridos) con feedback inmediato, complementando la validación server-side.
-
-**Nota normalizada (0–10): 7,5**
-
----
-
-#### 1.4 Desarrolla aplicaciones Web analizando y aplicando las características del modelo de objetos del documento
-
-**Nota obtenida: 3 — Bien**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **3 — Bien** ✅ | Se ha accedido de manera adecuada a la estructura del documento, creando y modificando elementos, asociando acciones a los eventos. |
-
-**Justificación**: React gestiona el Virtual DOM como abstracción del DOM real. Los componentes crean y modifican dinámicamente la estructura del documento en función del estado (loading states, condicionales, listas dinámicas). Los refs se usan donde se requiere acceso directo al DOM (`useRef`). Las acciones están asociadas a eventos del modelo a través del sistema de eventos sintéticos de React. No se manipula el DOM "crudo" directamente (document.querySelector, etc.) porque React lo abstrae correctamente; el nivel Excelente aplica el criterio original orientado a JS vanilla.
-
-**Mejora posible**: Uso explícito de refs para manipulación directa en casos donde aplica (scroll automático, foco programático) y documentar esas decisiones.
-
-**Nota normalizada (0–10): 7,5**
+**Justificación**: Uso avanzado de refs para medición de DOM, ResizeObserver, cleanup correcto de efectos, estados complejos interdependientes. Excelente dominio del modelo de objetos en React.
 
 ---
 
-#### 1.5 Desarrolla aplicaciones Web dinámicas, reconociendo y aplicando mecanismos de comunicación asíncrona entre cliente y servidor
+### DWEC-5: Comunicación asíncrona — PUNTUACIÓN: 4 / 4 (10 pts)
 
-**Nota obtenida: 4 — Excelente**
+**Evidencia:**
+- **Polling con router.reload**: Dashboard, Asignaturas, Tareas — todos implementan polling cada 5s con `router.reload({ only: [...] })` para partial reloads SPA.
+- **useForm de Inertia**: Login usa `Form` con `method="post"`, `action={store().url}`, `resetOnSuccess`. Dashboard usa `useForm` con `post` para actualizar matriz.
+- **Endpoints /api/***: Definidos en `web.php` — `/api/asignaturas`, `/api/tareas/{courseId}`, `/api/all-tareas`, `/api/calificaciones`, `/api/recursos/{courseId}`, `/api/all-recursos`, `/api/configuracion`.
+- **Estados de carga**: `loading` prop + `<Spinner>` + `<Skeleton>` + `aria-live="polite" aria-busy="true"`.
+- **Manejo de errores**: `dashboardError`, `pageError` — errores del servidor mostrados con `<AlertError>`.
+- **Formatos múltiples**: ICS export (`/tareas/export-all.ics`), PDF download (`/calificaciones/report`), JSON endpoints.
+- **Navegación SPA**: `<Link href={...}>` de Inertia para navegación sin recarga.
+- **Cancelación**: `cancelled = true` + `clearTimeout` en cleanup de useEffect.
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **4 — Excelente** ✅ | Se ha utilizado comunicación asíncrona en la actualización dinámica del documento, utilizando distintos formatos en el envío y recepción de información, incorporando librerías que facilitan las tecnologías de actualización dinámica. |
+**Justificación**: Comunicación asíncrona completa: polling con partial reloads, formularios Inertia, endpoints JSON, exportaciones multi-formato, estados de carga, manejo de errores, cancelación de peticiones. Excelente.
 
-**Justificación**: Éste es el punto más sólido de DWEC. El proyecto implementa múltiples capas de comunicación asíncrona:
-1. **Inertia.js**: SPA con navegación asíncrona sin recarga completa, intercambio de props JSON entre servidor y cliente.
-2. **Polling de estado**: los endpoints `/dashboard/status`, `/asignaturas/status`, `/tareas/status` se consultan periódicamente para actualizar el estado de carga por sección (patrón Async Cache + Jobs).
-3. **Laravel Echo + Pusher**: WebSockets en tiempo real para notificaciones (canal `notifications.{userId}`).
-4. **Múltiples formatos**: JSON para API, ICS (`text/calendar`) para exportación de tareas, PDF para informes de calificaciones.
-5. **Librerías especializadas**: Inertia, Echo, y el sistema de colas de Laravel como infraestructura asíncrona de servidor.
-
-**Mejora posible**: Ninguna significativa en este criterio; es el de mayor solidez técnica del módulo DWEC.
-
-**Nota normalizada (0–10): 10,0**
 
 ---
 
-### 2. DWES — Desarrollo Web en Entorno Servidor
+## PARTE 2 — RÚBRICA DWES (Desarrollo Web en Entorno Servidor)
 
-Escala cualitativa: **Insuficiente · Mejorable · Suficiente · Correcto · Excelente**  
-Estructura: Backend (70%) compuesto por API REST y MVC; Modelo de Datos (30%).  
-Para normalización a 0–10: Insuficiente=0 · Mejorable=2,5 · Suficiente=5 · Correcto=7,5 · Excelente=10.
+### DWES-API: API REST — Correcto (7.5 pts)
 
-> **Nota crítica**: La rúbrica de DWES define "Correcto" y "Excelente" con "sistema de autenticación y autorización **con roles**" como condición explícita. OrganizaT tiene un único tipo de usuario autenticado (sin sistema RBAC ni roles diferenciados). Esto fija el techo en **Suficiente** para API REST y MVC.
+**a) Diseño de recursos REST: Correcto**
+- Rutas siguen convención: GET para lectura, POST para acciones, PATCH para actualización parcial, DELETE para eliminación.
+- Prefijo `/api` para endpoints JSON separados de rutas web.
+- Rutas bien estructuradas por entidad: `/api/asignaturas`, `/api/tareas/{courseId}`, `/api/calificaciones`, `/api/recursos/{courseId}`.
+- **Carencia**: No hay paginación ni filtros en endpoints API. No es REST puro (es Inertia + endpoints de soporte).
 
----
+**b) Autenticación y autorización: Excelente**
+- Fortify para login/registro/2FA/verificación.
+- Middleware `auth` + `verified` en rutas protegidas.
+- Middleware `role.admin` para rutas admin (`/admin`, `/moodle-console`).
+- Roles `admin`/`user` con enum en migración.
 
-#### 2.1 API REST (dentro del 70% de Backend)
+**c) Códigos HTTP: Correcto**
+- Controladores devuelven `Inertia::render()` (200 implícito), `redirect()` (302), `response()->json()` (200).
+- `abort(403)` y `abort(503)` en exportación ICS.
+- Validación con `$request->validate()` devuelve 422 automáticamente.
+- Throttle en rutas sensibles (`throttle:6,1`).
+- **Carencia**: No se observan respuestas 201 explícitas para creación.
 
-**Nota obtenida: Suficiente**
+**d) Pruebas de API: Correcto**
+- 18 archivos Feature + 5 Unit. Cubren: Auth (login, registro, 2FA, password, verificación), Dashboard, Settings/Security, Moodle (conexión, preferencias, notificaciones background), Tareas (exportación ICS).
+- Tests de éxito y error presentes.
+- Tests de autorización (admin middleware).
+- **Carencia**: No hay tests directos de los endpoints `/api/*`. Cobertura cuantitativa no publicada.
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **Suficiente** ✅ | Diseño mejorable de recursos, puntos de entrada y códigos de respuesta. Sistema de autenticación y autorización **sin roles**. Pruebas unitarias con cobertura mejorable. Documentación mejorable sin peticiones de prueba. |
+**e) Documentación API: Correcto**
+- OpenAPI con Scramble (auto-generado). URL pública: `https://organizat.blete.tech/docs/api`.
+- README documenta endpoints con tabla de métodos, parámetros, respuestas y códigos.
+- Ejemplos curl reales y reproducibles.
+- `docs/openapi.md` existe (9KB).
+- **Carencia**: La documentación OpenAPI es auto-generada, no hay anotaciones manuales enriquecidas.
 
-**Evidencia analizada**:
-- Las rutas bajo `/api` están bien organizadas dentro del grupo `auth`+`verified` y agrupadas en `Route::prefix('api')`.
-- Controladores separados por dominio: `MoodleDataController`, `MoodlePreferencesController`, `MoodleConnectionController`, etc.
-- Códigos HTTP correctos: `200`, `201`, `401`, `422`, `500`, `502` usados apropiadamente.
-- **Sin roles**: solo middleware `auth` + `verified`. No hay RBAC, no hay Admin/User ni ninguna capa de autorización diferenciada.
-- Tests: 25 ficheros PHP (Feature + Unit) con escenarios reales, pero no hay colección OpenAPI/Swagger ni Postman exportada.
-- El README incluye tabla de endpoints y ejemplos `curl`, pero la rúbrica para "Correcto" requiere "peticiones de prueba" formales (Postman/OpenAPI), no solo curl en el README.
-
-**Puntos positivos no alcanzables por la restricción de roles**: diseño de rutas correcto, controladores bien separados, HTTP codes acertados, tests existentes y README con curl examples.
-
-**Mejora posible**: Implementar al menos un nivel básico de RBAC (admin vs. alumno) o diferenciar acceso por tipo de usuario. Generar una colección Postman o fichero OpenAPI para la documentación formal de la API.
-
-**Nota normalizada (0–10): 5,0**
-
----
-
-#### 2.2 MVC (dentro del 70% de Backend)
-
-**Nota obtenida: Suficiente**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **Suficiente** ✅ | Separación mejorable de la lógica de negocio de los aspectos de presentación. Sistema de autenticación y autorización **sin roles**. |
-
-**Evidencia analizada**:
-- La separación real del proyecto es **mejor que "mejorable"**: controladores delegan en servicios (`MoodleAcademicService`, `MoodleSessionService`), los jobs encapsulan lógica asíncrona, los modelos acceden a la BD. La arquitectura es MVC sólida con capa de servicios adicional.
-- Sin embargo, la condición de roles es limitante: la rúbrica no permite alcanzar "Correcto" sin sistema de autenticación y autorización con roles.
-- El nivel asignado (Suficiente) **no refleja la calidad real de la separación**, que es cercana al nivel Correcto o Excelente técnicamente, pero la restricción de roles lo impide según la rúbrica.
-
-**Mejora posible**: La separación en sí no necesita mejora. El único bloqueo es la ausencia de roles, misma solución que para API REST.
-
-**Nota normalizada (0–10): 5,0**
+**Puntuación global DWES-API: Correcto → 7.5/10**
 
 ---
 
-#### 2.3 Modelo de Datos (30%)
+### DWES-MVC: MVC — Correcto (7.5 pts)
 
-**Nota obtenida: Suficiente**
+**Evidencia:**
+- **Separación clara**: Controladores orquestan (DashboardController, TareasController), Services contienen lógica (MoodleCasClient, EisenhowerMatrixService, MoodleEphemeralSessionService, MoodleUserAcademicCache, etc.), Vistas son páginas React via Inertia.
+- **Lógica en Services**: 15+ servicios en `app/Services/` con responsabilidades claras. Controladores no hacen parsing HTML ni lógica de negocio compleja directamente.
+- **Inyección de dependencias**: Constructor injection en controladores (`private readonly MoodleUserAcademicCache $cache`, etc.).
+- **Carencia**: No hay Form Requests separados — la validación se hace inline con `$request->validate()`. Los controladores son largos (DashboardController 23KB, TareasController 20KB) con métodos privados de transformación que podrían estar en servicios dedicados.
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **Suficiente** ✅ | Modelo simple poco relacionado. Consultas simples. Documentación mejorable. |
-
-**Evidencia analizada**:
-- El modelo de datos local es muy acotado: tabla `users` (con múltiples columnas JSON para datos Moodle y preferencias), tabla `moodle_notification_emails`, más tablas de framework (`cache`, `jobs`, `sessions`, `password_reset_tokens`, `failed_jobs`).
-- Solo hay 2 entidades de dominio propias (users y moodle_notification_emails) con una relación 1:N básica.
-- Las consultas son simples: lecturas sobre User model y escrituras sobre moodle_notification_emails.
-- La documentación del diseño existe y tiene un diagrama ER en Mermaid (`docs/05-diseno.md`), lo que eleva la valoración respecto a "Mejorable" (que indica documentación deficiente).
-- El uso de columnas JSON (`moodle_notification_preferences`, `dashboard_quick_subject_ids`) añade algo de complejidad a nivel de estructura, pero no equivale a un modelo relacional complejo.
-
-**Mejora posible**: El modelo es intrínsecamente simple por la naturaleza de la aplicación (los datos "ricos" son de Moodle, externos). Si se almacenaran localmente algunas entidades (historial de tareas, asignaturas favoritas, etc.) se enriquecería el modelo de datos con más relaciones reales.
-
-**Nota normalizada (0–10): 5,0**
+**Puntuación: Correcto → 7.5/10**
 
 ---
 
-### 3. DIW — Diseño de Interfaces Web
+### DWES-Modelo: Modelo de Datos — Suficiente (5 pts)
 
-Escala: **0 (Insuficiente) · 2,5 (Aceptable) · 5 (Bueno) · 7,5 (Muy Bueno) · 10 (Excelente)**
+**Evidencia:**
+- **Modelos**: Solo 2 modelos Eloquent (User, ErrorReport). User tiene casts, métodos helper (`isAdmin()`, `hasMoodleBackgroundSession()`).
+- **Migraciones**: 11 migraciones. Tabla users con campos Moodle, 2FA, roles. Tabla error_reports. Tablas de infraestructura (cache, jobs, sessions).
+- **Relaciones**: Solo 1 relación implícita (user_id en moodle_notification_emails). No hay relaciones Eloquent definidas en modelos (`hasMany`, `belongsTo`).
+- **Complejidad**: El modelo es simple. La mayoría de datos académicos viven en cache/Redis, no en BD relacional. No hay consultas complejas con joins, scopes avanzados, ni relaciones N:M.
+- **Diagrama ER**: Presente en `docs/05-diseno.md` con Mermaid y capturas.
+- **Justificación**: El diseño se justifica por la naturaleza del proyecto (datos efímeros de Moodle en cache), pero desde perspectiva académica el modelo relacional es muy básico.
 
----
+**Puntuación: Suficiente → 5/10**
 
-#### 3.1 Planificación y prototipado RA1
-
-**Peso en el módulo: 20%**  
-**Nota obtenida: 7,5 — Muy Bueno**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **7,5 — Muy Bueno** ✅ | Prototipo responsive con uso de auto-layout y componentes bien estructurados, aunque faltan detalles menores en la guía de estilos. |
-
-**Justificación**: El enlace al prototipo Figma está documentado en `docs/04-guia-estilos.md`. La implementación final refleja una planificación estructurada con pantallas consistentes: dashboard con hero block + Eisenhower matrix, vistas por módulo académico (asignaturas, tareas, calificaciones, recursos), zona de configuración separada. No es posible verificar directamente el uso de auto-layout avanzado o variables nativas de Figma desde el repositorio, lo que impide confirmar el nivel Excelente. La correspondencia entre prototipo e implementación es evidente.
-
-**Mejora posible**: Documentar en `docs/04-guia-estilos.md` el uso de componentes en Figma, librería de estilos y variables de Figma de forma explícita para que el evaluador pueda verificar sin abrir el archivo.
-
-**Nota: 7,5**
 
 ---
 
-#### 3.2 Guía de estilos y consistencia visual RA1, RA2
+## PARTE 3 — RÚBRICA DIW (Diseño de Interfaces Web)
 
-**Peso en el módulo: 20%**  
-**Nota obtenida: 10 — Excelente**
+### DIW-1: Planificación y prototipado — 7.5 / 10
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **10 — Excelente** ✅ | Guía de estilos completa: tipografías, colores, tamaños y patrones reutilizables, manteniendo coherencia perfecta en todo el diseño. |
-
-**Justificación**: El sistema de estilos es exhaustivo y coherente:
-- **Tipografía**: 3 familias con roles diferenciados (Space Grotesk + Instrument Sans para texto operativo, JetBrains Mono para código, Playfair Display para display).
-- **Color**: tokens centralizados con soporte dark/light en `_variables.scss`, usando `var(--color-*)` en todos los componentes. Tokens de marca, estados (brand, danger, muted, ring) y overlays rgba.
-- **Espaciado**: escala de `space-1` a `space-12` en rem, radios sm/md/lg y sombras sm/md reutilizables.
-- **BEM**: aplicado consistentemente (`c-academia-header`, `c-academia-header__nav-link`, `p-dashboard__hero`, etc.).
-- **Metodología**: arquitectura ITCSS 7-1 (settings → tools → generic → elements → objects → components → utilities).
-
-La coherencia visual se mantiene a través de todos los módulos de la aplicación mediante este sistema.
-
-**Mejora posible**: No hay mejora significativa en este criterio.
-
-**Nota: 10,0**
+**Evidencia:**
+- Enlace Figma presente: `https://www.figma.com/design/H4suweb5Pc2qJqUs7iRXQ9/...`
+- Guía de estilos describe componentes reutilizables del prototipo.
+- Paleta de colores, tipografías y espaciados documentados.
+- **Carencia**: No se describe explícitamente si el prototipo usa auto-layout ni variables Figma. No hay wireframes separados documentados (solo se menciona "correspondencia con interfaz final"). No puedo verificar el contenido del Figma.
 
 ---
 
-#### 3.3 Definición de estilos avanzados CSS3/Preprocesadores RA2
+### DIW-2: Guía de estilos y consistencia visual — 7.5 / 10
 
-**Peso en el módulo: 20%**  
-**Nota obtenida: 10 — Excelente**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **10 — Excelente** ✅ | Uso avanzado de preprocesadores y metodologías, código limpio y bien documentado. La estructura CSS3 está perfectamente optimizada. |
-
-**Justificación**:
-- **Preprocesador SCSS**: arquitectura 7-1 ITCSS completa con capas separadas (settings, tools, generic, elements, objects, components, utilities).
-- **Mixins**: `up(sm|md|lg|xl)` para media queries responsivos, `focus-ring` para accesibilidad de teclado, y otros mixins de composición reutilizables.
-- **Variables/tokens**: sistema centralizado en `_variables.scss` con CSS custom properties para theming.
-- **Metodología BEM**: nomenclatura consistente y bien aplicada en todos los componentes.
-- Sin estilos hardcodeados, sin píxeles directos salvo donde es justificable (media queries), unidades relativas (rem).
-- Código limpio, sin duplicaciones, con separación clara entre capas.
-
-**Mejora posible**: No hay mejora significativa en este criterio.
-
-**Nota: 10,0**
+**Evidencia:**
+- **Colores tokenizados**: `_variables.scss` tiene 100+ variables de color para light/dark con nomenclatura consistente.
+- **Tipografías**: 3 familias definidas en `_tokens.scss` (sans, mono, display).
+- **Espaciados**: Escala `$space-1` a `$space-12` en rem. Radios `$radius-sm/md/lg`. Sombras `$shadow-sm/md`.
+- **Coherencia SCSS ↔ guía**: La guía documenta lo que está en código.
+- **Carencia**: Algunos valores en páginas SCSS usan valores directos (`2.5rem`, `1.125rem`) en vez de tokens `$space-*`. La guía de estilos escrita (doc) es breve (3KB) — podría ser más exhaustiva con ejemplos visuales.
 
 ---
 
-#### 3.4 Diseño responsive y accesibilidad RA5, RA6
+### DIW-3: Estilos avanzados CSS3/Preprocesadores — 10 / 10
 
-**Peso en el módulo: 20%**  
-**Nota obtenida: 7,5 — Muy Bueno**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **7,5 — Muy Bueno** ✅ | Diseño responsive y accesible, con pequeños detalles que podrían mejorarse en algunos dispositivos o en las pautas WCAG. |
-
-**Justificación**:
-- Breakpoints centralizados con mixin `up(sm|md|lg|xl)` aplicado consistentemente.
-- Mixin `focus-ring` para navegación por teclado accesible.
-- Semántica HTML correcta (según instrucciones del proyecto): `main`, `section`, `article`, `header`, `nav`, etc.
-- Metodología BEM que favorece la accesibilidad estructural.
-- Soporte dark/light mode mediante CSS custom properties.
-- No se evidencia una auditoría WCAG AA formal documentada (axe, Lighthouse accesibilidad > 90), ni atributos ARIA explícitos en componentes complejos como modales o dropdowns, lo que impide confirmar el nivel Excelente ("Cumple con SEO y estándares de accesibilidad").
-
-**Mejora posible**: Ejecutar y documentar un informe de accesibilidad Lighthouse o axe. Añadir `aria-label`, `aria-expanded`, `aria-haspopup` en componentes complejos (Dropdown, Dialog). Verificar ratio de contraste en modo claro y oscuro.
-
-**Nota: 7,5**
+**Evidencia:**
+- **ITCSS 7 capas**: `app.scss` importa en orden correcto: settings → tools → generic → elements → objects → components → utilities.
+- **BEM estricto**: `.p-asignaturas__course--span-1`, `.c-auth-editorial__hero-title`, `.p-dashboard__hero`, `.c-academia-header__nav-link`.
+- **@use moderno**: Todo el proyecto usa `@use` (no `@import`). Ejemplo: `@use '../1-settings/breakpoints' as bp;`.
+- **Mixins reutilizados**: `up(sm|md|lg|xl)` para responsive, `focus-ring` para accesibilidad.
+- **Sin PX hardcodeados** (excepto breakpoints que es correcto): Espaciados en rem, `clamp()` para tipografía responsive.
+- **Código comentado**: Comentarios en nginx conf y PHP, SCSS tiene estructura autoexplicativa.
+- **Subdivisión components**: atoms/molecules/organisms/pages — Atomic Design dentro de ITCSS.
 
 ---
 
-#### 3.5 Interactividad y multimedia RA3, RA4
+### DIW-4: Responsive y accesibilidad — 7.5 / 10
 
-**Peso en el módulo: 10%**  
-**Nota obtenida: 5 — Bueno**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **5 — Bueno** ✅ | Multimedia integrada de forma básica pero funcional, con inconsistencias en su diseño o uso limitado de elementos interactivos. |
-
-**Justificación**: OrganizaT es una aplicación de productividad académica. La integración multimedia es funcional pero acotada:
-- Estados de carga con `Spinner` y `Skeleton` (feedback visual animado).
-- Exportación de archivos multimedia: ICS (calendario) y PDF (informe de calificaciones).
-- Reproductor de media de Moodle (`moodle.media` route) para contenido externo.
-- No hay integración creativa de vídeo, audio, animaciones CSS/JS complejas ni transiciones de página elaboradas.
-
-Esta es la naturaleza de la aplicación (dashboard funcional, no una plataforma de contenido multimedia), por lo que el 5 es la puntuación justa.
-
-**Mejora posible**: Añadir micro-animaciones en transiciones de componentes (framer-motion o CSS transitions), onboarding interactivo con tooltips animados, o vídeos demostrativos embebidos para enriquecer la experiencia multimedia.
-
-**Nota: 5,0**
+**Evidencia:**
+- **Breakpoints**: 4 breakpoints (640, 768, 1024, 1280px) con mixin `up()`.
+- **Responsive**: `clamp()` para tipografía, `min()` para containers, grid responsive con `minmax`.
+- **Labels**: `<Label htmlFor="email">`, `<Label htmlFor="password">` en formularios.
+- **ARIA**: `aria-live="polite"`, `aria-busy="true"`, `aria-hidden="true"`, `aria-label` en secciones.
+- **Semántica HTML**: `<article>`, `<section>`, `<header>`, `<main>`, `<nav>`, `<figure>`, `<footer>`.
+- **Focus visible**: Mixin `focus-ring` con outline.
+- **Imágenes**: `alt` descriptivos (`alt={`Imagen de ${course.title}`}`), `loading="lazy"`.
+- **Carencia**: No puedo verificar jerarquía h1→h2→h3 completa en todas las páginas. No hay skip-to-content link visible. No hay pruebas de accesibilidad automatizadas (axe, lighthouse).
 
 ---
 
-#### 3.6 Usabilidad y experiencia de usuario UX RA5, RA6
+### DIW-5: Interactividad y multimedia — 5 / 10
 
-**Peso en el módulo: 10%**  
-**Nota obtenida: 7,5 — Muy Bueno**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **7,5 — Muy Bueno** ✅ | Navegación fluida y mayoritariamente intuitiva, con mínimos problemas detectados en las verificaciones. |
-
-**Justificación**:
-- Navegación SPA con Inertia (sin recarga completa, transición suave entre páginas).
-- Estados de carga explícitos: Spinner/Skeleton mientras se obtienen datos de Moodle.
-- Feedback de errores claro (`Alert`, `AlertError`) con mensajes contextuales.
-- Dashboard con Eisenhower matrix para priorización visual de tareas.
-- Cabecera académica común (`AcademiaHeader`) en todas las secciones para coherencia de navegación.
-- Soporte dark/light mode.
-- No se documenta verificación formal de usabilidad (test con usuarios, Hotjar, etc.) que justificaría el nivel Excelente.
-
-**Mejora posible**: Realizar y documentar al menos un test de usabilidad básico (5 usuarios, tareas definidas). Implementar breadcrumbs más descriptivos y mensajes de onboarding para usuarios nuevos.
-
-**Nota: 7,5**
+**Evidencia:**
+- **Elementos interactivos**: Calendario interactivo, matriz Eisenhower con cuadrantes, timeline expandible, polling con estados de carga.
+- **Coherencia con sistema de diseño**: Spinner, Skeleton, Alert — todos del sistema UI.
+- **Carencia**: No se observan animaciones CSS/transitions explícitas en SCSS (no hay `@keyframes`, `transition`, `animation` en los archivos leídos). No hay optimización de imágenes documentada (no hay `<picture>`, srcset, WebP). No hay vídeos ni multimedia rica.
 
 ---
 
-### 4. Despliegue de Aplicaciones Web
+### DIW-6: Usabilidad y UX — 7.5 / 10
 
-Escala: **1 (Insuficiente) · 2 (Básico) · 3 (Bien) · 4 (Excelente)**  
-Para normalización a 0–10: 1→0 · 2→5 · 3→7,5 · 4→10.
+**Evidencia:**
+- **Navegación**: Header académico común en todas las secciones, breadcrumbs, sidebar.
+- **Estados error/éxito**: `<AlertError>` con mensajes claros, estados de sesión Moodle caducada.
+- **Feedback formularios**: Validación inmediata (onBlur), spinner en botón submit, `processing` state.
+- **Flujo onboarding**: Conexión Moodle desde Settings > Seguridad con feedback claro.
+- **Carencia**: No hay evidencia de pruebas de usabilidad con usuarios reales. El flujo de conexión Moodle está en Settings, no en un onboarding dedicado al primer uso.
 
----
-
-#### 4.1 Arquitectura de la aplicación
-
-**Peso en el módulo: 20%**  
-**Nota obtenida: 4 — Excelente**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **4 — Excelente** ✅ | Arquitectura claramente definida y separada por servicios. Se explica qué hace cada servicio y cómo se comunican. Evidenciada con diagrama en README/DEPLOY y con el compose. Funciona al levantar el proyecto. |
-
-**Justificación**: La arquitectura de 7 servicios Docker está perfectamente definida y documentada:
-- `app` (Laravel PHP-FPM), `worker` (queue:work), `scheduler` (schedule:work), `nginx` (HTTP + estáticos), `redis` (cache/sesiones/colas), `db` (MySQL 8.4), `adminer` (gestión DB).
-- Diagramas Mermaid en `README.md` y `docs/08-despliegue.md` con arquitectura runtime y lógica.
-- `docker-compose.beta.yml` con todos los servicios y sus dependencias.
-- Explicación de la comunicación entre servicios (Redis como bus de colas, PHP-FPM detrás de Nginx, Worker consumiendo de Redis).
-
-**Mejora posible**: Ninguna significativa.
-
-**Nota normalizada (0–10): 10,0**
 
 ---
 
-#### 4.2 Implementación Docker
+## PARTE 4 — RÚBRICA DESPLIEGUE
 
-**Peso en el módulo: 20%**  
-**Nota obtenida: 4 — Excelente**
+### Despliegue-1: Arquitectura — 4 / 4 (10 pts)
 
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **4 — Excelente** ✅ | Proyecto completamente "dockerizado" y reproducible. Dockerfile(s) correctos y compose.yaml con instrucciones claras. Redes internas y puertos limpios. Volúmenes para persistencia. Variables de entorno bien gestionadas (.env.example). Imagen publicada en registry. |
-
-**Justificación**:
-- **Dockerfile multi-stage** (5 etapas: `base` → `vendor` → `frontend` → `runtime` → `nginx`): imagen final limpia sin artefactos de build.
-- **docker-compose.beta.yml**: 7 servicios con healthchecks, named volumes, YAML anchors, internal networks.
-- **`.env.beta.example`**: plantilla completa de variables con script de validación (`bootstrap-droplet-beta.sh`) que rechaza placeholders sin reemplazar.
-- **Imagen publicada** en `ghcr.io` mediante `deploy-beta.yml` (evidenciada en el workflow).
-- Solo se expone el puerto HTTP de Nginx; el resto de servicios se comunican en red interna.
-
-**Mejora posible**: Ninguna significativa.
-
-**Nota normalizada (0–10): 10,0**
+**Evidencia:**
+- 7 servicios claramente separados: app, worker, scheduler, nginx, redis, db, adminer.
+- Diagrama Mermaid en README con flujo completo.
+- Cada servicio justificado y explicado en `docs/08-despliegue.md`.
+- Comunicación entre servicios documentada (nginx → app via fastcgi, app → redis, app → db).
 
 ---
 
-#### 4.3 Servidor web/front (reverse proxy)
+### Despliegue-2: Implementación Docker — 4 / 4 (10 pts)
 
-**Peso en el módulo: 15%** *(Este ítem no aparece en los criterios de evaluación final, pero se evalúa como parte de la rúbrica de Despliegue)*  
-**Nota obtenida: 4 — Excelente**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **4 — Excelente** ✅ | Servidor web actúa como front real: reverse proxy al backend y sirve estáticos. HTTPS configurado correctamente (o explicado por qué no se usa). Contextos/rutas adecuadas. Se explican adaptaciones. Evidenciado con fichero de configuración. |
-
-**Justificación**:
-- **`docker/nginx/conf.d/default.conf`**: configuración completa con upstream a `app:9000` (PHP-FPM), keepalive 16, serving de estáticos con `expires 30d` y `Cache-Control: public, immutable`.
-- Gzip activado con tipos MIME correctos.
-- Security headers incluidos via `include /etc/nginx/snippets/security-headers.conf`.
-- Proxy a Adminer en `/adminer/`.
-- HTTPS en producción (`https://organizat.blete.tech/`) gestionado a nivel de infraestructura (Cloudflare o proxy externo), lo cual es una solución válida y habitual en entornos beta.
-- Acceso correcto documentado.
-
-**Mejora posible**: Documentar explícitamente en `docs/08-despliegue.md` cómo se gestiona el TLS (Cloudflare/Let's Encrypt/etc.) para que quede claro en la evidencia.
-
-**Nota normalizada (0–10): 10,0**  
-*(Este ítem no contribuye a los criterios de evaluación de la rúbrica oficial, pero refleja un trabajo Excelente)*
+**Evidencia:**
+- Dockerfile multi-stage (5 targets: base, vendor, frontend, runtime, nginx).
+- `.env.example` y `.env.beta.example` presentes.
+- Solo puerto HTTP expuesto (`APP_HTTP_PORT:-8080`).
+- Red interna `backend` entre servicios.
+- Volúmenes para persistencia: `db_data`, `redis_data`.
+- Imágenes publicadas en GHCR (deploy-beta.yml).
+- Variables de entorno bien gestionadas con `env_file`.
+- Healthchecks en todos los servicios.
 
 ---
 
-#### 4.4 Servidor de aplicaciones
+### Despliegue-3: Reverse proxy (Nginx) — 3 / 4 (6.67 pts)
 
-**Peso en el módulo: 15%**  
-**Nota obtenida: 3 — Bien**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **3 — Bien** ✅ | Backend correctamente configurado y probado, pero con menos profundidad (pruebas de rendimiento muy básicas o explicación corta). Evidencia funcionamiento y logs. |
-
-**Justificación**:
-- PHP-FPM correctamente configurado como servidor de aplicaciones detrás de Nginx.
-- Redis como driver para sesiones, caché y colas (documentado en variables de entorno).
-- Workers de cola independientes con `queue:work` en contenedor separado.
-- Tests funcionales con Pest (25 ficheros PHP, cobertura de Feature + Unit).
-- El README incluye ejemplos curl reproducibles para verificar endpoints.
-- **No se evidencian pruebas de rendimiento/carga** (ab, wrk, k6, Siege) que el nivel Excelente requiere.
-
-**Mejora posible**: Ejecutar al menos una prueba básica de carga (ej. `wrk -t4 -c50 -d30s http://localhost/api/asignaturas`) y documentar el resultado con interpretación.
-
-**Nota normalizada (0–10): 7,5**
+**Evidencia:**
+- Nginx hace reverse proxy a PHP-FPM via upstream `php_fpm_upstream`.
+- Sirve estáticos directamente con cache 30d.
+- Rutas `/adminer/` proxied a servicio adminer.
+- Security headers configurados (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, X-XSS-Protection, Permissions-Policy).
+- Logs configurados (access_log, error_log).
+- Gzip habilitado con tipos correctos.
+- **Carencia**: HTTPS no está configurado en nginx (se justifica que hay proxy externo que termina TLS, pero no hay configuración SSL en el proyecto). No hay rate limiting en nginx.
 
 ---
 
-#### 4.5 Control de versiones + CI/CD
+### Despliegue-4: Servidor de aplicaciones — 3 / 4 (6.67 pts)
 
-**Peso en el módulo: 20%**  
-**Nota obtenida: 4 — Excelente**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **4 — Excelente** ✅ | Git ordenado con ramas para features, main estable, commits descriptivos. GitHub Actions con CI (build + tests) y CD (publicar imagen + despliegue). Run correcto evidenciado. Secrets usados. |
-
-**Justificación**:
-- **3 workflows de GitHub Actions**:
-  - `tests.yml`: matriz PHP 8.4/8.5, ejecuta Pest suite completa.
-  - `lint.yml`: Pint (PHP), ESLint + TypeScript + Prettier (frontend) — calidad de código automatizada.
-  - `deploy-beta.yml`: pipeline completo CI → build imagen multi-stage → push `ghcr.io` → SSH deploy, con `migrate --force`, `optimize`, `queue:restart`.
-- Secrets usados (`GHCR_TOKEN`, `SSH_PRIVATE_KEY`, `SSH_HOST`, etc.).
-- Rama `deploy-beta` separada de `main` para el despliegue.
-- La existencia y complejidad de los 3 workflows demuestra madurez en la práctica CI/CD.
-
-**Mejora posible**: Ninguna significativa. Se podría añadir análisis estático de seguridad (SAST) como action adicional.
-
-**Nota normalizada (0–10): 10,0**
+**Evidencia:**
+- PHP-FPM configurado: pool dinámico (max_children=10, start=2, min_spare=2, max_spare=4, max_requests=500).
+- OPcache optimizado (192MB, 20000 files, validate_timestamps=0).
+- Logs: `catch_workers_output = yes`.
+- Ping/status paths configurados.
+- **Carencia**: No hay pruebas de rendimiento/carga documentadas. No hay evidencia de pruebas con curl a endpoints en docs de despliegue (sí hay ejemplos curl en README pero no resultados de pruebas).
 
 ---
 
-#### 4.6 Documentación del despliegue
+### Despliegue-5: CI/CD — 4 / 4 (10 pts)
 
-**Peso en el módulo: 10%**  
-**Nota obtenida: 4 — Excelente**
-
-| Nivel | Descripción (rúbrica) |
-|---|---|
-| **4 — Excelente** ✅ | Documentación permite entender, ejecutar y mantener el proyecto sin ayuda. README con arquitectura + diagrama + API documentada con curl + Deploy paso a paso + variables de entorno + troubleshooting. |
-
-**Justificación**:
-- `README.md`: índice completo, diagrama Mermaid de arquitectura runtime, tabla de endpoints con métodos/parámetros/códigos, ejemplos curl reales, instrucciones de arranque local y beta, sección de troubleshooting básico.
-- `docs/08-despliegue.md`: dockerfile explicado por etapas, configuración de entorno, flujo del workflow CI/CD paso a paso, opción automatizada con script.
-- `.env.beta.example`: todas las variables documentadas con comentarios.
-- Script `bootstrap-droplet-beta.sh` con validación previa al despliegue.
-- No hay aspectos importantes sin documentar.
-
-**Mejora posible**: Ninguna significativa.
-
-**Nota normalizada (0–10): 10,0**
+**Evidencia:**
+- `tests.yml`: Matrix PHP 8.4/8.5, Node 22, ejecuta Pest.
+- `lint.yml`: Pint (PHP), formatcheck, lintcheck, typescheck (TS).
+- `deploy-beta.yml`: CI completo → build multi-stage → push GHCR → deploy SSH con migrate + optimize + queue:restart.
+- Secrets de GitHub (SERVER_HOST, SERVER_USER, SERVER_PASSWORD, GITHUB_TOKEN).
+- Concurrency control (`cancel-in-progress: true`).
+- Flujo de branches: develop/deploy-beta/main.
+- **Bonus**: Verificación de estructura del proyecto en CI antes de build.
 
 ---
 
-## Criterios de evaluación y pesos — Cálculo de notas
+### Despliegue-6: Documentación del despliegue — 4 / 4 (10 pts)
 
-A continuación se calcula la nota de cada criterio combinando las notas de los ítems de rúbrica con sus pesos oficiales, todos normalizados a escala 0–10.
+**Evidencia:**
+- README cubre: arquitectura, requisitos, arranque, API, CI/CD, despliegue paso a paso, variables de entorno, verificación, troubleshooting.
+- Diagrama Mermaid de arquitectura.
+- Endpoints API con tabla completa + ejemplos curl reales.
+- Deploy documentado desde cero (host Ubuntu → Docker → clone → .env → bootstrap).
+- Troubleshooting con 5 problemas reales.
+- `.env.example` y `.env.beta.example` documentados.
+- URL pública: https://organizat.blete.tech
 
-### Tabla de ítems de rúbrica normalizados (referencia)
-
-| Ítem | Nota normalizada (0–10) |
-|---|---|
-| DWEC: Sintaxis moderna del lenguaje | 7,5 |
-| DWEC: Objetos predefinidos | 7,5 |
-| DWEC: Manejo de eventos | 7,5 |
-| DWEC: DOM (modelo de objetos del documento) | 7,5 |
-| DWEC: Comunicación asíncrona | 10,0 |
-| DWES: API REST | 5,0 |
-| DWES: MVC | 5,0 |
-| DWES: Modelo de Datos | 5,0 |
-| DIW: Planificación y prototipado (RA1) | 7,5 |
-| DIW: Guía de estilos y consistencia visual (RA1, RA2) | 10,0 |
-| DIW: Estilos avanzados CSS3/Preprocesadores (RA2) | 10,0 |
-| DIW: Diseño responsive y accesibilidad (RA5, RA6) | 7,5 |
-| DIW: Interactividad y multimedia (RA3, RA4) | 5,0 |
-| DIW: Usabilidad y experiencia de usuario (RA5, RA6) | 7,5 |
-| Despliegue: Arquitectura de la aplicación | 10,0 |
-| Despliegue: Implementación Docker | 10,0 |
-| Despliegue: Servidor de aplicaciones | 7,5 |
-| Despliegue: Control de versiones + CI/CD | 10,0 |
-| Despliegue: Documentación del despliegue | 10,0 |
 
 ---
 
-### Criterio 2h) Documentación para el diseño
+## PARTE 5 — DOCUMENTACIÓN
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DIW: Planificación y prototipado (RA1) | 30% | 7,5 |
-| DIW: Guía de estilos y consistencia visual (RA1, RA2) | 30% | 10,0 |
-| DIW: Definición de estilos avanzados CSS3/Preprocesadores (RA2) | 20% | 10,0 |
-| DIW: Interactividad y multimedia (RA3, RA4) | 20% | 5,0 |
+| Documento | Evaluación | Observaciones |
+|-----------|-----------|---------------|
+| 01-introduccion.md | **COMPLETO** | Origen, motivación, objetivos específicos, comparativa con Moodle, resultado vs objetivos |
+| 02-descripcion.md | **COMPLETO** | Funcionalidades detalladas por sección, usuarios objetivo, casos de uso, límites actuales |
+| 03-instalacion.md | **COMPLETO** | Paso a paso verificable, requisitos con versiones, scripts Docker, variables de entorno |
+| 04-guia-estilos.md | **PARCIAL** | Enlace Figma ✓, tipografías ✓, colores ✓, componentes ✓. Falta: capturas del prototipo, ejemplos visuales de componentes |
+| 05-diseno.md | **COMPLETO** | Diagrama ER Mermaid, casos de uso, flujo de sincronización, arquitectura, diseño API completo |
+| 06-desarrollo.md | **COMPLETO** | Secuencia de desarrollo, dificultades con soluciones, decisiones técnicas justificadas, fragmentos de código |
+| 07-pruebas.md | **COMPLETO** | Metodología, tipos, inventario, casos representativos, ejecución, cobertura (reconoce limitación) |
+| 08-despliegue.md | **COMPLETO** | Entorno, CI/CD, proceso documentado, URL producción, OpenAPI, verificaciones |
+| 09-manual-usuario.md | **PARCIAL** | Guía de uso completa, FAQ/troubleshooting. Falta: capturas de pantalla reales (solo texto) |
+| 10-conclusiones.md | **COMPLETO** | Evaluación crítica honesta, grado cumplimiento, mejoras futuras, lecciones aprendidas, preparación defensa |
 
-**Nota 2h = (7,5×0,30) + (10×0,30) + (10×0,20) + (5×0,20) = 2,25 + 3,00 + 2,00 + 1,00 = 8,25**
-
----
-
-### Criterio 2i) Control de calidad
-
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DIW: Diseño responsive y accesibilidad (RA5, RA6) | 30% | 7,5 |
-| DIW: Usabilidad y experiencia de usuario (RA5, RA6) | 20% | 7,5 |
-| DWEC: Mecanismos de manejo de eventos | 10% | 7,5 |
-| DWEC: Modelo de objetos del documento | 10% | 7,5 |
-| DWEC: Comunicación asíncrona | 10% | 10,0 |
-| DWES: API REST | 20% | 5,0 |
-
-**Nota 2i = (7,5×0,30) + (7,5×0,20) + (7,5×0,10) + (7,5×0,10) + (10×0,10) + (5×0,20) = 2,25 + 1,50 + 0,75 + 0,75 + 1,00 + 1,00 = 7,25**
 
 ---
 
-### Criterio 3d) Procedimientos de actuación
+## PARTE 6 — CÁLCULO DE NOTAS COMPUESTAS
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DWEC: Sintaxis moderna del lenguaje | 10% | 7,5 |
-| DWEC: Objetos predefinidos | 10% | 7,5 |
-| DWEC: Mecanismos de manejo de eventos | 10% | 7,5 |
-| DWEC: Modelo de objetos del documento | 10% | 7,5 |
-| DWEC: Comunicación asíncrona | 10% | 10,0 |
-| DWES: MVC | 20% | 5,0 |
-| DWES: API REST | 20% | 5,0 |
-| Despliegue: Implementación Docker | 10% | 10,0 |
+Valores normalizados usados:
 
-**Nota 3d = (7,5×0,10) + (7,5×0,10) + (7,5×0,10) + (7,5×0,10) + (10×0,10) + (5×0,20) + (5×0,20) + (10×0,10) = 0,75 + 0,75 + 0,75 + 0,75 + 1,00 + 1,00 + 1,00 + 1,00 = 7,00**
-
----
-
-### Criterio 3e) Riesgos y prevención
-
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| Despliegue: Arquitectura de la aplicación | 25% | 10,0 |
-| Despliegue: Implementación Docker | 25% | 10,0 |
-| Despliegue: Servidor de aplicaciones | 20% | 7,5 |
-| Despliegue: Control de versiones + CI/CD | 10% | 10,0 |
-| Despliegue: Documentación del despliegue | 10% | 10,0 |
-| DWES: API REST | 10% | 5,0 |
-
-**Nota 3e = (10×0,25) + (10×0,25) + (7,5×0,20) + (10×0,10) + (10×0,10) + (5×0,10) = 2,50 + 2,50 + 1,50 + 1,00 + 1,00 + 0,50 = 9,00**
+| Ítem | Nota /10 |
+|------|----------|
+| DWEC-1 | 10 |
+| DWEC-2 | 10 |
+| DWEC-3 | 7.5 |
+| DWEC-4 | 10 |
+| DWEC-5 | 10 |
+| DWES-API | 7.5 |
+| DWES-MVC | 7.5 |
+| DWES-Modelo | 5 |
+| DIW-1 | 7.5 |
+| DIW-2 | 7.5 |
+| DIW-3 | 10 |
+| DIW-4 | 7.5 |
+| DIW-5 | 5 |
+| DIW-6 | 7.5 |
+| Deploy-1 | 10 |
+| Deploy-2 | 10 |
+| Deploy-3 | 6.67 |
+| Deploy-4 | 6.67 |
+| Deploy-5 | 10 |
+| Deploy-6 | 10 |
 
 ---
 
-### Criterio 3h) Documentación para la implementación
+### Criterio 2h — Documentación para el diseño
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| Despliegue: Documentación del despliegue | 40% | 10,0 |
-| DWES: API REST | 20% | 5,0 |
-| DWES: MVC | 10% | 5,0 |
-| DWES: Modelo de Datos | 10% | 5,0 |
-| DWEC: Objetos predefinidos | 20% | 7,5 |
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DIW-1: Planificación y prototipado | 30% | 7.5 | 2.25 |
+| DIW-2: Guía de estilos | 30% | 7.5 | 2.25 |
+| DIW-3: Estilos avanzados | 20% | 10 | 2.00 |
+| DIW-5: Interactividad | 20% | 5 | 1.00 |
+| **NOTA CRITERIO 2h** | | | **7.50 / 10** |
 
-**Nota 3h = (10×0,40) + (5×0,20) + (5×0,10) + (5×0,10) + (7,5×0,20) = 4,00 + 1,00 + 0,50 + 0,50 + 1,50 = 7,50**
+### Criterio 2i — Control de calidad
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DIW-4: Responsive y accesibilidad | 30% | 7.5 | 2.25 |
+| DIW-6: Usabilidad y UX | 20% | 7.5 | 1.50 |
+| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
+| DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
+| DWES-API: API REST | 20% | 7.5 | 1.50 |
+| **NOTA CRITERIO 2i** | | | **8.00 / 10** |
+
+### Criterio 3d — Procedimientos de actuación
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DWEC-1: Sintaxis moderna | 10% | 10 | 1.00 |
+| DWEC-2: Objetos predefinidos | 10% | 10 | 1.00 |
+| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
+| DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
+| DWES-MVC: MVC | 20% | 7.5 | 1.50 |
+| DWES-API: API REST | 20% | 7.5 | 1.50 |
+| Despliegue-2: Docker | 10% | 10 | 1.00 |
+| **NOTA CRITERIO 3d** | | | **8.75 / 10** |
+
+### Criterio 3e — Riesgos y prevención
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| Despliegue-1: Arquitectura | 25% | 10 | 2.50 |
+| Despliegue-2: Docker | 25% | 10 | 2.50 |
+| Despliegue-4: Servidor aplicaciones | 20% | 6.67 | 1.33 |
+| Despliegue-5: CI/CD | 10% | 10 | 1.00 |
+| Despliegue-6: Documentación | 10% | 10 | 1.00 |
+| DWES-API: API REST | 10% | 7.5 | 0.75 |
+| **NOTA CRITERIO 3e** | | | **9.08 / 10** |
+
+### Criterio 3h — Documentación para la implementación
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| Despliegue-6: Documentación | 40% | 10 | 4.00 |
+| DWES-API: API REST | 20% | 7.5 | 1.50 |
+| DWES-MVC: MVC | 10% | 7.5 | 0.75 |
+| DWES-Modelo: Modelo datos | 10% | 5 | 0.50 |
+| DWEC-2: Objetos predefinidos | 20% | 10 | 2.00 |
+| **NOTA CRITERIO 3h** | | | **8.75 / 10** |
+
+### Criterio 4a — Procedimiento de evaluación
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DWES-API: API REST | 30% | 7.5 | 2.25 |
+| DWES-MVC: MVC | 10% | 7.5 | 0.75 |
+| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
+| DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
+| DIW-4: Responsive y accesibilidad | 20% | 7.5 | 1.50 |
+| Despliegue-5: CI/CD | 10% | 10 | 1.00 |
+| **NOTA CRITERIO 4a** | | | **8.25 / 10** |
+
+### Criterio 4b — Indicadores de calidad
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DIW-4: Responsive y accesibilidad | 25% | 7.5 | 1.875 |
+| DIW-6: Usabilidad y UX | 15% | 7.5 | 1.125 |
+| DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
+| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
+| DWES-API: API REST | 20% | 7.5 | 1.50 |
+| Despliegue-5: CI/CD | 10% | 10 | 1.00 |
+| **NOTA CRITERIO 4b** | | | **8.25 / 10** |
+
+### Criterio 4c — Evaluación de incidencias
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| Despliegue-4: Servidor aplicaciones | 20% | 6.67 | 1.33 |
+| Despliegue-2: Docker | 20% | 10 | 2.00 |
+| DWES-API: API REST | 20% | 7.5 | 1.50 |
+| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
+| Despliegue-6: Documentación | 20% | 10 | 2.00 |
+| **NOTA CRITERIO 4c** | | | **8.58 / 10** |
+
+### Criterio 4d — Gestión de cambios
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DWES-MVC: MVC | 30% | 7.5 | 2.25 |
+| DWEC-1: Sintaxis moderna | 10% | 10 | 1.00 |
+| DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
+| DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
+| Despliegue-5: CI/CD | 20% | 10 | 2.00 |
+| DIW-2: Guía de estilos | 20% | 7.5 | 1.50 |
+| **NOTA CRITERIO 4d** | | | **8.75 / 10** |
+
+### Criterio 4e — Documentación para la evaluación
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| Despliegue-6: Documentación | 30% | 10 | 3.00 |
+| DIW-6: Usabilidad y UX | 20% | 7.5 | 1.50 |
+| DWES-API: API REST | 25% | 7.5 | 1.875 |
+| DWEC-2: Objetos predefinidos | 25% | 10 | 2.50 |
+| **NOTA CRITERIO 4e** | | | **8.875 / 10** |
+
+### Criterio 4f — Participación de usuarios
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DIW-6: Usabilidad y UX | 40% | 7.5 | 3.00 |
+| DIW-5: Interactividad y multimedia | 10% | 5 | 0.50 |
+| DWEC-3: Manejo de eventos | 20% | 7.5 | 1.50 |
+| DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
+| DWEC-2: Objetos predefinidos | 20% | 10 | 2.00 |
+| **NOTA CRITERIO 4f** | | | **8.00 / 10** |
+
+### Criterio 4g — Cumplimiento del pliego de condiciones
+
+| Ítem | Peso | Nota | Contribución |
+|------|------|------|-------------|
+| DIW-2: Guía de estilos | 20% | 7.5 | 1.50 |
+| DWEC-1: Sintaxis moderna | 10% | 10 | 1.00 |
+| DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
+| DWES-API: API REST | 30% | 7.5 | 2.25 |
+| Despliegue-5: CI/CD | 30% | 10 | 3.00 |
+| **NOTA CRITERIO 4g** | | | **8.75 / 10** |
+
 
 ---
 
-### Criterio 4a) Procedimiento de evaluación
+## PARTE 7 — TABLA RESUMEN FINAL
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DWES: API REST | 30% | 5,0 |
-| DWES: MVC | 10% | 5,0 |
-| DWEC: Mecanismos de manejo de eventos | 10% | 7,5 |
-| DWEC: Modelo de objetos del documento | 10% | 7,5 |
-| DWEC: Comunicación asíncrona | 10% | 10,0 |
-| DIW: Diseño responsive y accesibilidad (RA5, RA6) | 20% | 7,5 |
-| Despliegue: Control de versiones + CI/CD | 10% | 10,0 |
-
-**Nota 4a = (5×0,30) + (5×0,10) + (7,5×0,10) + (7,5×0,10) + (10×0,10) + (7,5×0,20) + (10×0,10) = 1,50 + 0,50 + 0,75 + 0,75 + 1,00 + 1,50 + 1,00 = 7,00**
-
----
-
-### Criterio 4b) Indicadores de calidad
-
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DIW: Diseño responsive y accesibilidad (RA5, RA6) | 25% | 7,5 |
-| DIW: Usabilidad y experiencia de usuario (RA5, RA6) | 15% | 7,5 |
-| DWEC: Comunicación asíncrona | 10% | 10,0 |
-| DWEC: Mecanismos de manejo de eventos | 10% | 7,5 |
-| DWEC: Modelo de objetos del documento | 10% | 7,5 |
-| DWES: API REST | 20% | 5,0 |
-| Despliegue: Control de versiones + CI/CD | 10% | 10,0 |
-
-**Nota 4b = (7,5×0,25) + (7,5×0,15) + (10×0,10) + (7,5×0,10) + (7,5×0,10) + (5×0,20) + (10×0,10) = 1,875 + 1,125 + 1,00 + 0,75 + 0,75 + 1,00 + 1,00 = 7,50**
-
----
-
-### Criterio 4c) Evaluación de incidencias
-
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| Despliegue: Servidor de aplicaciones | 20% | 7,5 |
-| Despliegue: Implementación Docker | 20% | 10,0 |
-| DWES: API REST | 20% | 5,0 |
-| DWEC: Mecanismos de manejo de eventos | 10% | 7,5 |
-| DWEC: Comunicación asíncrona | 10% | 10,0 |
-| Despliegue: Documentación del despliegue | 20% | 10,0 |
-
-**Nota 4c = (7,5×0,20) + (10×0,20) + (5×0,20) + (7,5×0,10) + (10×0,10) + (10×0,20) = 1,50 + 2,00 + 1,00 + 0,75 + 1,00 + 2,00 = 8,25**
+| Criterio | Nota / 10 | Calificación |
+|----------|-----------|--------------|
+| **ÍTEMS BASE** | | |
+| DWEC-1 Sintaxis moderna | 10.0 | Excelente |
+| DWEC-2 Objetos predefinidos | 10.0 | Excelente |
+| DWEC-3 Eventos | 7.5 | Bien |
+| DWEC-4 DOM | 10.0 | Excelente |
+| DWEC-5 Asíncrona | 10.0 | Excelente |
+| DWES-API REST | 7.5 | Correcto |
+| DWES-MVC | 7.5 | Correcto |
+| DWES-Modelo de datos | 5.0 | Suficiente |
+| DIW-1 Prototipado | 7.5 | Muy Bueno |
+| DIW-2 Guía estilos | 7.5 | Muy Bueno |
+| DIW-3 CSS avanzado | 10.0 | Excelente |
+| DIW-4 Responsive/Accesibilidad | 7.5 | Muy Bueno |
+| DIW-5 Interactividad/Multimedia | 5.0 | Bueno |
+| DIW-6 Usabilidad/UX | 7.5 | Muy Bueno |
+| Deploy-1 Arquitectura | 10.0 | Excelente |
+| Deploy-2 Docker | 10.0 | Excelente |
+| Deploy-3 Reverse proxy | 6.67 | Bien |
+| Deploy-4 Servidor aplicaciones | 6.67 | Bien |
+| Deploy-5 CI/CD | 10.0 | Excelente |
+| Deploy-6 Documentación | 10.0 | Excelente |
+| **CRITERIOS COMPUESTOS** | | |
+| 2h Documentación diseño | 7.50 | |
+| 2i Control de calidad | 8.00 | |
+| 3d Procedimientos de actuación | 8.75 | |
+| 3e Riesgos y prevención | 9.08 | |
+| 3h Documentación implementación | 8.75 | |
+| 4a Procedimiento evaluación | 8.25 | |
+| 4b Indicadores de calidad | 8.25 | |
+| 4c Evaluación incidencias | 8.58 | |
+| 4d Gestión de cambios | 8.75 | |
+| 4e Documentación evaluación | 8.88 | |
+| 4f Participación de usuarios | 8.00 | |
+| 4g Cumplimiento pliego | 8.75 | |
 
 ---
 
-### Criterio 4d) Gestión de cambios
+### Media global orientativa
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DWES: MVC | 30% | 5,0 |
-| DWEC: Sintaxis moderna del lenguaje | 10% | 7,5 |
-| DWEC: Modelo de objetos del documento | 10% | 7,5 |
-| DWEC: Comunicación asíncrona | 10% | 10,0 |
-| Despliegue: Control de versiones + CI/CD | 20% | 10,0 |
-| DIW: Guía de estilos y consistencia visual (RA1, RA2) | 20% | 10,0 |
-
-**Nota 4d = (5×0,30) + (7,5×0,10) + (7,5×0,10) + (10×0,10) + (10×0,20) + (10×0,20) = 1,50 + 0,75 + 0,75 + 1,00 + 2,00 + 2,00 = 8,00**
+- **Media ítems base**: 8.14 / 10
+- **Media criterios compuestos**: 8.46 / 10
+- **Nota global estimada**: **8.3 / 10** (Notable alto)
 
 ---
 
-### Criterio 4e) Documentación para la evaluación
+### 3 Puntos más fuertes del proyecto
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| Despliegue: Documentación del despliegue | 30% | 10,0 |
-| DIW: Usabilidad y experiencia de usuario (RA5, RA6) | 20% | 7,5 |
-| DWES: API REST | 25% | 5,0 |
-| DWEC: Objetos predefinidos | 25% | 7,5 |
-
-**Nota 4e = (10×0,30) + (7,5×0,20) + (5×0,25) + (7,5×0,25) = 3,00 + 1,50 + 1,25 + 1,875 = 7,63**
+1. **Infraestructura de despliegue excepcional**: Dockerfile multi-stage, 7 servicios con healthchecks, CI/CD completo con 3 workflows, deploy automatizado por SSH. Nivel profesional real.
+2. **Frontend TypeScript de alta calidad**: Tipado estricto en todas las páginas, hooks personalizados reutilizables, polling asíncrono con cleanup correcto, manipulación avanzada del DOM con ResizeObserver.
+3. **Arquitectura SCSS impecable**: ITCSS 7 capas + BEM estricto + @use moderno + tokens centralizados + dark/light theme. Es el mejor aspecto técnico del proyecto desde perspectiva de mantenibilidad.
 
 ---
 
-### Criterio 4f) Participación de usuarios
+### 3 Puntos más débiles que más penalizan
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DIW: Usabilidad y experiencia de usuario (RA5, RA6) | 40% | 7,5 |
-| DIW: Interactividad y multimedia (RA3, RA4) | 10% | 5,0 |
-| DWEC: Mecanismos de manejo de eventos | 20% | 7,5 |
-| DWEC: Modelo de objetos del documento | 10% | 7,5 |
-| DWEC: Objetos predefinidos | 20% | 7,5 |
-
-**Nota 4f = (7,5×0,40) + (5×0,10) + (7,5×0,20) + (7,5×0,10) + (7,5×0,20) = 3,00 + 0,50 + 1,50 + 0,75 + 1,50 = 7,25**
+1. **Modelo de datos muy simple** (5/10): Solo 2 modelos Eloquent, sin relaciones definidas, sin consultas complejas. La justificación técnica (datos en cache) es válida pero académicamente penaliza.
+2. **Interactividad/multimedia limitada** (5/10): No hay animaciones CSS, transitions, ni multimedia rica. El proyecto es funcional pero visualmente estático.
+3. **Tests de endpoints API ausentes**: Los endpoints `/api/*` no tienen tests directos. La cobertura cuantitativa no se publica. Esto baja DWES-API de Excelente a Correcto.
 
 ---
 
-### Criterio 4g) Cumplimiento del pliego de condiciones
+### Recomendaciones prioritarias antes de la entrega (22 de mayo) — ordenadas por impacto en nota
 
-| Ítem de rúbrica | Peso | Nota |
-|---|---|---|
-| DIW: Guía de estilos y consistencia visual (RA1, RA2) | 20% | 10,0 |
-| DWEC: Sintaxis moderna del lenguaje | 10% | 7,5 |
-| DWEC: Modelo de objetos del documento | 10% | 7,5 |
-| DWES: API REST | 30% | 5,0 |
-| Despliegue: Control de versiones + CI/CD | 30% | 10,0 |
+1. **[ALTO IMPACTO] Añadir 2-3 tests Feature para endpoints `/api/*`** (mejora DWES-API de 7.5 a 8.5-9): Un test de `/api/asignaturas`, `/api/tareas/{id}` y `/api/configuracion` con mock de sesión Moodle. Impacta en 8 criterios compuestos.
 
-**Nota 4g = (10×0,20) + (7,5×0,10) + (7,5×0,10) + (5×0,30) + (10×0,30) = 2,00 + 0,75 + 0,75 + 1,50 + 3,00 = 8,00**
+2. **[ALTO IMPACTO] Añadir transitions/animations CSS** (mejora DIW-5 de 5 a 7.5): Añadir `transition` en hover de tarjetas, `@keyframes` para skeleton loading, y `transition` en apertura de menús. 30 minutos de trabajo, impacta en criterios 2h y 4f.
 
----
+3. **[MEDIO IMPACTO] Añadir capturas de pantalla al manual de usuario** (mejora doc 09 de PARCIAL a COMPLETO): 4-5 screenshots de las pantallas principales. Impacta en percepción general del tribunal.
 
-## Resumen de notas por criterio
+4. **[MEDIO IMPACTO] Definir relación Eloquent `hasMany` en User** para `moodle_notification_emails` (mejora DWES-Modelo de 5 a 6-6.5): Una línea de código que demuestra conocimiento de ORM.
 
-| Criterio | Descripción | Nota (0–10) |
-|---|---|---|
-| **2h** | Documentación para el diseño | **8,25** |
-| **2i** | Control de calidad | **7,25** |
-| **3d** | Procedimientos de actuación | **7,00** |
-| **3e** | Riesgos y prevención | **9,00** |
-| **3h** | Documentación para la implementación | **7,50** |
-| **4a** | Procedimiento de evaluación | **7,00** |
-| **4b** | Indicadores de calidad | **7,50** |
-| **4c** | Evaluación de incidencias | **8,25** |
-| **4d** | Gestión de cambios | **8,00** |
-| **4e** | Documentación para la evaluación | **7,63** |
-| **4f** | Participación de usuarios | **7,25** |
-| **4g** | Cumplimiento del pliego de condiciones | **8,00** |
-
----
-
-## Nota media final
-
-$$\text{Nota final} = \frac{8{,}25 + 7{,}25 + 7{,}00 + 9{,}00 + 7{,}50 + 7{,}00 + 7{,}50 + 8{,}25 + 8{,}00 + 7{,}63 + 7{,}25 + 8{,}00}{12} = \frac{91{,}63}{12} \approx \mathbf{7{,}64 / 10}$$
-
-**Calificación: Notable (7,64)**
-
----
-
-## Análisis de fortalezas y debilidades
-
-### Fortalezas (lo que eleva la nota)
-
-1. **Infraestructura y DevOps excepcional**: Despliegue Docker multi-stage, 7 servicios bien definidos, 3 workflows CI/CD completos (tests + lint + deploy). Es el punto más sólido del proyecto, alcanzando el máximo en casi todos los ítems de Despliegue.
-
-2. **Sistema de estilos CSS/SCSS de nivel profesional**: Arquitectura 7-1 ITCSS, BEM, token system con dark/light, mixins reutilizables. Los ítems de DIW relacionados con preprocesadores y guía de estilos alcanzan el máximo.
-
-3. **Comunicación asíncrona avanzada**: Inertia SPA + polling de estado + Laravel Echo/WebSockets + múltiples formatos de respuesta (JSON, ICS, PDF). El único ítem de DWEC que alcanza Excelente.
-
-4. **Documentación técnica completa**: README exhaustivo con diagramas, curl examples, troubleshooting, junto a los 10 documentos de memoria.
-
-### Debilidades (lo que limita la nota)
-
-1. **Ausencia de roles/RBAC** *(impacto: −2 a −3 puntos en criterios que incluyen DWES)*: Es el mayor limitante. Los ítems DWES API REST y MVC no pueden superar "Suficiente" según la rúbrica por esta razón. Afecta a los criterios 2i, 3d, 3e, 3h, 4a, 4b, 4c, 4d, 4e, 4g.
-
-2. **Modelo de datos simple**: Solo 2 entidades de dominio propias. Inevitable dada la naturaleza de la aplicación (datos en Moodle), pero penaliza el criterio DWES Modelo de Datos.
-
-3. **Sin documentación formal de API** (OpenAPI/Swagger/Postman): El README tiene curl examples, pero no hay una colección exportable que cumpla el estándar de "documentación formal con peticiones de prueba".
-
-4. **Ausencia de pruebas de rendimiento**: No hay evidencia de load testing documentado, lo que impide alcanzar el Excelente en Servidor de Aplicaciones.
-
-5. **Comentarios de código insuficientes en TSX**: El código TypeScript está bien tipado pero no está comentado "en todo momento", limitando la nota de Sintaxis moderna a Bien en lugar de Excelente.
-
-### Acciones concretas de mejora (por impacto descendente)
-
-1. **[Alto impacto]** Añadir sistema de roles básico (admin/usuario) con `spatie/laravel-permission` o un guard simple. Desbloquearía API REST y MVC de Suficiente → Correcto (+2,5 puntos por ítem normalizados).
-
-2. **[Alto impacto]** Generar colección Postman exportable (`postman_collection.json`) o un fichero `openapi.yaml`. Complementa la documentación existente y eleva la puntuación de API REST.
-
-3. **[Medio impacto]** Ejecutar y documentar un test de carga básico (wrk/k6) en `docs/08-despliegue.md`. Desbloquearía Servidor de Aplicaciones de Bien → Excelente.
-
-4. **[Medio impacto]** Añadir JSDoc a hooks personalizados y componentes principales. Desbloquearía DWEC Sintaxis moderna de Bien → Excelente.
-
-5. **[Bajo impacto]** Ejecutar auditoría de accesibilidad (Lighthouse/axe) y documentar el resultado con porcentaje. Añadir ARIA attributes en componentes complejos (Dialog, Dropdown). Desbloquearía DIW Responsive/Accesibilidad de Muy Bueno → Excelente.
+5. **[BAJO IMPACTO] Añadir un evento de teclado** (Escape para cerrar modales, Enter para confirmar): Mejora DWEC-3 de 7.5 a 8.5-9.
