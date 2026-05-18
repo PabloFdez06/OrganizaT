@@ -38,6 +38,14 @@ class MoodlePreferencesController extends Controller
         'email_moodle_message' => true,
     ];
 
+    /**
+     * Devuelve las preferencias de notificación Moodle del usuario autenticado.
+     *
+     * Fusiona los valores guardados con los valores por defecto, devolviendo siempre
+     * un objeto completo con todas las claves de preferencia.
+     *
+     * @return JsonResponse Objeto con todas las preferencias de notificación (boolean e int).
+     */
     public function show(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -46,6 +54,14 @@ class MoodlePreferencesController extends Controller
         return response()->json(array_merge($this->defaults, $saved));
     }
 
+    /**
+     * Actualiza las preferencias de notificación Moodle del usuario autenticado.
+     *
+     * Acepta un subconjunto de los campos de preferencia (todos son opcionales).
+     * Los campos no enviados mantienen su valor actual.
+     *
+     * @return JsonResponse `{ message: string, data: object }` con las preferencias actualizadas.
+     */
     public function update(Request $request): JsonResponse
     {
         $data = $request->validate([

@@ -137,8 +137,44 @@ La URL publica final depende del entorno de entrega. En esta memoria dejo el cam
 
 1. URL beta/publica: https://organizat.blete.tech/.
 
-## 8.11 Conclusiones de despliegue
+## 8.11 Documentación OpenAPI (Swagger)
+
+La aplicación incluye documentación OpenAPI 3.x generada automáticamente con **dedoc/scramble**.
+
+### URLs de acceso (producción/beta)
+
+- **Swagger UI**: `https://organizat.blete.tech/docs/api`
+- **JSON spec (OpenAPI)**: `https://organizat.blete.tech/docs/api.json`
+
+### Arquitectura de publicación
+
+La documentación se sirve por la misma entrada HTTPS del sitio, sin puertos adicionales.
+No requiere ningún servicio extra ni cambios en `docker-compose.beta.yml`.
+
+```
+Cliente → HTTPS (proxy externo) → nginx (puerto 80) → PHP-FPM → Scramble → /docs/api
+```
+
+### HTTPS y proxy reverso
+
+- `TrustProxies(at: '*')` está configurado en `bootstrap/app.php`.
+- nginx reenvía `X-Forwarded-Proto` al PHP-FPM (ver `docker/nginx/conf.d/default.conf`).
+- El JSON spec genera URLs de servidor con esquema `https://` en producción.
+
+### Verificación post-despliegue
+
+```bash
+# Verificar que la UI responde
+curl -I https://organizat.blete.tech/docs/api
+
+# Verificar que el JSON es válido
+curl -s https://organizat.blete.tech/docs/api.json | python3 -m json.tool > /dev/null && echo "OK"
+```
+
+### Seguridad
+
+La documentación es **pública** (sin login), pero los endpoints reales siguen protegidos por
+middleware `auth` + `verified`. Ver decisión completa en [docs/openapi.md](openapi.md).
+
+## 8.12 Conclusiones de despliegue
 He dejado una base de despliegue reproducible y escalable para un TFG individual: separacion de servicios, pipeline automatizada, healthchecks y scripts operativos reales. El siguiente salto natural seria reforzar observabilidad y publicar metrica de cobertura en CI como artefacto permanente, y asi ultimar como deploy en producción.
-
-
-

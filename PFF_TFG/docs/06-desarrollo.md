@@ -116,6 +116,8 @@ solución: tabla moodle_notification_emails con unique(user_id, notification_id)
 4. Usé colas y scheduler porque el modelo de notificaciones lo exige.
 5. Dockericé con multi-stage para mejorar reproducibilidad de despliegue.
 6. Nos arriesgamos en cierta parte por no prescindir de las notificaciones en segundo plano, como se explica en el problema 1 del punto anterior.
+7. Implementé documentación OpenAPI con **dedoc/scramble** para exponer el spec de la API JSON
+   automáticamente desde el código, sin anotaciones manuales. Ver [docs/openapi.md](openapi.md).
 
 ## 6.9 Control de versiones y flujo de trabajo
 He trabajado con ramas y automatizacion en GitHub Actions:

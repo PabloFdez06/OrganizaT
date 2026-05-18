@@ -17,6 +17,14 @@ class MoodleDataController extends Controller
         private readonly MoodleEphemeralSessionService $sessionService,
     ) {}
 
+    /**
+     * Obtiene la lista de asignaturas (cursos) Moodle del usuario autenticado.
+     *
+     * Devuelve los cursos activos del alumno obtenidos de la caché interna de OrganizaT.
+     * Si la sesión Moodle ha expirado se devuelve 401.
+     *
+     * @return JsonResponse Array de cursos con id, nombre, progreso y metadatos.
+     */
     public function asignaturas(Request $request): JsonResponse
     {
         try {
@@ -38,6 +46,12 @@ class MoodleDataController extends Controller
         }
     }
 
+    /**
+     * Obtiene las tareas de una asignatura concreta.
+     *
+     * @param  int  $courseId  Identificador del curso Moodle.
+     * @return JsonResponse Array de tareas con nombre, fecha de entrega, estado y calificación.
+     */
     public function tareas(Request $request, int $courseId): JsonResponse
     {
         try {
@@ -59,6 +73,11 @@ class MoodleDataController extends Controller
         }
     }
 
+    /**
+     * Obtiene el agregado de todas las tareas de todas las asignaturas.
+     *
+     * @return JsonResponse Payload con cursos y tareas agrupadas, listas para dashboard y calendario.
+     */
     public function allTareas(Request $request): JsonResponse
     {
         try {
@@ -80,6 +99,11 @@ class MoodleDataController extends Controller
         }
     }
 
+    /**
+     * Obtiene las calificaciones del usuario en todas las asignaturas.
+     *
+     * @return JsonResponse Array de calificaciones por asignatura con notas por tarea/actividad.
+     */
     public function calificaciones(Request $request): JsonResponse
     {
         try {
@@ -101,6 +125,12 @@ class MoodleDataController extends Controller
         }
     }
 
+    /**
+     * Obtiene los recursos de una asignatura concreta.
+     *
+     * @param  int  $courseId  Identificador del curso Moodle.
+     * @return JsonResponse Array de recursos (ficheros, URLs, actividades) de la asignatura.
+     */
     public function recursos(Request $request, int $courseId): JsonResponse
     {
         try {
@@ -122,6 +152,11 @@ class MoodleDataController extends Controller
         }
     }
 
+    /**
+     * Obtiene el agregado de todos los recursos de todas las asignaturas.
+     *
+     * @return JsonResponse Payload con recursos agrupados por asignatura.
+     */
     public function allRecursos(Request $request): JsonResponse
     {
         try {

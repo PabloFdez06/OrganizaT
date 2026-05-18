@@ -9,7 +9,7 @@ Aplicación web para alumnado de FP que centraliza información académica de Mo
 - [3. Arquitectura](#3-arquitectura)
 - [4. Requisitos previos](#4-requisitos-previos)
 - [5. Arranque local](#5-arranque-local)
-- [6. API y endpoints](#6-api-y-endpoints)
+- [6. API, endpoints y documentación OpenAPI](#6-api-endpoints-y-documentación-openapi)
 - [7. Calidad y pruebas](#7-calidad-y-pruebas)
 - [8. CI/CD](#8-cicd)
 - [9. Despliegue beta desde cero (Docker)](#9-despliegue-beta-desde-cero-docker)
@@ -119,13 +119,27 @@ composer dev
 
 `composer dev` levanta servidor Laravel, cola y Vite en paralelo.
 
-## 6. API y endpoints
+## 6. API, endpoints y documentación OpenAPI
 
-Nota de arquitectura:
+### 6.0 Documentación OpenAPI (Swagger)
+
+La API dispone de **documentación OpenAPI 3.x generada automáticamente** mediante [dedoc/scramble](https://scramble.dedoc.co/).
+
+| Recurso | URL (beta/producción) | URL (local) |
+| --- | --- | --- |
+| Swagger UI | `https://organizat.blete.tech/docs/api` | `http://localhost/docs/api` |
+| JSON spec (OpenAPI) | `https://organizat.blete.tech/docs/api.json` | `http://localhost/docs/api.json` |
+
+La documentación es **pública** (no requiere login para leer el spec). La API en sí requiere sesión activa.
+Se sirve por el mismo dominio y la misma entrada HTTPS — no hay puerto adicional.
+Ver documentación técnica completa en [docs/openapi.md](docs/openapi.md).
+
+### 6.1 Nota de arquitectura de rutas
 
 1. La aplicación principal funciona sobre Inertia (rutas web).
 2. Existen endpoints JSON de soporte en prefijo `/api`.
 3. Las rutas principales estan protegidas por middleware `auth` y `verified`.
+
 
 ### 6.1 Endpoints JSON principales
 
@@ -317,4 +331,6 @@ Checklist:
 - Prototipo Figma: <https://www.figma.com/design/H4suweb5Pc2qJqUs7iRXQ9/Prototipo_TFG_PFF?node-id=0-1&t=Dou0TuJGGV2lCw4X-1>
 - documentación 01-10: [docs/](docs/)
 - URL publica beta/producción: https://organizat.blete.tech.
+- Swagger UI: https://organizat.blete.tech/docs/api
+- OpenAPI JSON spec: https://organizat.blete.tech/docs/api.json
 
