@@ -69,7 +69,7 @@ const TASK_BATCH_SIZE = 5;
 const SIDE_CARD_MIN_WIDTH_REM = 15;
 const SIDE_GRID_GAP_REM = 1;
 const FALLBACK_ROOT_FONT_SIZE_PX = 16;
-const FEATURED_SUBJECT_HERO_IMAGE = 'https://www.figma.com/api/mcp/asset/e9a3c07d-e088-4d12-97b6-95272c044a93';
+const FEATURED_SUBJECT_HERO_IMAGE = '/imgs/subject-hero.png';
 
 function calculateSubjectsPerRow(containerWidthPx: number, rootFontSizePx: number): number {
     const minCardWidthPx = SIDE_CARD_MIN_WIDTH_REM * rootFontSizePx;
