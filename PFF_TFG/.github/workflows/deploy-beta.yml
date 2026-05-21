@@ -194,7 +194,7 @@ jobs:
 
             git fetch --all --prune
             git switch deploy-beta
-            git pull origin deploy-beta
+            git pull origin deploy-beta 
 
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
