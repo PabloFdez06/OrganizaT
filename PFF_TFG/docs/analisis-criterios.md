@@ -32,7 +32,7 @@
 
 ---
 
-### DWEC-3: Manejo de eventos — PUNTUACIÓN: 3 / 4 (7.5 pts)
+### DWEC-3: Manejo de eventos — PUNTUACIÓN: 4 / 4 (10 pts)
 
 **Evidencia:**
 - **Formularios con validación cliente**: `useFormValidation` hook con reglas (`required`, `email`, `minLength`, `maxLength`, `matches`). Login usa `onBefore={() => validateAll()}` para validar antes de enviar.
@@ -40,9 +40,11 @@
 - **Errores servidor + cliente**: `clientErrors.email || translateServerError(errors.email)` — combinación de validación local y errores de Inertia.
 - **Accesibilidad formularios**: `<Label htmlFor="email">`, `required`, `autoComplete`, `tabIndex` ordenados.
 - **Eventos de UI**: onClick implícitos en Links y Buttons, onChange/onBlur en inputs.
-- **Carencia**: No se observan eventos personalizados (CustomEvent), ni event bubbling/delegation explícito, ni handlers de teclado (keydown/keyup) más allá de los nativos del navegador. Los formularios no usan `onSubmit` directo sino el `Form` de Inertia con `onBefore`.
+- **Keyboard shortcut**: `sidebar.tsx` implementa `window.addEventListener('keydown', handleKeyDown)` con `SIDEBAR_KEYBOARD_SHORTCUT = 'b'` para toggle de sidebar mediante teclado, con cleanup correcto en `return () => window.removeEventListener('keydown', handleKeyDown)`. Listener nativo del DOM, no delegación de React.
+- **Delegación Inertia**: `router.on('start', ...)` y `router.on('finish', ...)` — interceptación de eventos de navegación SPA para gestionar estados de carga.
+- **Carencia menor**: No se usan CustomEvent de la API del navegador. Event bubbling no se usa explícitamente (correcto en React con SyntheticEvent).
 
-**Justificación**: Validación cliente-servidor bien integrada con hook reutilizable. Handlers correctamente tipados. Formularios accesibles. Falta variedad de eventos (keyboard, custom events) para el 4.
+**Justificación**: Validación cliente-servidor integrada con hook reutilizable. Handlers tipados con `ChangeEvent`, `FocusEvent`, `FormEvent`. Keyboard shortcut con addEventListener/removeEventListener nativos. Cleanup correcto en useEffect. Cobertura completa de mecanismos de eventos requeridos por el criterio.
 
 ---
 
@@ -195,12 +197,14 @@
 
 ---
 
-### DIW-5: Interactividad y multimedia — 5 / 10
+### DIW-5: Interactividad y multimedia — 7.5 / 10
 
 **Evidencia:**
 - **Elementos interactivos**: Calendario interactivo, matriz Eisenhower con cuadrantes, timeline expandible, polling con estados de carga.
 - **Coherencia con sistema de diseño**: Spinner, Skeleton, Alert — todos del sistema UI.
-- **Carencia**: No se observan animaciones CSS/transitions explícitas en SCSS (no hay `@keyframes`, `transition`, `animation` en los archivos leídos). No hay optimización de imágenes documentada (no hay `<picture>`, srcset, WebP). No hay vídeos ni multimedia rica.
+- **Animaciones CSS**: `_asignaturas.scss` — `@keyframes asignaturas-loading-spin` con `animation: ... 1s linear infinite` y `transform: rotate()`. `_helpers.scss` — `@keyframes c-global-loading-spin` (spinner global). `_welcome.scss` — 4 `@keyframes`: `welcome-glow-breathe` (4s ease-in-out), `welcome-phone-float` (5s), `welcome-tag-float` (5s), `welcome-marquee` (22s linear) con `animation-delay` escalonado.
+- **Transitions CSS**: `_button.scss` (atoms) — `transition: background-color 180ms ease, border-color 180ms ease` en todos los botones. `_admin.scss` — transitions en hover de badges y filas. `_welcome.scss` — 10+ transitions (`transform`, `width/height`, `color`, `background`, `stroke`) con duraciones de 0.12s a 0.4s.
+- **Carencia**: No hay vídeos ni audio. Imágenes sin `<picture>`/srcset/WebP. La interactividad multimedia está presente en la landing y estados de carga, pero es limitada en las páginas internas de la app autenticada.
 
 ---
 
@@ -242,7 +246,7 @@
 
 ---
 
-### Despliegue-3: Reverse proxy (Nginx) — 3 / 4 (6.67 pts)
+### Despliegue-3: Reverse proxy (Nginx) — 4 / 4 (10 pts)
 
 **Evidencia:**
 - Nginx hace reverse proxy a PHP-FPM via upstream `php_fpm_upstream`.
@@ -251,18 +255,21 @@
 - Security headers configurados (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, X-XSS-Protection, Permissions-Policy).
 - Logs configurados (access_log, error_log).
 - Gzip habilitado con tipos correctos.
-- **Carencia**: HTTPS no está configurado en nginx (se justifica que hay proxy externo que termina TLS, pero no hay configuración SSL en el proyecto). No hay rate limiting en nginx.
+- **HTTPS**: El proxy externo (hosting) termina TLS. Nginx recibe HTTP/80 y reenvía `X-Forwarded-Proto: https`. `TrustProxies(at: '*')` en `bootstrap/app.php` garantiza URLs correctas. Justificado en documentación.
+- **Logs documentados**: `08-despliegue-eval.md` (sección C8) incluye comando y ejemplo de salida real del `access.log` en formato Combined Log Format, con 7 peticiones representativas (GET, POST, redirección, JSON, asset) y tabla explicativa.
 
 ---
 
-### Despliegue-4: Servidor de aplicaciones — 3 / 4 (6.67 pts)
+### Despliegue-4: Servidor de aplicaciones — 4 / 4 (10 pts)
 
 **Evidencia:**
 - PHP-FPM configurado: pool dinámico (max_children=10, start=2, min_spare=2, max_spare=4, max_requests=500).
 - OPcache optimizado (192MB, 20000 files, validate_timestamps=0).
 - Logs: `catch_workers_output = yes`.
 - Ping/status paths configurados.
-- **Carencia**: No hay pruebas de rendimiento/carga documentadas. No hay evidencia de pruebas con curl a endpoints en docs de despliegue (sí hay ejemplos curl en README pero no resultados de pruebas).
+- **Prueba de carga**: `docs/08-despliegue.md` sección 8.14 documenta Apache Bench con resultados reales: `/up` = 144 req/s, `/` = 29 req/s, `/docs/api` = 13 req/s. 0 fallos en todas las pruebas. Interpretación técnica incluida.
+- **Curl endpoints**: Sección 8.15 documenta curl a 5 endpoints con cabeceras de respuesta completas y análisis.
+- **Configuración PHP-FPM + OPcache**: Sección 8.13 con tabla de todos los parámetros configurados y justificación de cada valor.
 
 ---
 
@@ -319,7 +326,7 @@ Valores normalizados usados:
 |------|----------|
 | DWEC-1 | 10 |
 | DWEC-2 | 10 |
-| DWEC-3 | 7.5 |
+| DWEC-3 | 10 |
 | DWEC-4 | 10 |
 | DWEC-5 | 10 |
 | DWES-API | 7.5 |
@@ -329,12 +336,12 @@ Valores normalizados usados:
 | DIW-2 | 7.5 |
 | DIW-3 | 10 |
 | DIW-4 | 7.5 |
-| DIW-5 | 5 |
+| DIW-5 | 7.5 |
 | DIW-6 | 7.5 |
 | Deploy-1 | 10 |
 | Deploy-2 | 10 |
-| Deploy-3 | 6.67 |
-| Deploy-4 | 6.67 |
+| Deploy-3 | 10 |
+| Deploy-4 | 10 |
 | Deploy-5 | 10 |
 | Deploy-6 | 10 |
 
@@ -347,8 +354,8 @@ Valores normalizados usados:
 | DIW-1: Planificación y prototipado | 30% | 7.5 | 2.25 |
 | DIW-2: Guía de estilos | 30% | 7.5 | 2.25 |
 | DIW-3: Estilos avanzados | 20% | 10 | 2.00 |
-| DIW-5: Interactividad | 20% | 5 | 1.00 |
-| **NOTA CRITERIO 2h** | | | **7.50 / 10** |
+| DIW-5: Interactividad | 20% | 7.5 | 1.50 |
+| **NOTA CRITERIO 2h** | | | **8.00 / 10** |
 
 ### Criterio 2i — Control de calidad
 
@@ -356,11 +363,11 @@ Valores normalizados usados:
 |------|------|------|-------------|
 | DIW-4: Responsive y accesibilidad | 30% | 7.5 | 2.25 |
 | DIW-6: Usabilidad y UX | 20% | 7.5 | 1.50 |
-| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-3: Manejo de eventos | 10% | 10 | 1.00 |
 | DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
 | DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
 | DWES-API: API REST | 20% | 7.5 | 1.50 |
-| **NOTA CRITERIO 2i** | | | **8.00 / 10** |
+| **NOTA CRITERIO 2i** | | | **8.25 / 10** |
 
 ### Criterio 3d — Procedimientos de actuación
 
@@ -368,13 +375,13 @@ Valores normalizados usados:
 |------|------|------|-------------|
 | DWEC-1: Sintaxis moderna | 10% | 10 | 1.00 |
 | DWEC-2: Objetos predefinidos | 10% | 10 | 1.00 |
-| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-3: Manejo de eventos | 10% | 10 | 1.00 |
 | DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
 | DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
 | DWES-MVC: MVC | 20% | 7.5 | 1.50 |
 | DWES-API: API REST | 20% | 7.5 | 1.50 |
 | Despliegue-2: Docker | 10% | 10 | 1.00 |
-| **NOTA CRITERIO 3d** | | | **8.75 / 10** |
+| **NOTA CRITERIO 3d** | | | **9.00 / 10** |
 
 ### Criterio 3e — Riesgos y prevención
 
@@ -382,11 +389,11 @@ Valores normalizados usados:
 |------|------|------|-------------|
 | Despliegue-1: Arquitectura | 25% | 10 | 2.50 |
 | Despliegue-2: Docker | 25% | 10 | 2.50 |
-| Despliegue-4: Servidor aplicaciones | 20% | 6.67 | 1.33 |
+| Despliegue-4: Servidor aplicaciones | 20% | 10 | 2.00 |
 | Despliegue-5: CI/CD | 10% | 10 | 1.00 |
 | Despliegue-6: Documentación | 10% | 10 | 1.00 |
 | DWES-API: API REST | 10% | 7.5 | 0.75 |
-| **NOTA CRITERIO 3e** | | | **9.08 / 10** |
+| **NOTA CRITERIO 3e** | | | **9.75 / 10** |
 
 ### Criterio 3h — Documentación para la implementación
 
@@ -405,12 +412,12 @@ Valores normalizados usados:
 |------|------|------|-------------|
 | DWES-API: API REST | 30% | 7.5 | 2.25 |
 | DWES-MVC: MVC | 10% | 7.5 | 0.75 |
-| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-3: Manejo de eventos | 10% | 10 | 1.00 |
 | DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
 | DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
 | DIW-4: Responsive y accesibilidad | 20% | 7.5 | 1.50 |
 | Despliegue-5: CI/CD | 10% | 10 | 1.00 |
-| **NOTA CRITERIO 4a** | | | **8.25 / 10** |
+| **NOTA CRITERIO 4a** | | | **8.50 / 10** |
 
 ### Criterio 4b — Indicadores de calidad
 
@@ -419,23 +426,23 @@ Valores normalizados usados:
 | DIW-4: Responsive y accesibilidad | 25% | 7.5 | 1.875 |
 | DIW-6: Usabilidad y UX | 15% | 7.5 | 1.125 |
 | DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
-| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-3: Manejo de eventos | 10% | 10 | 1.00 |
 | DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
 | DWES-API: API REST | 20% | 7.5 | 1.50 |
 | Despliegue-5: CI/CD | 10% | 10 | 1.00 |
-| **NOTA CRITERIO 4b** | | | **8.25 / 10** |
+| **NOTA CRITERIO 4b** | | | **8.50 / 10** |
 
 ### Criterio 4c — Evaluación de incidencias
 
 | Ítem | Peso | Nota | Contribución |
 |------|------|------|-------------|
-| Despliegue-4: Servidor aplicaciones | 20% | 6.67 | 1.33 |
+| Despliegue-4: Servidor aplicaciones | 20% | 10 | 2.00 |
 | Despliegue-2: Docker | 20% | 10 | 2.00 |
 | DWES-API: API REST | 20% | 7.5 | 1.50 |
-| DWEC-3: Manejo de eventos | 10% | 7.5 | 0.75 |
+| DWEC-3: Manejo de eventos | 10% | 10 | 1.00 |
 | DWEC-5: Comunicación asíncrona | 10% | 10 | 1.00 |
 | Despliegue-6: Documentación | 20% | 10 | 2.00 |
-| **NOTA CRITERIO 4c** | | | **8.58 / 10** |
+| **NOTA CRITERIO 4c** | | | **9.50 / 10** |
 
 ### Criterio 4d — Gestión de cambios
 
@@ -464,11 +471,11 @@ Valores normalizados usados:
 | Ítem | Peso | Nota | Contribución |
 |------|------|------|-------------|
 | DIW-6: Usabilidad y UX | 40% | 7.5 | 3.00 |
-| DIW-5: Interactividad y multimedia | 10% | 5 | 0.50 |
-| DWEC-3: Manejo de eventos | 20% | 7.5 | 1.50 |
+| DIW-5: Interactividad y multimedia | 10% | 7.5 | 0.75 |
+| DWEC-3: Manejo de eventos | 20% | 10 | 2.00 |
 | DWEC-4: Modelo objetos documento | 10% | 10 | 1.00 |
 | DWEC-2: Objetos predefinidos | 20% | 10 | 2.00 |
-| **NOTA CRITERIO 4f** | | | **8.00 / 10** |
+| **NOTA CRITERIO 4f** | | | **8.75 / 10** |
 
 ### Criterio 4g — Cumplimiento del pliego de condiciones
 
@@ -491,7 +498,7 @@ Valores normalizados usados:
 | **ÍTEMS BASE** | | |
 | DWEC-1 Sintaxis moderna | 10.0 | Excelente |
 | DWEC-2 Objetos predefinidos | 10.0 | Excelente |
-| DWEC-3 Eventos | 7.5 | Bien |
+| DWEC-3 Eventos | 10.0 | Excelente |
 | DWEC-4 DOM | 10.0 | Excelente |
 | DWEC-5 Asíncrona | 10.0 | Excelente |
 | DWES-API REST | 7.5 | Correcto |
@@ -501,50 +508,50 @@ Valores normalizados usados:
 | DIW-2 Guía estilos | 7.5 | Muy Bueno |
 | DIW-3 CSS avanzado | 10.0 | Excelente |
 | DIW-4 Responsive/Accesibilidad | 7.5 | Muy Bueno |
-| DIW-5 Interactividad/Multimedia | 5.0 | Bueno |
+| DIW-5 Interactividad/Multimedia | 7.5 | Muy Bueno |
 | DIW-6 Usabilidad/UX | 7.5 | Muy Bueno |
 | Deploy-1 Arquitectura | 10.0 | Excelente |
 | Deploy-2 Docker | 10.0 | Excelente |
-| Deploy-3 Reverse proxy | 6.67 | Bien |
-| Deploy-4 Servidor aplicaciones | 6.67 | Bien |
+| Deploy-3 Reverse proxy | 10.0 | Excelente |
+| Deploy-4 Servidor aplicaciones | 10.0 | Excelente |
 | Deploy-5 CI/CD | 10.0 | Excelente |
 | Deploy-6 Documentación | 10.0 | Excelente |
 | **CRITERIOS COMPUESTOS** | | |
-| 2h Documentación diseño | 7.50 | |
-| 2i Control de calidad | 8.00 | |
-| 3d Procedimientos de actuación | 8.75 | |
-| 3e Riesgos y prevención | 9.08 | |
+| 2h Documentación diseño | 8.00 | |
+| 2i Control de calidad | 8.25 | |
+| 3d Procedimientos de actuación | 9.00 | |
+| 3e Riesgos y prevención | 9.75 | |
 | 3h Documentación implementación | 8.75 | |
-| 4a Procedimiento evaluación | 8.25 | |
-| 4b Indicadores de calidad | 8.25 | |
-| 4c Evaluación incidencias | 8.58 | |
+| 4a Procedimiento evaluación | 8.50 | |
+| 4b Indicadores de calidad | 8.50 | |
+| 4c Evaluación incidencias | 9.50 | |
 | 4d Gestión de cambios | 8.75 | |
 | 4e Documentación evaluación | 8.88 | |
-| 4f Participación de usuarios | 8.00 | |
+| 4f Participación de usuarios | 8.75 | |
 | 4g Cumplimiento pliego | 8.75 | |
 
 ---
 
 ### Media global orientativa
 
-- **Media ítems base**: 8.14 / 10
-- **Media criterios compuestos**: 8.46 / 10
-- **Nota global estimada**: **8.3 / 10** (Notable alto)
+- **Media ítems base**: 8.38 / 10
+- **Media criterios compuestos**: 8.80 / 10
+- **Nota global estimada**: **8.6 / 10** (Notable muy alto)
 
 ---
 
 ### 3 Puntos más fuertes del proyecto
 
 1. **Infraestructura de despliegue excepcional**: Dockerfile multi-stage, 7 servicios con healthchecks, CI/CD completo con 3 workflows, deploy automatizado por SSH. Nivel profesional real.
-2. **Frontend TypeScript de alta calidad**: Tipado estricto en todas las páginas, hooks personalizados reutilizables, polling asíncrono con cleanup correcto, manipulación avanzada del DOM con ResizeObserver.
-3. **Arquitectura SCSS impecable**: ITCSS 7 capas + BEM estricto + @use moderno + tokens centralizados + dark/light theme. Es el mejor aspecto técnico del proyecto desde perspectiva de mantenibilidad.
+2. **Frontend TypeScript de alta calidad**: Tipado estricto en todas las páginas, hooks personalizados reutilizables, polling asíncrono con cleanup correcto, manipulación avanzada del DOM con ResizeObserver, keyboard shortcuts nativos.
+3. **Arquitectura SCSS impecable**: ITCSS 7 capas + BEM estricto + @use moderno + tokens centralizados + dark/light theme + 6 `@keyframes` + 15+ transitions. Animaciones coherentes con el sistema de diseño.
 
 ---
 
 ### 3 Puntos más débiles que más penalizan
 
 1. **Modelo de datos muy simple** (5/10): Solo 2 modelos Eloquent, sin relaciones definidas, sin consultas complejas. La justificación técnica (datos en cache) es válida pero académicamente penaliza.
-2. **Interactividad/multimedia limitada** (5/10): No hay animaciones CSS, transitions, ni multimedia rica. El proyecto es funcional pero visualmente estático.
+2. **DWES-API no es REST puro** (7.5/10): El frontend usa Inertia (no cliente REST independiente), los endpoints `/api/*` no tienen tests directos, no se usan respuestas 201 para creación.
 3. **Tests de endpoints API ausentes**: Los endpoints `/api/*` no tienen tests directos. La cobertura cuantitativa no se publica. Esto baja DWES-API de Excelente a Correcto.
 
 ---

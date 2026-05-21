@@ -133,6 +133,17 @@ Comprobaciones recomendadas:
 3. Redis responde con PONG.
 4. Migraciones aplicadas sin error.
 
+## Prueba de carga post-instalación
+
+Una vez instalado el entorno beta, se puede validar el comportamiento del servidor de aplicaciones bajo carga ligera con:
+
+```bash
+# Requiere apache2-utils: sudo apt-get install apache2-utils
+bash scripts/ops/load-test.sh https://organizat.blete.tech
+```
+
+Esto ejecuta tres escenarios con Apache Bench contra `/up`, `/` y `/docs/api` y muestra throughput, tiempos de respuesta y percentiles. Ver interpretación en [08-despliegue.md — Sección 8.14](08-despliegue.md).
+
 ## Preparacion para CI/CD
 La pipeline definida en GitHub Actions exige como minimo:
 

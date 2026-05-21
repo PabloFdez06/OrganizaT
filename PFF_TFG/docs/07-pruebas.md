@@ -94,6 +94,41 @@ Punto importante: aunque en CI se habilita xdebug en workflow de tests, actualme
 ## 7.9 Conclusiones de calidad
 Con la suite actual he conseguido una base de control de calidad estable para evitar regresiones graves en las funcionalidades principales. Para una siguiente versión, mi prioridad es reforzar frontend y cobertura cuantitativa reportada para subir madurez de testing. Pero actualmente he de indicar que tengo una "base" bastante solida y que tras cada despliegue, hay una verificación exhaustiva de que todo funciona como deberia.
 
+## 7.10 Prueba de rendimiento y carga ligera
+
+Además de las pruebas funcionales, he incluido un script de carga ligera con Apache Bench (`ab`) para validar el comportamiento del servidor de aplicaciones bajo concurrencia real.
+
+### Herramienta y script
+
+El script `scripts/ops/load-test.sh` encapsula tres escenarios de prueba:
+
+```bash
+bash scripts/ops/load-test.sh https://organizat.blete.tech
+```
+
+Los escenarios cubren:
+
+1. Endpoint `/up` (200 peticiones, concurrencia 20) — capacidad bruta del stack.
+2. Página principal `/` (100 peticiones, concurrencia 10) — render Inertia completo.
+3. Documentación `/docs/api` (50 peticiones, concurrencia 5) — serialización OpenAPI.
+
+### Resultados obtenidos
+
+| Endpoint | Req/s | p95 (ms) | Errores |
+|---|---|---|---|
+| `/up` | 144 | 193 | 0 |
+| `/` | 29 | 467 | 0 |
+| `/docs/api` | 13 | 481 | 0 |
+
+### Interpretación
+
+- **Sin errores en ningún escenario**: el pool PHP-FPM dinámico (`pm = dynamic`, `max_children = 10`) absorbe la concurrencia sin saturarse.
+- **`/up` a 144 req/s**: coherente con OPcache activo y mínima lógica PHP ejecutada. Demuestra que el stack nginx → PHP-FPM está operativo y con capacidad de respuesta.
+- **`/` a 29 req/s**: tiempo esperado para un render Inertia completo con serialización de datos. Aceptable para uso beta individual y demostraciones.
+- **`/docs/api` a 13 req/s**: Scramble genera el JSON del spec en cada petición; el throughput más bajo es consecuencia directa del tamaño del spec, no de saturación del servidor.
+
+La configuración de PHP-FPM y los resultados están documentados con detalle en [08-despliegue.md — Sección 8.13 y 8.14](08-despliegue.md).
+
 ## Pruebas de Autorización
 
 ### Middleware y acceso al panel de administración

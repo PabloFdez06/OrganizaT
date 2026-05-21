@@ -13,9 +13,17 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
 
     if (variant === 'header') {
         return (
-            <div className="">{children}</div>
+            <div className="">
+                <a href="#main-content" className="u-skip-to-content">Saltar al contenido principal</a>
+                {children}
+            </div>
         );
     }
 
-    return <SidebarProvider defaultOpen={isOpen}>{children}</SidebarProvider>;
+    return (
+        <SidebarProvider defaultOpen={isOpen}>
+            <a href="#main-content" className="u-skip-to-content">Saltar al contenido principal</a>
+            {children}
+        </SidebarProvider>
+    );
 }

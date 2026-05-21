@@ -8,11 +8,12 @@ type Props = React.ComponentProps<'main'> & {
 
 export function AppContent({ variant = 'sidebar', children, ...props }: Props) {
     if (variant === 'sidebar') {
-        return <SidebarInset {...props}>{children}</SidebarInset>;
+        return <SidebarInset id="main-content" {...props}>{children}</SidebarInset>;
     }
 
     return (
         <main
+            id="main-content"
             className=""
             {...props}
         >

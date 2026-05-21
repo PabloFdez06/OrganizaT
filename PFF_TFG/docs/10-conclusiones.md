@@ -23,9 +23,8 @@ He cerrado un alcance funcional amplio, más y mejor de lo propuesto inicialment
 
 Puntos que no considero cerrados al 100% para versión final profesional:
 
-1. publicación de cobertura cuantitativa de tests.
-2. documentación API formal tipo OpenAPI.
-3. Refuerzo de pruebas frontend automatizadas.
+1. Publicación de cobertura cuantitativa de tests con umbral mínimo en CI.
+2. Refuerzo de pruebas frontend automatizadas sobre componentes y hooks.
 
 A nivel de trazabilidad de propuesta, también dejo explícito que la idea inicial de SPA + API REST completa evoluciono a una arquitectura SPA con Inertia y endpoints JSON de soporte. Funcionalmente mantiene el objetivo de panel académico, pero tecnicamente no es una API publica desacoplada al 100%.
 
@@ -61,11 +60,11 @@ Ese proceso ha mejorado claramente mi criterio de arquitectura y mantenimiento.
 
 ## 10.6 Mejoras futuras propuestas
 
-1. Incorporar reporte formal de cobertura y umbrales en CI.
-2. Aumentar test frontend de componentes y hooks críticos.
-3. Añadir documentación OpenAPI o coleccion Postman oficial para endpoints JSON.
-4. Introducir observabilidad más completa (metricas y alertas).
-5. Evaluar control de roles si evoluciona a escenario multi-perfil (profesorado).
+1. Incorporar reporte formal de cobertura y umbrales en CI (HTML/Codecov).
+2. Aumentar test frontend de componentes y hooks críticos con Vitest.
+3. Introducir observabilidad más completa (métricas, alertas y dashboards).
+4. Evaluar control de roles si evoluciona a escenario multi-perfil (profesorado).
+5. Escalar PHP-FPM (`pm.max_children`) y añadir segundo nodo si la carga crece.
 
 ## 10.7 Preparacion para defensa
 Para la defensa, mi mensaje central será que no he construido solo una interfaz sobre Moodle, sino una capa de organización académica con decisiones tecnicas justificadas por problemas reales:
@@ -79,5 +78,5 @@ Este enfoque me permite argumentar con claridad tanto valor funcional como solid
 ## 10.8 Cierre final
 El proyecto esta terminado en una versión funcional y defendible, con una base de calidad suficiente para entrega y con una hoja de mejora clara para evolucion posterior. Mi evaluacion final es positiva porque he cumplido el alcance comprometido y he documentado de forma honesta lo que esta cerrado y lo que aún puedo reforzar.
 
-
+La documentación de despliegue cubre tanto el proceso operativo completo ([08-despliegue.md](08-despliegue.md)) como la evaluación detallada de criterios de artefactos y red ([08-despliegue-eval.md](08-despliegue-eval.md)), con pruebas de carga reales y verificación técnica de red reproducible.
 
