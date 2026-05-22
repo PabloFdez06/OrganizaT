@@ -17,15 +17,24 @@ En este documento explico, con enfoque tecnico-practico, como funciona mi flujo 
 Idea clave: login de app y login de Moodle son dos pasos separados.
 
 ## Flujo 2: conectar mi cuenta Moodle
-Este flujo lo gestiono en `MoodleConnectionController`.
+Este flujo lo gestiono en `MoodleConnectionController` + `ConnectMoodleJob`.
 
 1. Recibo `moodle_username` y `moodle_password`.
-2. Valido credenciales contra Moodle/CAS haciendo login real con `MoodleCasClient::login(...)`.
-3. Si el login falla, devuelvo error claro (credenciales invalidas o problema de configuracion).
-4. Si el login va bien:
-- Guardo `moodle_username` y `moodle_password` en el usuario.
-- La password Moodle se guarda cifrada (cast encrypted en el modelo `User`).
-- Limpio cache academico de ese usuario con `MoodleUserAcademicCache::clearForUser(...)`.
+2. Marco estado `pending` en `MoodleAsyncSectionCache` (seccion `moodle-connect`).
+3. Despacho `ConnectMoodleJob` a la cola (database queue) para evitar timeout de nginx.
+4. Devuelvo respuesta JSON inmediata `{"status": "pending"}`.
+5. El frontend hace polling a `GET /moodle-connect/status` cada 2 segundos mostrando spinner.
+6. En el job:
+   - Valido credenciales contra Moodle/CAS haciendo login real con `MoodleCasClient::login(...)`.
+   - Si el login falla, marco estado `error` con mensaje claro.
+   - Si el login va bien:
+     - Guardo sesion efimera con `MoodleEphemeralSessionService`.
+     - Guardo `moodle_username` en el usuario.
+     - Limpio cache academico con `MoodleUserAcademicCache::clearForUser(...)`.
+     - Marco estado `done`.
+7. El frontend detecta `done` y recarga la pagina mostrando el usuario conectado.
+
+Razon del diseno asincrono: el login CAS puede tardar mas de 60 segundos (timeout de nginx/fastcgi). Al mover la operacion a un job en background, la respuesta HTTP es instantanea y el usuario ve un spinner hasta que el job termina.
 
 ## Flujo 3: primera carga de datos academicos (tras login o tras conectar Moodle)
 Cuando entro, por ejemplo, a `dashboard`, `asignaturas` o `tareas`, el controlador llama a `MoodleUserAcademicCache::getForUser($user)`.

@@ -83,14 +83,23 @@ Mi flujo principal es Inertia + Laravel + Fortify. La app trabaja con usuario au
   - ademas expongo en la vista la configuracion de cache fresh/stale en minutos.
 
 ### app/Http/Controllers/Moodle/MoodleConnectionController.php
-- Que hace: conecta y verifica credenciales Moodle mediante CAS.
-- Por que: valido credenciales antes de persistirlas para evitar estados incoherentes.
+- Que hace: conecta y verifica credenciales Moodle mediante CAS de forma asincrona.
+- Por que: el login CAS puede superar el timeout de nginx (60s), asi que despacho un job en background y el frontend hace polling.
 - Como:
   - valido moodle_username/moodle_password.
-  - ejecuto login CAS real con MoodleCasClient.
-  - si falla autenticacion, devuelvo error 422 claro.
-  - si todo va bien, guardo credenciales en User (cifrado por cast) y limpio cache.
+  - marco estado `pending` en MoodleAsyncSectionCache.
+  - despacho ConnectMoodleJob a la cola.
+  - devuelvo JSON inmediato `{"status": "pending"}`.
+  - endpoint GET /moodle-connect/status devuelve el estado actual (pending/done/error) para polling del frontend.
   - tengo endpoint debug no disponible en produccion para diagnostico.
+
+### app/Jobs/Moodle/ConnectMoodleJob.php
+- Que hace: ejecuta el login CAS real en background.
+- Por que: evita 504 Gateway Timeout al desacoplar la operacion lenta del ciclo request/response.
+- Como:
+  - login CAS con MoodleCasClient.
+  - si ok, guarda sesion efimera, actualiza moodle_username en User y limpia cache.
+  - si falla, marca error en MoodleAsyncSectionCache con mensaje descriptivo.
 
 ### app/Http/Controllers/Moodle/MoodleConsoleController.php
 - Que hace: consola tecnica interna para ejecutar endpoints Moodle y ver salida.

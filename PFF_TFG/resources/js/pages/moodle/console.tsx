@@ -68,16 +68,22 @@ export default function MoodleConsole({
         setConsoleConnecting(true);
         setConsoleConnectError(null);
 
+        const getXsrfToken = (): string => {
+            const prefix = 'XSRF-TOKEN=';
+            const cookie = document.cookie.split('; ').find((c) => c.startsWith(prefix));
+            return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : '';
+        };
+
         try {
-            const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
             await fetch('/moodle-connect', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getXsrfToken(), 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
                 body: JSON.stringify({ moodle_username: formData.get('moodle_username'), moodle_password: formData.get('moodle_password') }),
             });
 
             const poll = async (): Promise<void> => {
-                const res = await fetch('/moodle-connect/status', { headers: { Accept: 'application/json' } });
+                const res = await fetch('/moodle-connect/status', { credentials: 'same-origin', headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
                 const state = await res.json();
                 if (state.status === 'done') { setConsoleConnecting(false); router.reload(); return; }
                 if (state.status === 'error') { setConsoleConnecting(false); setConsoleConnectError(state.error); return; }

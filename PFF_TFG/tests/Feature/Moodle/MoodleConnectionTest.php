@@ -2,8 +2,6 @@
 
 use App\Jobs\Moodle\ConnectMoodleJob;
 use App\Models\User;
-use App\Services\Moodle\MoodleCasClient;
-use App\Services\Moodle\MoodleSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 

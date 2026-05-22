@@ -6,6 +6,7 @@ import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
@@ -191,15 +192,21 @@ export default function Security({
         setConnectProcessing(true);
         setConnectError(null);
 
-        try {
-            const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+        const getXsrfToken = (): string => {
+            const prefix = 'XSRF-TOKEN=';
+            const cookie = document.cookie.split('; ').find((c) => c.startsWith(prefix));
+            return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : '';
+        };
 
+        try {
             await fetch('/moodle-connect', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
                     Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
                 },
                 body: JSON.stringify({ moodle_username: username, moodle_password: password }),
             });
@@ -207,7 +214,8 @@ export default function Security({
             // Poll for completion
             const poll = async (): Promise<void> => {
                 const res = await fetch('/moodle-connect/status', {
-                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 });
                 const state = await res.json();
 
@@ -803,6 +811,7 @@ export default function Security({
                                                 className="p-settings__outline-button"
                                                 disabled={connectProcessing}
                                             >
+                                                {connectProcessing && <Spinner />}
                                                 {connectProcessing ? 'Conectando...' : 'Guardar conexión'}
                                             </Button>
                                         </form>
