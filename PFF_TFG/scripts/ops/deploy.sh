@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-COMPOSE_FILE="docker-compose.beta.yml"
+COMPOSE_FILE="docker-compose.prod.yml"
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -43,7 +43,7 @@ set_env_value() {
 
 ensure_env_file() {
   if [ ! -f .env ]; then
-    cp .env.beta.example .env
+    cp .env.prod.example .env
   fi
 }
 
@@ -159,7 +159,7 @@ main() {
 
   post_checks
 
-  log "Despliegue beta completado correctamente"
+  log "Despliegue completado correctamente"
 }
 
 main "$@"

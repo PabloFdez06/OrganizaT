@@ -1,4 +1,4 @@
-name: organizat-beta
+name: organizat-prod
 
 x-laravel-service: &laravel-service
   env_file:

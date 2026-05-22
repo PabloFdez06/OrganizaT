@@ -1,9 +1,9 @@
-name: CI/CD Deploy Beta
+name: CI/CD Deploy
 
 on:
   push:
     branches:
-      - deploy-beta
+      - main
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: deploy-beta
+  group: deploy-production
   cancel-in-progress: true
 
 env:
@@ -23,7 +23,7 @@ env:
   COMPOSER_NO_AUDIT: 1
 
 jobs:
-  ci:
+  ci-backend:
     name: Backend checks
     runs-on: ubuntu-latest
     defaults:
@@ -41,7 +41,7 @@ jobs:
           test -f package-lock.json
           test -f artisan
           test -f Dockerfile
-          test -f docker-compose.beta.yml
+          test -f docker-compose.prod.yml
           test -f phpunit.xml
 
       - name: Setup PHP
@@ -50,20 +50,57 @@ jobs:
           php-version: "8.4"
           tools: composer:v2
           coverage: none
+          extensions: curl, sqlite3, mbstring, xml, dom, json
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Install PHP dependencies
-        run: composer install --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
       - name: Prepare Laravel test environment
         run: |
           cp .env.example .env
           php artisan key:generate --ansi
 
+  ci-frontend:
+    name: Frontend checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PFF_TFG
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run frontend checks
+        run: npm run cicheck
+
 
   build:
     name: Build and push images
     runs-on: ubuntu-latest
-    needs: ci
+    needs: [ci-backend, ci-frontend]
 
     outputs:
       app_image: ${{ steps.meta.outputs.app_image }}
@@ -76,7 +113,7 @@ jobs:
       - name: Verify build context
         run: |
           test -f PFF_TFG/Dockerfile
-          test -f PFF_TFG/docker-compose.beta.yml
+          test -f PFF_TFG/docker-compose.prod.yml
           test -f PFF_TFG/package.json
           test -f PFF_TFG/composer.json
 
@@ -106,7 +143,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.app_image }}:${{ env.IMAGE_TAG }}
-            ${{ steps.meta.outputs.app_image }}:beta
+            ${{ steps.meta.outputs.app_image }}:latest
           cache-from: type=registry,ref=${{ steps.meta.outputs.app_image }}:buildcache
           cache-to: type=registry,ref=${{ steps.meta.outputs.app_image }}:buildcache,mode=max
 
@@ -119,15 +156,15 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.nginx_image }}:${{ env.IMAGE_TAG }}
-            ${{ steps.meta.outputs.nginx_image }}:beta
+            ${{ steps.meta.outputs.nginx_image }}:latest
           cache-from: type=registry,ref=${{ steps.meta.outputs.nginx_image }}:buildcache
           cache-to: type=registry,ref=${{ steps.meta.outputs.nginx_image }}:buildcache,mode=max
 
   deploy:
-    name: Deploy to beta
+    name: Deploy to production
     runs-on: ubuntu-latest
     needs: build
-    environment: beta
+    environment: production
 
     steps:
       - name: Deploy over SSH
@@ -156,8 +193,8 @@ jobs:
             fi
 
             git fetch --all --prune
-            git switch deploy-beta
-            git pull origin deploy-beta
+            git switch main
+            git pull origin main 
 
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
@@ -179,13 +216,13 @@ jobs:
               echo "IMAGE_TAG=$IMAGE_TAG" >> .env
             fi
 
-            docker compose -f docker-compose.beta.yml config >/dev/null
-            docker compose -f docker-compose.beta.yml pull app worker scheduler nginx
-            docker compose -f docker-compose.beta.yml up -d app worker scheduler nginx
+            docker compose -f docker-compose.prod.yml config >/dev/null
+            docker compose -f docker-compose.prod.yml pull app worker scheduler nginx
+            docker compose -f docker-compose.prod.yml up -d app worker scheduler nginx
 
-            docker compose -f docker-compose.beta.yml exec -T app php artisan migrate --force
-            docker compose -f docker-compose.beta.yml exec -T app php artisan optimize:clear
-            docker compose -f docker-compose.beta.yml exec -T app php artisan optimize
-            docker compose -f docker-compose.beta.yml exec -T app php artisan queue:restart
+            docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+            docker compose -f docker-compose.prod.yml exec -T app php artisan optimize
+            docker compose -f docker-compose.prod.yml exec -T app php artisan queue:restart
 
-            docker compose -f docker-compose.beta.yml ps
+            docker compose -f docker-compose.prod.yml ps

@@ -74,7 +74,7 @@ flowchart LR
 
 ![diagrama-runtime-beta](image.png)
 
-Servicios definidos en `docker-compose.beta.yml`:
+Servicios definidos en `docker-compose.prod.yml`:
 
 - `app`
 - `worker`
@@ -223,9 +223,9 @@ Workflows definidos en `.github/workflows/`:
 
 1. `tests.yml` - build y tests (matrix PHP 8.4/8.5).
 2. `lint.yml` - pint + lint + types + format check.
-3. `deploy-beta.yml` - checks backend/frontend + build/push GHCR + deploy SSH.
+3. `deploy.yml` - checks backend/frontend + build/push GHCR + deploy SSH.
 
-## 9. Despliegue beta desde cero (Docker)
+## 9. Despliegue producción desde cero (Docker)
 
 ### 9.1 Preparar host Ubuntu
 
@@ -244,14 +244,14 @@ sudo ufw --force enable
 git clone <URL_REPO> app
 cd app
 git fetch --all --prune
-git switch deploy-beta
-git pull origin deploy-beta
+git switch main
+git pull origin main
 ```
 
 ### 9.3 Configurar entorno
 
 ```bash
-cp .env.beta.example .env
+cp .env.prod.example .env
 nano .env
 ```
 
@@ -290,7 +290,7 @@ sh scripts/ops/inspect-beta.sh
 Referencias:
 
 1. Local: `.env.example`
-2. Beta: `.env.beta.example`
+2. Producción: `.env.prod.example`
 
 Variables clave:
 
@@ -304,8 +304,8 @@ Variables clave:
 ## 11. Verificación post-despliegue
 
 ```bash
-docker compose -f docker-compose.beta.yml config
-docker compose -f docker-compose.beta.yml ps
+docker compose -f docker-compose.prod.yml config
+docker compose -f docker-compose.prod.yml ps
 sh scripts/ops/inspect-beta.sh
 curl -I http://127.0.0.1:${APP_HTTP_PORT:-80}/up
 ```

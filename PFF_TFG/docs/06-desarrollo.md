@@ -124,7 +124,7 @@ He trabajado con ramas y automatizacion en GitHub Actions:
 
 1. tests.yml para validación de build y tests.
 2. lint.yml para calidad de código (Pint, ESLint, Prettier, TypeScript).
-3. deploy-beta.yml para construir imagenes y desplegar en beta.
+3. deploy.yml para construir imagenes y desplegar en producción.
 
 ## 6.10 Fragmentos de código relevantes
 

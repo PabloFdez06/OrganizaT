@@ -2,9 +2,9 @@ name: tests
 
 on:
   push:
-    branches: [deploy-beta, develop, main, master, workos]
+    branches: [main, deploy-beta, develop]
   pull_request:
-    branches: [deploy-beta, develop, main, master, workos]
+    branches: [main, deploy-beta, develop]
 
 jobs:
   ci:

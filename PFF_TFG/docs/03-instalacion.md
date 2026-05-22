@@ -24,10 +24,10 @@ En esta sección documento como preparo el proyecto en local y como dejo la beta
 Los ficheros que uso para preparar y desplegar son:
 
 1. Dockerfile.
-2. docker-compose.beta.yml.
-3. .env.example y .env.beta.example.
+2. docker-compose.prod.yml.
+3. .env.example y .env.prod.example.
 4. scripts/ops/first-boot-beta.sh.
-5. scripts/ops/deploy-beta.sh.
+5. scripts/ops/deploy.sh.
 6. scripts/ops/bootstrap-droplet-beta.sh.
 7. scripts/ops/inspect-beta.sh.
 
@@ -115,15 +115,15 @@ sh scripts/ops/first-boot-beta.sh
 ### Opcion actualizacion
 
 ```bash
-sh scripts/ops/deploy-beta.sh
+sh scripts/ops/deploy.sh
 sh scripts/ops/inspect-beta.sh
 ```
 
 ## Validaciones de instalación
 
 ```bash
-docker compose -f docker-compose.beta.yml config
-docker compose -f docker-compose.beta.yml ps
+docker compose -f docker-compose.prod.yml config
+docker compose -f docker-compose.prod.yml ps
 ```
 
 Comprobaciones recomendadas:
@@ -135,7 +135,7 @@ Comprobaciones recomendadas:
 
 ## Prueba de carga post-instalación
 
-Una vez instalado el entorno beta, se puede validar el comportamiento del servidor de aplicaciones bajo carga ligera con:
+Una vez instalado el entorno de producción, se puede validar el comportamiento del servidor de aplicaciones bajo carga ligera con:
 
 ```bash
 # Requiere apache2-utils: sudo apt-get install apache2-utils
@@ -151,7 +151,7 @@ La pipeline definida en GitHub Actions exige como minimo:
 2. Build frontend correcto (npm run build).
 3. Tests backend ejecutables (./vendor/bin/pest).
 
-En rama deploy-beta, la pipeline también construye imagenes runtime y nginx y despliega por SSH.
+En rama main, la pipeline también construye imagenes runtime y nginx y despliega por SSH.
 
 ## Errores comunes que he contemplado
 
@@ -164,7 +164,7 @@ En rama deploy-beta, la pipeline también construye imagenes runtime y nginx y d
 Con este flujo tengo dos rutas reproducibles:
 
 1. Desarrollo local para evolucionar funcionalidad.
-2. Entorno beta dockerizado para validación y demostracion del proyecto, cual pasara a ser producción.
+2. Entorno de producción dockerizado para validación y demostración del proyecto.
 
 
 

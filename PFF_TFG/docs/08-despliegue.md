@@ -7,7 +7,7 @@
 ## 8.1 Entorno de despliegue utilizado
 He preparado el despliegue beta sobre infraestructura Linux (Ubuntu) con Docker Compose, usando una arquitectura de servicios separada.
 
-Servicios definidos en docker-compose.beta.yml:
+Servicios definidos en docker-compose.prod.yml:
 
 1. app (Laravel PHP-FPM).
 2. worker (queue:work para colas default y mail).
@@ -43,9 +43,9 @@ Ventajas de esta aproximacion:
 3. Separacion entre servicio app y servicio nginx.
 
 ## 8.4 Configuración de entorno
-Para despliegue uso .env.beta.example como plantilla y nunca versiono .env real.
+Para despliegue uso .env.prod.example como plantilla y nunca versiono .env real.
 
-Variables clave de beta:
+Variables clave de producción:
 
 1. DB_* para MySQL.
 2. REDIS_* y drivers redis para sesión/cache/colas.
@@ -61,16 +61,16 @@ El script bootstrap valida que no queden placeholders antes de levantar stack.
 
 1. tests.yml: build y test en matrix PHP 8.4/8.5.
 2. lint.yml: Pint, formato frontend, lint frontend y tipos TS.
-3. deploy-beta.yml: CI backend/frontend, build de imagenes, push a GHCR y despliegue por SSH.
+3. deploy.yml: CI backend/frontend, build de imagenes, push a GHCR y despliegue por SSH.
 
-### Flujo de deploy-beta
+### Flujo de deploy
 
 1. Verifica estructura del proyecto.
 2. Ejecuta checks backend y frontend.
 3. Construye imagen runtime (app) y nginx.
 4. Publica imagenes en ghcr.io.
-5. Conecta por SSH al servidor beta.
-6. Actualiza rama deploy-beta.
+5. Conecta por SSH al servidor de producción.
+6. Actualiza rama main.
 7. Hace pull de imagenes y levanta servicios.
 8. Ejecuta migrate --force, optimize y queue:restart.
 
@@ -91,7 +91,7 @@ sh scripts/ops/first-boot-beta.sh
 ### Opcion actualizacion
 
 ```bash
-sh scripts/ops/deploy-beta.sh
+sh scripts/ops/deploy.sh
 sh scripts/ops/inspect-beta.sh
 ```
 
@@ -125,29 +125,29 @@ En scripts y checklist incluyo verificaciones concretas:
 
 ```bash
 # 1. Validar sintaxis del compose
-docker compose -f docker-compose.beta.yml config
+docker compose -f docker-compose.prod.yml config
 
 # 2. Estado de servicios (todos deben estar healthy)
-docker compose -f docker-compose.beta.yml ps
+docker compose -f docker-compose.prod.yml ps
 
 # 3. Health check HTTP
 curl -fsS https://organizat.blete.tech/up && echo " — OK"
 
 # 4. Redis
-docker compose -f docker-compose.beta.yml exec redis \
+docker compose -f docker-compose.prod.yml exec redis \
   sh -c 'redis-cli -a "$REDIS_PASSWORD" ping'
 # Respuesta esperada: PONG
 
 # 5. Worker activo
-docker compose -f docker-compose.beta.yml exec worker \
+docker compose -f docker-compose.prod.yml exec worker \
   sh -c 'pgrep -a -f "artisan queue:work"'
 
 # 6. Scheduler activo
-docker compose -f docker-compose.beta.yml exec scheduler \
+docker compose -f docker-compose.prod.yml exec scheduler \
   sh -c 'pgrep -a -f "artisan schedule:work"'
 
 # 7. Migraciones aplicadas
-docker compose -f docker-compose.beta.yml exec app \
+docker compose -f docker-compose.prod.yml exec app \
   php artisan migrate:status | tail -5
 ```
 
@@ -182,7 +182,7 @@ La aplicación incluye documentación OpenAPI 3.x generada automáticamente con 
 ### Arquitectura de publicación
 
 La documentación se sirve por la misma entrada HTTPS del sitio, sin puertos adicionales.
-No requiere ningún servicio extra ni cambios en `docker-compose.beta.yml`.
+No requiere ningún servicio extra ni cambios en `docker-compose.prod.yml`.
 
 ```
 Cliente → HTTPS (proxy externo) → nginx (puerto 80) → PHP-FPM → Scramble → /docs/api
@@ -295,10 +295,10 @@ Los logs de PHP-FPM son capturados por Docker y consultables directamente:
 
 ```bash
 # Logs en tiempo real de la aplicación (stdout + stderr de PHP-FPM)
-docker compose -f docker-compose.beta.yml logs -f app
+docker compose -f docker-compose.prod.yml logs -f app
 
 # Estado del pool PHP-FPM (procesos activos, inactivos, peticiones)
-docker compose -f docker-compose.beta.yml exec app \
+docker compose -f docker-compose.prod.yml exec app \
   curl -s http://127.0.0.1/status
 ```
 
@@ -464,7 +464,7 @@ Solo el servicio `nginx` expone un puerto hacia el host (`APP_HTTP_PORT:80`). El
 ### Estado de contenedores (`docker compose ps`)
 
 ```bash
-docker compose -f docker-compose.beta.yml ps
+docker compose -f docker-compose.prod.yml ps
 ```
 
 Salida esperada (todos los servicios `healthy`):

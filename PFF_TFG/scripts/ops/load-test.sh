@@ -93,7 +93,7 @@ printf '  /up          → debería superar 150 req/s con p95 < 200ms (carga mí
 printf '  /            → esperado 30–60 req/s con p95 < 400ms (render completo)\n'
 printf '  /docs/api    → esperado 20–40 req/s (serialización JSON de spec)\n'
 printf '\n  Si algún valor queda muy por debajo, revisar:\n'
-printf '    1. Logs PHP-FPM:  docker compose -f docker-compose.beta.yml logs app\n'
+printf '    1. Logs PHP-FPM:  docker compose -f docker-compose.prod.yml logs app\n'
 printf '    2. Estado pool:   docker compose exec app curl -s http://127.0.0.1/status\n'
 printf '    3. Opcache:       php artisan opcache:status (si el comando existe)\n'
 printf '    4. pm.max_children en docker/php/php-fpm.d/zz-docker.conf\n'

@@ -33,9 +33,9 @@ Todos los artefactos necesarios para reproducir el despliegue están identificad
 | Fichero / directorio | Propósito | Se versiona |
 |---|---|---|
 | `Dockerfile` | Define las 5 etapas de build (base, vendor, frontend, runtime, nginx) | Sí |
-| `docker-compose.beta.yml` | Orquesta los 7 servicios del entorno beta | Sí |
+| `docker-compose.prod.yml` | Orquesta los 7 servicios del entorno de producción | Sí |
 | `.env.example` | Plantilla de variables para desarrollo local | Sí |
-| `.env.beta.example` | Plantilla de variables para entorno beta dockerizado | Sí |
+| `.env.prod.example` | Plantilla de variables para entorno de producción dockerizado | Sí |
 | `docker/nginx/conf.d/default.conf` | Configuración del servidor web (reverse proxy, rutas, compresión, caché) | Sí |
 | `docker/nginx/snippets/security-headers.conf` | Security headers HTTP reutilizables | Sí |
 | `docker/php/php-fpm.d/zz-docker.conf` | Pool PHP-FPM (pm dinámico, workers, logs) | Sí |
@@ -44,10 +44,10 @@ Todos los artefactos necesarios para reproducir el despliegue están identificad
 | `docker/bin/healthcheck-scheduler` | Script de healthcheck para el servicio scheduler | Sí |
 | `scripts/ops/bootstrap-droplet-beta.sh` | Bootstrap completo desde cero (instala Docker si falta) | Sí |
 | `scripts/ops/first-boot-beta.sh` | Primer arranque manual sin bootstrap | Sí |
-| `scripts/ops/deploy-beta.sh` | Actualización del entorno beta existente | Sí |
+| `scripts/ops/deploy.sh` | Actualización del entorno existente | Sí |
 | `scripts/ops/inspect-beta.sh` | Inspección de logs y estado de contenedores | Sí |
 | `scripts/ops/load-test.sh` | Prueba de carga ligera con Apache Bench | Sí |
-| `.github/workflows/deploy-beta.yml` | Pipeline CI/CD completo (test → build → push GHCR → deploy SSH) | Sí |
+| `.github/workflows/deploy.yml` | Pipeline CI/CD completo (test → build → push GHCR → deploy SSH) | Sí |
 | `.github/workflows/tests.yml` | Pipeline de tests (matrix PHP 8.4/8.5) | Sí |
 | `.github/workflows/lint.yml` | Pipeline de calidad (Pint, ESLint, Prettier, TypeScript) | Sí |
 | `.env` | Variables reales del entorno activo | No (en `.gitignore`) |
@@ -75,16 +75,16 @@ El script `bootstrap-droplet-beta.sh` valida activamente que `.env` no contenga 
 
 ### Imagen Docker publicada en GHCR
 
-El workflow `deploy-beta.yml` construye y publica dos imágenes en **GitHub Container Registry**:
+El workflow `deploy.yml` construye y publica dos imágenes en **GitHub Container Registry**:
 
 | Imagen | Tag por commit | Tag fijo |
 |---|---|---|
-| `ghcr.io/[owner]/organizat-app` | `ghcr.io/.../organizat-app:<SHA>` | `ghcr.io/.../organizat-app:beta` |
-| `ghcr.io/[owner]/organizat-nginx` | `ghcr.io/.../organizat-nginx:<SHA>` | `ghcr.io/.../organizat-nginx:beta` |
+| `ghcr.io/[owner]/organizat-app` | `ghcr.io/.../organizat-app:<SHA>` | `ghcr.io/.../organizat-app:latest` |
+| `ghcr.io/[owner]/organizat-nginx` | `ghcr.io/.../organizat-nginx:<SHA>` | `ghcr.io/.../organizat-nginx:latest` |
 
 - **Tag por SHA**: permite rollback a cualquier build anterior.
-- **Tag `beta`**: siempre apunta al último deploy estable.
-- El `docker-compose.beta.yml` referencia las imágenes mediante variables de entorno (`APP_IMAGE`, `NGINX_IMAGE`, `IMAGE_TAG`) actualizadas automáticamente por el workflow antes de hacer `docker compose up`.
+- **Tag `latest`**: siempre apunta al último deploy estable.
+- El `docker-compose.prod.yml` referencia las imágenes mediante variables de entorno (`APP_IMAGE`, `NGINX_IMAGE`, `IMAGE_TAG`) actualizadas automáticamente por el workflow antes de hacer `docker compose up`.
 
 **Cómo se genera la imagen (Dockerfile multi-stage):**
 
@@ -114,7 +114,7 @@ Los datos que deben conservarse entre reinicios o actualizaciones están mapeado
 | `db_data` | `db` (MySQL 8.4) | Toda la base de datos: usuarios, sesiones, jobs, notificaciones |
 | `redis_data` | `redis` (Redis 7.2) | Cache de secciones académicas, colas de trabajos, sesiones activas |
 
-Los volúmenes se declaran en `docker-compose.beta.yml`:
+Los volúmenes se declaran en `docker-compose.prod.yml`:
 
 ```yaml
 volumes:
@@ -139,7 +139,7 @@ Todos los scripts del despliegue están en `scripts/ops/`:
 scripts/ops/
 ├── bootstrap-droplet-beta.sh   ← Instalación completa desde cero
 ├── first-boot-beta.sh          ← Primer arranque sin bootstrap automático
-├── deploy-beta.sh              ← Actualización (ejecutado por el workflow SSH)
+├── deploy.sh                   ← Actualización (ejecutado por el workflow SSH)
 ├── inspect-beta.sh             ← Revisión de estado y últimos 40 logs por servicio
 └── load-test.sh                ← Prueba de carga con Apache Bench
 ```
@@ -151,7 +151,7 @@ scripts/ops/
 bash scripts/ops/bootstrap-droplet-beta.sh
 
 # Actualización manual
-sh scripts/ops/deploy-beta.sh
+sh scripts/ops/deploy.sh
 
 # Verificar estado y logs
 sh scripts/ops/inspect-beta.sh
@@ -200,7 +200,7 @@ Internet (cliente)
 ### Puertos publicados
 
 ```bash
-docker compose -f docker-compose.beta.yml ps --format "table {{.Service}}\t{{.Ports}}"
+docker compose -f docker-compose.prod.yml ps --format "table {{.Service}}\t{{.Ports}}"
 ```
 
 Salida esperada:
@@ -221,7 +221,7 @@ Solo `nginx` tiene binding de puerto al host. El resto de servicios no son acces
 ### Estado de contenedores
 
 ```bash
-docker compose -f docker-compose.beta.yml ps
+docker compose -f docker-compose.prod.yml ps
 ```
 
 Salida esperada (todos los servicios `healthy` o `running`):
@@ -325,7 +325,7 @@ expires: Thu, 20 Jun 2026 10:00:00 GMT
 **6. Verificación interna Redis (desde el host con docker exec)**
 
 ```bash
-docker compose -f docker-compose.beta.yml exec redis \
+docker compose -f docker-compose.prod.yml exec redis \
   sh -c 'redis-cli -a "$REDIS_PASSWORD" ping'
 ```
 
@@ -381,10 +381,10 @@ El servicio nginx escribe accesos en formato **Combined Log Format** en `/var/lo
 
 ```bash
 # Ver últimas 20 líneas del access.log de nginx en tiempo real
-docker compose -f docker-compose.beta.yml logs --tail=20 nginx
+docker compose -f docker-compose.prod.yml logs --tail=20 nginx
 
 # O acceder directamente al fichero dentro del contenedor
-docker compose -f docker-compose.beta.yml exec nginx \
+docker compose -f docker-compose.prod.yml exec nginx \
   tail -n 20 /var/log/nginx/access.log
 ```
 
@@ -422,7 +422,7 @@ Los assets estáticos (`/build/*.js`, `/build/*.css`, `/favicon.ico`) no aparece
 **Error log** (nginx no debería mostrar errores en operación normal):
 
 ```bash
-docker compose -f docker-compose.beta.yml exec nginx \
+docker compose -f docker-compose.prod.yml exec nginx \
   cat /var/log/nginx/error.log
 # Salida esperada: vacío (sin errores)
 ```

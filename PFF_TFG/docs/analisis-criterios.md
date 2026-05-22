@@ -236,11 +236,11 @@
 
 **Evidencia:**
 - Dockerfile multi-stage (5 targets: base, vendor, frontend, runtime, nginx).
-- `.env.example` y `.env.beta.example` presentes.
+- `.env.example` y `.env.prod.example` presentes.
 - Solo puerto HTTP expuesto (`APP_HTTP_PORT:-8080`).
 - Red interna `backend` entre servicios.
 - Volúmenes para persistencia: `db_data`, `redis_data`.
-- Imágenes publicadas en GHCR (deploy-beta.yml).
+- Imágenes publicadas en GHCR (deploy.yml).
 - Variables de entorno bien gestionadas con `env_file`.
 - Healthchecks en todos los servicios.
 
@@ -278,10 +278,10 @@
 **Evidencia:**
 - `tests.yml`: Matrix PHP 8.4/8.5, Node 22, ejecuta Pest.
 - `lint.yml`: Pint (PHP), formatcheck, lintcheck, typescheck (TS).
-- `deploy-beta.yml`: CI completo → build multi-stage → push GHCR → deploy SSH con migrate + optimize + queue:restart.
+- `deploy.yml`: CI completo → build multi-stage → push GHCR → deploy SSH con migrate + optimize + queue:restart.
 - Secrets de GitHub (SERVER_HOST, SERVER_USER, SERVER_PASSWORD, GITHUB_TOKEN).
 - Concurrency control (`cancel-in-progress: true`).
-- Flujo de branches: develop/deploy-beta/main.
+- Flujo de branches: deploy-beta (desarrollo) → main (producción).
 - **Bonus**: Verificación de estructura del proyecto en CI antes de build.
 
 ---
@@ -294,7 +294,7 @@
 - Endpoints API con tabla completa + ejemplos curl reales.
 - Deploy documentado desde cero (host Ubuntu → Docker → clone → .env → bootstrap).
 - Troubleshooting con 5 problemas reales.
-- `.env.example` y `.env.beta.example` documentados.
+- `.env.example` y `.env.prod.example` documentados.
 - URL pública: https://organizat.blete.tech
 
 

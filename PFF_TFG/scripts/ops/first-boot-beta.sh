@@ -2,7 +2,7 @@
 set -eu
 
 if [ ! -f .env ]; then
-    cp .env.beta.example .env
+    cp .env.prod.example .env
 fi
 
 set_env_value() {
@@ -16,10 +16,10 @@ set_env_value() {
     fi
 }
 
-docker compose -f docker-compose.beta.yml build --pull
+docker compose -f docker-compose.prod.yml build --pull
 
 if ! grep -Eq '^APP_KEY=base64:' .env; then
-    generated_key="$(docker compose -f docker-compose.beta.yml run --rm --no-deps app php artisan key:generate --show | tail -n 1 | tr -d '\r')"
+    generated_key="$(docker compose -f docker-compose.prod.yml run --rm --no-deps app php artisan key:generate --show | tail -n 1 | tr -d '\r')"
 
     case "${generated_key}" in
         base64:*)
@@ -32,8 +32,8 @@ if ! grep -Eq '^APP_KEY=base64:' .env; then
     esac
 fi
 
-docker compose -f docker-compose.beta.yml up -d --remove-orphans
+docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
-docker compose -f docker-compose.beta.yml exec -T app php artisan migrate --force
-docker compose -f docker-compose.beta.yml exec -T app php artisan optimize:clear
-docker compose -f docker-compose.beta.yml exec -T app php artisan optimize
+docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
+docker compose -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+docker compose -f docker-compose.prod.yml exec -T app php artisan optimize

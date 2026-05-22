@@ -134,7 +134,7 @@ El flujo de cada modulo academico es:
 
 1. tests.yml: build y suite backend.
 2. lint.yml: pint + checks frontend.
-3. deploy-beta.yml: build/push a GHCR y despliegue por SSH.
+3. deploy.yml: build/push a GHCR y despliegue por SSH.
 
 ### 6.3 Limitacion documental pendiente
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-COMPOSE_FILE="docker-compose.beta.yml"
+COMPOSE_FILE="docker-compose.prod.yml"
 DOCKER_CMD="docker"
 
 log() {
@@ -147,8 +147,8 @@ ensure_redis_overcommit() {
 
 ensure_env_file() {
     if [ ! -f .env ]; then
-        cp .env.beta.example .env
-        log "Se creo .env desde .env.beta.example"
+        cp .env.prod.example .env
+        log "Se creo .env desde .env.prod.example"
     fi
 }
 

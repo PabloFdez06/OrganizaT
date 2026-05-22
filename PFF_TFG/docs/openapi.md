@@ -142,7 +142,7 @@ php artisan route:list --path=docs
 
 ### Actualizar la versión de la API
 
-Editar en `.env` o `.env.beta.example`:
+Editar en `.env` o `.env.prod.example`:
 
 ```env
 API_VERSION=1.1.0
@@ -208,7 +208,7 @@ curl https://tu-dominio.com/docs/api.json | python3 -m json.tool > /dev/null && 
    no se activa en `AppServiceProvider`. En ese caso las URLs del spec en `/docs/api.json`
    pueden aparecer con `http://`. Workaround: configurar `APP_ENV=production` en beta,
    o añadir `APP_ENV=beta` al condicional en AppServiceProvider.
-   **Se asume que el entorno beta usa `APP_ENV=production` (confirmado en `.env.beta.example`).**
+   **Se asume que el entorno de producción usa `APP_ENV=production` (confirmado en `.env.prod.example`).**
 
 4. **Status endpoints no documentados**: Los endpoints de polling interno (`/dashboard/status`,
    `/asignaturas/status`, etc.) no están bajo `/api/` y quedan excluidos del spec.
