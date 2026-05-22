@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"Figma": {
+			"url": "https://mcp.figma.com/mcp",
+			"type": "http"
+		},
+		"my-mcp-server-e2b4a72e": {
+			"url": "https://www.figma.com/design/H4suweb5Pc2qJqUs7iRXQ9/Prototipo_TFG_PFF?node-id=244-2&p=f&m=dev",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}

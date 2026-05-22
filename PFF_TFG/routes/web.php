@@ -26,6 +26,10 @@ Route::get('/', function (): Response|RedirectResponse {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('style-guide', function (): Response {
+    return Inertia::render('style-guide');
+})->name('style-guide');
+
 Route::post('errors/not-found/report', [ErrorReportController::class, 'store'])
     ->middleware('throttle:6,1')
     ->name('errors.not-found.report');
