@@ -306,6 +306,7 @@
         position: relative;
         width: 300px;
         height: 610px;
+        contain: layout style paint;
     }
 
     .phone-glow {
@@ -314,6 +315,7 @@
         background: radial-gradient(ellipse, rgb(79 6 249 / 20%) 0%, transparent 68%);
         border-radius: 50%;
         animation: welcome-glow-breathe 4s ease-in-out infinite;
+        will-change: transform, opacity;
     }
 
     .phone-float {
@@ -322,9 +324,6 @@
         transform: rotate(5deg) perspective(1000px) rotateX(2deg);
         animation: welcome-phone-float 5s ease-in-out infinite;
         will-change: transform;
-        filter:
-            drop-shadow(-32px 56px 72px rgb(0 0 0 / 75%))
-            drop-shadow(0 0 60px rgb(79 6 249 / 18%));
     }
 
     .p-shell {
@@ -334,6 +333,9 @@
         padding: 2px;
         background: linear-gradient(145deg, #3a3a3a 0%, #1e1e1e 50%, #111 100%);
         position: relative;
+        box-shadow:
+            -32px 56px 72px rgb(0 0 0 / 75%),
+            0 0 60px rgb(79 6 249 / 18%);
     }
 
     .p-screen {
