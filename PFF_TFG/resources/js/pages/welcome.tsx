@@ -157,20 +157,21 @@ export default function Welcome() {
         if (!prefersReducedMotion && supportsCustomCursor && cursor && ring) {
             root.classList.add('is-cursor-enabled');
 
+            let cursorScale = 1;
+            let ringScale = 1;
+
             const onPointerMove = (event: PointerEvent) => {
                 mouseX = event.clientX;
                 mouseY = event.clientY;
 
-                cursor.style.left = `${mouseX}px`;
-                cursor.style.top = `${mouseY}px`;
+                cursor.style.transform = `translate3d(${mouseX - 5}px, ${mouseY - 5}px, 0) scale(${cursorScale})`;
             };
 
             const animateCursor = () => {
                 ringX += (mouseX - ringX) * 0.13;
                 ringY += (mouseY - ringY) * 0.13;
 
-                ring.style.left = `${ringX}px`;
-                ring.style.top = `${ringY}px`;
+                ring.style.transform = `translate3d(${ringX - 17}px, ${ringY - 17}px, 0) scale(${ringScale})`;
                 rafId = window.requestAnimationFrame(animateCursor);
             };
 
@@ -178,15 +179,15 @@ export default function Welcome() {
 
             interactiveElements.forEach((element) => {
                 const onEnter = () => {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(1.8)';
-                    ring.style.width = '52px';
-                    ring.style.height = '52px';
+                    cursorScale = 1.8;
+                    ringScale = 1.53;
+                    cursor.style.transform = `translate3d(${mouseX - 5}px, ${mouseY - 5}px, 0) scale(1.8)`;
                 };
 
                 const onLeave = () => {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
-                    ring.style.width = '34px';
-                    ring.style.height = '34px';
+                    cursorScale = 1;
+                    ringScale = 1;
+                    cursor.style.transform = `translate3d(${mouseX - 5}px, ${mouseY - 5}px, 0) scale(1)`;
                 };
 
                 element.addEventListener('mouseenter', onEnter);

@@ -35,27 +35,29 @@
         .cursor {
             display: block;
             position: fixed;
+            top: 0;
+            left: 0;
             width: 10px;
             height: 10px;
             background: var(--purple);
             border-radius: 50%;
             pointer-events: none;
             z-index: 9999;
-            transform: translate(-50%, -50%);
-            transition: transform 0.12s;
+            will-change: transform;
         }
 
         .cursor-ring {
             display: block;
             position: fixed;
+            top: 0;
+            left: 0;
             width: 34px;
             height: 34px;
             border: 1.5px solid rgb(79 6 249 / 45%);
             border-radius: 50%;
             pointer-events: none;
             z-index: 9998;
-            transform: translate(-50%, -50%);
-            transition: width 0.2s, height 0.2s;
+            will-change: transform;
         }
     }
 
