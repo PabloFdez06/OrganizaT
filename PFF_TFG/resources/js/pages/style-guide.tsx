@@ -10,6 +10,7 @@ export default function StyleGuide() {
                     <div className="p-style-guide__hero-content">
                         <h1 className="p-style-guide__hero-title">ORGANIZAT</h1>
                         <p className="p-style-guide__hero-subtitle">Guía de Estilos &amp; Design System</p>
+                        <div className="p-style-guide__hero-brand-line" />
                         <p className="p-style-guide__hero-version">v1.0 · TFG DAW 2025–2026</p>
                         <nav className="p-style-guide__hero-nav">
                             <a href="#colores">01 Colores</a>
@@ -151,7 +152,6 @@ export default function StyleGuide() {
                         <ShadowCard token="$shadow-md" desc="Elevación media — cards, dropdowns" value="0 6px 20px rgba(0,0,0,0.12)" shadow="0 6px 20px rgba(0,0,0,0.12)" />
                         <ShadowCard token="dropdown" desc="Elevación alta — modales, overlays" value="0 12px 28px rgba(0,0,0,0.16)" shadow="0 12px 28px rgba(0,0,0,0.16)" />
                         <div className="p-style-guide__shadow-card p-style-guide__shadow-card--focus">
-                            <div className="p-style-guide__shadow-card-box" />
                             <span className="p-style-guide__shadow-card-token">focus ring</span>
                             <span className="p-style-guide__shadow-card-desc">Focus ring accesibilidad — #8AB6FF</span>
                             <span className="p-style-guide__shadow-card-value">outline 2px solid var(--color-ring), offset 2px</span>
@@ -169,11 +169,11 @@ export default function StyleGuide() {
                 <section id="breakpoints" className="p-style-guide__section">
                     <h2 className="p-style-guide__section-title">07 — Breakpoints &amp; Grid</h2>
                     <div className="p-style-guide__bp-grid">
-                        <BpCard label="XS" token="(base)" value="< 640px" desc="Mobile portrait" />
-                        <BpCard label="SM" token="$bp-sm" value="≥ 640px" desc="Mobile landscape" />
-                        <BpCard label="MD" token="$bp-md" value="≥ 768px" desc="Tablet portrait" />
-                        <BpCard label="LG" token="$bp-lg" value="≥ 1024px" desc="Tablet landscape / small laptop" />
-                        <BpCard label="XL" token="$bp-xl" value="≥ 1280px" desc="Desktop (diseño principal)" />
+                        <BpCard label="XS" token="(base)" value="< 640px" desc="Mobile portrait" screenWidth="29%" />
+                        <BpCard label="SM" token="$bp-sm" value="≥ 640px" desc="Mobile landscape" screenWidth="45%" />
+                        <BpCard label="MD" token="$bp-md" value="≥ 768px" desc="Tablet portrait" screenWidth="59%" />
+                        <BpCard label="LG" token="$bp-lg" value="≥ 1024px" desc="Tablet landscape / small laptop" screenWidth="82%" />
+                        <BpCard label="XL" token="$bp-xl" value="≥ 1280px" desc="Desktop (diseño principal)" screenWidth="100%" />
                     </div>
                 </section>
 
@@ -198,6 +198,8 @@ export default function StyleGuide() {
                         <A11yCard title="Labels en formularios" desc='Siempre <label for> asociado o aria-label. Nunca placeholder como único label.' wcag="WCAG 1.3.1 A" />
                         <A11yCard title="Semántica HTML estricta" desc="Metodología BEM. Tags semánticos: <nav>, <main>, <header>, <section>, <article>. Evitar <div> innecesario." wcag="WCAG 4.1.2 A" />
                         <A11yCard title="Navegación por teclado" desc="Tab order lógico. Botones y links accesibles con Enter/Space. No keyboard traps." wcag="WCAG 2.1.1 A" />
+                        <A11yCard title="Color como único diferenciador" desc="EVITAR usar solo color para transmitir información. Usar también iconos, texto, o patrones." wcag="WCAG 1.4.1 A" variant="red" />
+                        <A11yCard title="Texto alt en imágenes" desc='Todas las imágenes informativas con alt descriptivo. Decorativas con alt="".' wcag="WCAG 1.1.1 A" />
                     </div>
                 </section>
 
@@ -269,8 +271,7 @@ function RadiusCard({ token, value, desc, radius }: { token: string; value: stri
 
 function ShadowCard({ token, desc, value, shadow }: { token: string; desc: string; value: string; shadow: string }) {
     return (
-        <div className="p-style-guide__shadow-card">
-            <div className="p-style-guide__shadow-card-box" style={{ boxShadow: shadow }} />
+        <div className="p-style-guide__shadow-card" style={{ boxShadow: shadow }}>
             <span className="p-style-guide__shadow-card-token">{token}</span>
             <span className="p-style-guide__shadow-card-desc">{desc}</span>
             <span className="p-style-guide__shadow-card-value">{value}</span>
@@ -278,10 +279,10 @@ function ShadowCard({ token, desc, value, shadow }: { token: string; desc: strin
     );
 }
 
-function BpCard({ label, token, value, desc }: { label: string; token: string; value: string; desc: string }) {
+function BpCard({ label, token, value, desc, screenWidth }: { label: string; token: string; value: string; desc: string; screenWidth: string }) {
     return (
         <div className="p-style-guide__bp-card">
-            <div className="p-style-guide__bp-card-box" />
+            <div className="p-style-guide__bp-card-box" style={{ width: screenWidth }} />
             <span className="p-style-guide__bp-card-label">{label}</span>
             <span className="p-style-guide__bp-card-token">{token}</span>
             <span className="p-style-guide__bp-card-value">{value}</span>
@@ -302,9 +303,9 @@ function MotionCard({ title, duration, easing, desc, code }: { title: string; du
     );
 }
 
-function A11yCard({ title, desc, wcag }: { title: string; desc: string; wcag: string }) {
+function A11yCard({ title, desc, wcag, variant }: { title: string; desc: string; wcag: string; variant?: 'red' }) {
     return (
-        <div className="p-style-guide__a11y-card">
+        <div className={`p-style-guide__a11y-card${variant === 'red' ? ' p-style-guide__a11y-card--danger' : ''}`}>
             <strong className="p-style-guide__a11y-card-title">● {title}</strong>
             <span className="p-style-guide__a11y-card-desc">{desc}</span>
             <span className="p-style-guide__a11y-card-wcag">{wcag}</span>
@@ -424,8 +425,12 @@ function DosAndDonts() {
         { title: 'Tipografía semántica', desc: 'Usar <h1>-<h6> con jerarquía correcta. Solo un H1 por página. Respetar la escala tipográfica.' },
     ];
     const donts = [
-        { title: 'NO hardcodear colores', bad: 'color: #6a1cf6', good: 'color: var(--color-brand)' },
-        { title: 'NO usar px para espaciado', bad: 'padding: 16px', good: 'padding: $space-4 (1rem)' },
+        { title: 'NO hardcodear colores', desc: '❌ color: #6a1cf6   ✅ color: var(--color-brand)' },
+        { title: 'NO usar px para espaciado', desc: '❌ padding: 16px   ✅ padding: $space-4 (1rem)' },
+        { title: 'NO usar div genéricos', desc: '❌ <div class="nav">   ✅ <nav class="c-app-header__nav">' },
+        { title: 'NO color como único indicador', desc: 'Siempre acompañar de icono, texto o patrón para estados de error/éxito.' },
+        { title: 'NO romper jerarquía tipográfica', desc: '❌ H1 → H3 (saltarse H2)   ✅ H1 → H2 → H3 en orden.' },
+        { title: 'NO fetch() en componentes Inertia', desc: 'Usar useForm o router.visit. Nunca fetch/axios para datos del propio backend.' },
     ];
     return (
         <div className="p-style-guide__dos-grid">
@@ -440,7 +445,7 @@ function DosAndDonts() {
                 <div key={d.title} className="p-style-guide__dont-card">
                     <span className="p-style-guide__dont-card-label">✗ EVITAR</span>
                     <strong>{d.title}</strong>
-                    <p>❌ {d.bad}  ✅ {d.good}</p>
+                    <p>{d.desc}</p>
                 </div>
             ))}
         </div>
