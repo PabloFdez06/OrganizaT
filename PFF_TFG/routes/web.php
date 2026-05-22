@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('moodle/redirect', [MoodleMediaController::class, 'redirect'])->name('moodle.redirect');
 
     Route::post('moodle-connect', [MoodleConnectionController::class, 'connect'])->name('moodle.connect');
+    Route::get('moodle-connect/status', [MoodleConnectionController::class, 'connectStatus'])->name('moodle.connect.status');
     Route::post('moodle/preferences/background-notifications', [MoodlePreferencesController::class, 'updateBackgroundNotifications'])
         ->name('moodle.preferences.background_notifications.update');
 

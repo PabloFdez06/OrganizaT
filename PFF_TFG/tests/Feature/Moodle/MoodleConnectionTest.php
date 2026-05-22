@@ -1,18 +1,16 @@
 <?php
 
+use App\Jobs\Moodle\ConnectMoodleJob;
 use App\Models\User;
 use App\Services\Moodle\MoodleCasClient;
 use App\Services\Moodle\MoodleSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
-it('connects moodle account and stores encrypted password', function (): void {
-    $this->mock(MoodleCasClient::class, function ($mock): void {
-        $mock->shouldReceive('login')
-            ->once()
-            ->andReturn(new MoodleSession(curl_init(), 'sess-123', 10));
-    });
+it('dispatches connect job and returns pending status', function (): void {
+    Queue::fake();
 
     $user = User::factory()->create();
 
@@ -23,12 +21,12 @@ it('connects moodle account and stores encrypted password', function (): void {
         ]);
 
     $response->assertOk()->assertJson([
-        'message' => 'Cuenta Moodle conectada correctamente.',
+        'status' => 'pending',
     ]);
 
-    $user->refresh();
-
-    expect($user->moodle_username)->toBe('alumno');
-    expect($user->getRawOriginal('moodle_password'))->not->toBe('secreto123');
-    expect($user->moodle_password)->toBe('secreto123');
+    Queue::assertPushed(ConnectMoodleJob::class, function ($job) use ($user) {
+        return $job->userId === $user->id
+            && $job->moodleUsername === 'alumno'
+            && $job->moodlePassword === 'secreto123';
+    });
 });

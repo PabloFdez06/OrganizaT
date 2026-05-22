@@ -1,4 +1,5 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import Heading from '@/components/heading';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,37 @@ export default function MoodleConsole({
 }: MoodleConsoleProps) {
     const page = usePage();
     const flash = (page.props.flash ?? {}) as { success?: string; error?: string };
+    const [consoleConnecting, setConsoleConnecting] = useState(false);
+    const [consoleConnectError, setConsoleConnectError] = useState<string | null>(null);
+
+    const handleConsoleConnect = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        setConsoleConnecting(true);
+        setConsoleConnectError(null);
+
+        try {
+            const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+            await fetch('/moodle-connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, Accept: 'application/json' },
+                body: JSON.stringify({ moodle_username: formData.get('moodle_username'), moodle_password: formData.get('moodle_password') }),
+            });
+
+            const poll = async (): Promise<void> => {
+                const res = await fetch('/moodle-connect/status', { headers: { Accept: 'application/json' } });
+                const state = await res.json();
+                if (state.status === 'done') { setConsoleConnecting(false); router.reload(); return; }
+                if (state.status === 'error') { setConsoleConnecting(false); setConsoleConnectError(state.error); return; }
+                await new Promise((r) => setTimeout(r, 2000));
+                return poll();
+            };
+            await poll();
+        } catch {
+            setConsoleConnecting(false);
+            setConsoleConnectError('Error de red.');
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -88,41 +120,35 @@ export default function MoodleConsole({
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Form method="post" action="/moodle-connect" className="space-y-4">
-                                    {({ errors, processing }) => (
-                                        <>
-                                            <section className="space-y-2">
-                                                <Label htmlFor="moodle_username">Usuario Moodle</Label>
-                                                <Input
-                                                    id="moodle_username"
-                                                    name="moodle_username"
-                                                    defaultValue={moodleUsername ?? ''}
-                                                    required
-                                                />
-                                                {errors.moodle_username && (
-                                                    <p className="text-sm text-destructive">{errors.moodle_username}</p>
-                                                )}
-                                            </section>
+                                <form className="space-y-4" onSubmit={(e) => void handleConsoleConnect(e)}>
+                                    <section className="space-y-2">
+                                        <Label htmlFor="moodle_username">Usuario Moodle</Label>
+                                        <Input
+                                            id="moodle_username"
+                                            name="moodle_username"
+                                            defaultValue={moodleUsername ?? ''}
+                                            required
+                                        />
+                                    </section>
 
-                                            <section className="space-y-2">
-                                                <Label htmlFor="moodle_password">Password Moodle</Label>
-                                                <Input
-                                                    id="moodle_password"
-                                                    name="moodle_password"
-                                                    type="password"
-                                                    required
-                                                />
-                                                {errors.moodle_password && (
-                                                    <p className="text-sm text-destructive">{errors.moodle_password}</p>
-                                                )}
-                                            </section>
+                                    <section className="space-y-2">
+                                        <Label htmlFor="moodle_password">Password Moodle</Label>
+                                        <Input
+                                            id="moodle_password"
+                                            name="moodle_password"
+                                            type="password"
+                                            required
+                                        />
+                                    </section>
 
-                                            <Button type="submit" disabled={processing}>
-                                                {processing ? 'Conectando...' : 'Conectar Moodle'}
-                                            </Button>
-                                        </>
+                                    {consoleConnectError && (
+                                        <p className="text-sm text-destructive">{consoleConnectError}</p>
                                     )}
-                                </Form>
+
+                                    <Button type="submit" disabled={consoleConnecting}>
+                                        {consoleConnecting ? 'Conectando...' : 'Conectar Moodle'}
+                                    </Button>
+                                </form>
                             </CardContent>
                         </Card>
                     </article>

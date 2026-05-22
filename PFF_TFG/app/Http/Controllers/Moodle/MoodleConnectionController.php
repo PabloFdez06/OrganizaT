@@ -3,61 +3,40 @@
 namespace App\Http\Controllers\Moodle;
 
 use App\Http\Controllers\Controller;
-use App\Services\Moodle\Exceptions\MoodleAuthenticationException;
-use App\Services\Moodle\Exceptions\MoodleRequestException;
+use App\Jobs\Moodle\ConnectMoodleJob;
+use App\Services\Moodle\MoodleAsyncSectionCache;
 use App\Services\Moodle\MoodleCasClient;
-use App\Services\Moodle\MoodleEphemeralSessionService;
-use App\Services\Moodle\MoodleUserAcademicCache;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class MoodleConnectionController extends Controller
 {
     public function __construct(
         private readonly MoodleCasClient $client,
-        private readonly MoodleEphemeralSessionService $sessionService,
-        private readonly MoodleUserAcademicCache $cache,
+        private readonly MoodleAsyncSectionCache $asyncCache,
     ) {}
 
-    public function connect(Request $request): JsonResponse|RedirectResponse
+    public function connect(Request $request): JsonResponse
     {
         $data = $request->validate([
             'moodle_username' => ['required', 'string', 'max:255'],
             'moodle_password' => ['required', 'string', 'max:255'],
         ]);
 
-        try {
-            $session = $this->client->login($data['moodle_username'], $data['moodle_password']);
-            $this->sessionService->storeForUser($request->user(), $data['moodle_username'], $session);
-            $session->close();
-        } catch (MoodleAuthenticationException) {
-            return $this->respond(
-                $request,
-                ['message' => 'Credenciales Moodle inválidas.'],
-                ['moodle_password' => 'Credenciales Moodle inválidas.'],
-                422,
-            );
-        } catch (MoodleRequestException $exception) {
-            $message = $exception->getMessage() === 'Missing Moodle/CAS configuration.'
-                ? 'Falta la configuración Moodle en .env. Define MOODLE_URL o MOODLE_BASE_URL. Si CAS va en otro dominio, define MOODLE_CAS_BASE (o CAS_BASE).'
-                : $exception->getMessage();
+        $user = $request->user();
 
-            return $this->respond(
-                $request,
-                ['message' => $message],
-                ['moodle_username' => $message],
-                422,
-            );
-        }
+        $this->asyncCache->markPending('moodle-connect', $user->id);
 
-        $request->user()->update([
-            'moodle_username' => $data['moodle_username'],
-        ]);
+        ConnectMoodleJob::dispatch($user->id, $data['moodle_username'], $data['moodle_password']);
 
-        $this->cache->clearForUser($request->user());
+        return response()->json(['status' => 'pending']);
+    }
 
-        return $this->respond($request, ['message' => 'Cuenta Moodle conectada correctamente.']);
+    public function connectStatus(Request $request): JsonResponse
+    {
+        $state = $this->asyncCache->getState('moodle-connect', $request->user()->id);
+
+        return response()->json($state);
     }
 
     public function debug(Request $request): JsonResponse
@@ -88,24 +67,4 @@ class MoodleConnectionController extends Controller
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     * @param  array<string, string>|null  $errors
-     */
-    private function respond(Request $request, array $payload, ?array $errors = null, int $status = 200): JsonResponse|RedirectResponse
-    {
-        if ($request->expectsJson() || $request->is('api/*')) {
-            if ($errors) {
-                return response()->json(['message' => $payload['message'] ?? 'Error', 'errors' => $errors], $status);
-            }
-
-            return response()->json($payload, $status);
-        }
-
-        if ($errors) {
-            return back()->withErrors($errors);
-        }
-
-        return back()->with('success', $payload['message'] ?? 'OK');
-    }
 }

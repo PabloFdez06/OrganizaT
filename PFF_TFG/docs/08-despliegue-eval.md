@@ -32,28 +32,28 @@ Todos los artefactos necesarios para reproducir el despliegue están identificad
 
 | Fichero / directorio | Propósito | Se versiona |
 |---|---|---|
-| `Dockerfile` | Define las 5 etapas de build (base, vendor, frontend, runtime, nginx) | ✅ Sí |
-| `docker-compose.beta.yml` | Orquesta los 7 servicios del entorno beta | ✅ Sí |
-| `.env.example` | Plantilla de variables para desarrollo local | ✅ Sí |
-| `.env.beta.example` | Plantilla de variables para entorno beta dockerizado | ✅ Sí |
-| `docker/nginx/conf.d/default.conf` | Configuración del servidor web (reverse proxy, rutas, compresión, caché) | ✅ Sí |
-| `docker/nginx/snippets/security-headers.conf` | Security headers HTTP reutilizables | ✅ Sí |
-| `docker/php/php-fpm.d/zz-docker.conf` | Pool PHP-FPM (pm dinámico, workers, logs) | ✅ Sí |
-| `docker/php/conf.d/99-app.ini` | Configuración PHP (OPcache, memoria, timeouts) | ✅ Sí |
-| `docker/bin/healthcheck-worker` | Script de healthcheck para el servicio worker | ✅ Sí |
-| `docker/bin/healthcheck-scheduler` | Script de healthcheck para el servicio scheduler | ✅ Sí |
-| `scripts/ops/bootstrap-droplet-beta.sh` | Bootstrap completo desde cero (instala Docker si falta) | ✅ Sí |
-| `scripts/ops/first-boot-beta.sh` | Primer arranque manual sin bootstrap | ✅ Sí |
-| `scripts/ops/deploy-beta.sh` | Actualización del entorno beta existente | ✅ Sí |
-| `scripts/ops/inspect-beta.sh` | Inspección de logs y estado de contenedores | ✅ Sí |
-| `scripts/ops/load-test.sh` | Prueba de carga ligera con Apache Bench | ✅ Sí |
-| `.github/workflows/deploy-beta.yml` | Pipeline CI/CD completo (test → build → push GHCR → deploy SSH) | ✅ Sí |
-| `.github/workflows/tests.yml` | Pipeline de tests (matrix PHP 8.4/8.5) | ✅ Sí |
-| `.github/workflows/lint.yml` | Pipeline de calidad (Pint, ESLint, Prettier, TypeScript) | ✅ Sí |
-| `.env` | Variables reales del entorno activo | ❌ No (en `.gitignore`) |
-| `public/build/` | Assets compilados por Vite (generados en build) | ❌ No (generados en Dockerfile stage `frontend`) |
-| `vendor/` | Dependencias PHP de Composer | ❌ No (generadas en Dockerfile stage `vendor`) |
-| `node_modules/` | Dependencias Node.js | ❌ No (solo en build) |
+| `Dockerfile` | Define las 5 etapas de build (base, vendor, frontend, runtime, nginx) | Sí |
+| `docker-compose.beta.yml` | Orquesta los 7 servicios del entorno beta | Sí |
+| `.env.example` | Plantilla de variables para desarrollo local | Sí |
+| `.env.beta.example` | Plantilla de variables para entorno beta dockerizado | Sí |
+| `docker/nginx/conf.d/default.conf` | Configuración del servidor web (reverse proxy, rutas, compresión, caché) | Sí |
+| `docker/nginx/snippets/security-headers.conf` | Security headers HTTP reutilizables | Sí |
+| `docker/php/php-fpm.d/zz-docker.conf` | Pool PHP-FPM (pm dinámico, workers, logs) | Sí |
+| `docker/php/conf.d/99-app.ini` | Configuración PHP (OPcache, memoria, timeouts) | Sí |
+| `docker/bin/healthcheck-worker` | Script de healthcheck para el servicio worker | Sí |
+| `docker/bin/healthcheck-scheduler` | Script de healthcheck para el servicio scheduler | Sí |
+| `scripts/ops/bootstrap-droplet-beta.sh` | Bootstrap completo desde cero (instala Docker si falta) | Sí |
+| `scripts/ops/first-boot-beta.sh` | Primer arranque manual sin bootstrap | Sí |
+| `scripts/ops/deploy-beta.sh` | Actualización del entorno beta existente | Sí |
+| `scripts/ops/inspect-beta.sh` | Inspección de logs y estado de contenedores | Sí |
+| `scripts/ops/load-test.sh` | Prueba de carga ligera con Apache Bench | Sí |
+| `.github/workflows/deploy-beta.yml` | Pipeline CI/CD completo (test → build → push GHCR → deploy SSH) | Sí |
+| `.github/workflows/tests.yml` | Pipeline de tests (matrix PHP 8.4/8.5) | Sí |
+| `.github/workflows/lint.yml` | Pipeline de calidad (Pint, ESLint, Prettier, TypeScript) | Sí |
+| `.env` | Variables reales del entorno activo | No (en `.gitignore`) |
+| `public/build/` | Assets compilados por Vite (generados en build) | No (generados en Dockerfile stage `frontend`) |
+| `vendor/` | Dependencias PHP de Composer | No (generadas en Dockerfile stage `vendor`) |
+| `node_modules/` | Dependencias Node.js | No (solo en build) |
 
 ### Ficheros que no se suben al repositorio
 

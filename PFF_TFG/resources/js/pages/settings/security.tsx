@@ -1,7 +1,6 @@
 import { Form, Head, router, usePage } from '@inertiajs/react';
 import { BellRing, CircleHelp, Mail, Monitor, Moon, Palette, Settings, ShieldAlert, Sun, UserRound, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { connect } from '@/actions/App/Http/Controllers/Moodle/MoodleConnectionController';
 import { updateBackgroundNotifications } from '@/actions/App/Http/Controllers/Moodle/MoodlePreferencesController';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -11,7 +10,6 @@ import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { useAppearance } from '@/hooks/use-appearance';
 import type { Appearance } from '@/hooks/use-appearance';
 import { rules, useFormValidation } from '@/hooks/use-form-validation';
-import { translateServerError } from '@/lib/error-translator';
 import {
     TWO_FACTOR_ACTION_QUERY_KEY,
     useTwoFactorAuth,
@@ -176,6 +174,72 @@ export default function Security({
     });
 
     const [preferencesData, setPreferencesData] = useState<Preferences>(preferences);
+    const [connectProcessing, setConnectProcessing] = useState(false);
+    const [connectError, setConnectError] = useState<string | null>(null);
+
+    const handleMoodleConnect = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!validateMoodle()) {
+            return;
+        }
+
+        const formData = new FormData(event.currentTarget);
+        const username = formData.get('moodle_username') as string;
+        const password = formData.get('moodle_password') as string;
+
+        setConnectProcessing(true);
+        setConnectError(null);
+
+        try {
+            const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+
+            await fetch('/moodle-connect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({ moodle_username: username, moodle_password: password }),
+            });
+
+            // Poll for completion
+            const poll = async (): Promise<void> => {
+                const res = await fetch('/moodle-connect/status', {
+                    headers: { Accept: 'application/json' },
+                });
+                const state = await res.json();
+
+                if (state.status === 'done') {
+                    setConnectProcessing(false);
+                    setShowReconnectForm(false);
+                    clearMoodleErrors();
+                    router.reload();
+
+                    return;
+                }
+
+                if (state.status === 'error') {
+                    setConnectProcessing(false);
+                    setConnectError(state.error ?? 'Error al conectar con Moodle.');
+
+                    return;
+                }
+
+                // Still pending, poll again
+                await new Promise((resolve) => setTimeout(resolve, 2000));
+
+                return poll();
+            };
+
+            await poll();
+        } catch {
+            setConnectProcessing(false);
+            setConnectError('Error de red al conectar con Moodle.');
+        }
+    };
+
     const [processing, setProcessing] = useState(false);
     const [testingEmail, setTestingEmail] = useState(false);
     const [backgroundNotificationsEnabled, setBackgroundNotificationsEnabled] = useState<boolean>(moodleBackgroundNotifications);
@@ -700,57 +764,48 @@ export default function Security({
                                     </section>
 
                                     {(showReconnectForm || !moodleConnected) && (
-                                        <Form
-                                            method="post"
-                                            action={connect().url}
+                                        <form
                                             className="p-settings__connect-form"
-                                            onBefore={() => validateMoodle()}
-                                            onSuccess={() => {
-                                                setShowReconnectForm(false);
-                                                clearMoodleErrors();
-                                                router.reload();
-                                            }}
+                                            onSubmit={(e) => void handleMoodleConnect(e)}
                                         >
-                                            {({ errors, processing: connectProcessing }) => (
-                                                <>
-                                                    <section className="p-settings__field">
-                                                        <label className="p-settings__field-label" htmlFor="moodle_username">Usuario Moodle</label>
-                                                        <Input
-                                                            id="moodle_username"
-                                                            name="moodle_username"
-                                                            required
-                                                            autoComplete="username"
-                                                            onChange={handleMoodleChange}
-                                                            onBlur={handleMoodleBlur}
-                                                        />
-                                                        <InputError message={moodleClientErrors.moodle_username || translateServerError(errors.moodle_username)} />
-                                                    </section>
+                                            <section className="p-settings__field">
+                                                <label className="p-settings__field-label" htmlFor="moodle_username">Usuario Moodle</label>
+                                                <Input
+                                                    id="moodle_username"
+                                                    name="moodle_username"
+                                                    required
+                                                    autoComplete="username"
+                                                    onChange={handleMoodleChange}
+                                                    onBlur={handleMoodleBlur}
+                                                />
+                                                <InputError message={moodleClientErrors.moodle_username} />
+                                            </section>
 
-                                                    <section className="p-settings__field">
-                                                        <label className="p-settings__field-label" htmlFor="moodle_password">Contraseña Moodle</label>
-                                                        <Input
-                                                            id="moodle_password"
-                                                            name="moodle_password"
-                                                            type="password"
-                                                            required
-                                                            autoComplete="current-password"
-                                                            onChange={handleMoodleChange}
-                                                            onBlur={handleMoodleBlur}
-                                                        />
-                                                        <InputError message={moodleClientErrors.moodle_password || translateServerError(errors.moodle_password)} />
-                                                    </section>
+                                            <section className="p-settings__field">
+                                                <label className="p-settings__field-label" htmlFor="moodle_password">Contraseña Moodle</label>
+                                                <Input
+                                                    id="moodle_password"
+                                                    name="moodle_password"
+                                                    type="password"
+                                                    required
+                                                    autoComplete="current-password"
+                                                    onChange={handleMoodleChange}
+                                                    onBlur={handleMoodleBlur}
+                                                />
+                                                <InputError message={moodleClientErrors.moodle_password} />
+                                            </section>
 
-                                                    <Button
-                                                        type="submit"
-                                                        variant="outline"
-                                                        className="p-settings__outline-button"
-                                                        disabled={connectProcessing}
-                                                    >
-                                                        {connectProcessing ? 'Conectando...' : 'Guardar conexión'}
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </Form>
+                                            {connectError && <InputError message={connectError} />}
+
+                                            <Button
+                                                type="submit"
+                                                variant="outline"
+                                                className="p-settings__outline-button"
+                                                disabled={connectProcessing}
+                                            >
+                                                {connectProcessing ? 'Conectando...' : 'Guardar conexión'}
+                                            </Button>
+                                        </form>
                                     )}
 
                                     <p className="p-settings__caption">
