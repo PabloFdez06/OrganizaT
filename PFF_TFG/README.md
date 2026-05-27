@@ -1,7 +1,7 @@
 <h1 align="center">Organiza<span style="color:#6a1cf6">T</span></h1>
 
 <div align="center">
-  <img src="./PFF_TFG/resources/imgs/OrganizaT_sinfondo.png" width="400" alt="OrganizaT" />
+  <img src="https://raw.githubusercontent.com/PabloFdez06/PabloFdez_TFG/main/PFF_TFG/resources/imgs/OrganizaT_sinfondo.png" width="400" alt="OrganizaT" />
 </div>
 
 Aplicación web para alumnado de FP que centraliza información académica de Moodle en un panel unico de organización (tareas, calificaciones, recursos y prioridades).
