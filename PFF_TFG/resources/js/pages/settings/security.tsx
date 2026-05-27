@@ -618,6 +618,15 @@ export default function Security({
         <>
             <Head title="Configuración" />
 
+            {connectProcessing && (
+                <section className="c-global-loading" role="status" aria-live="polite" aria-label="Conectando con Moodle">
+                    <section className="c-global-loading__panel">
+                        <span className="c-global-loading__spinner" aria-hidden="true" />
+                        <p className="c-global-loading__text">Conectando con Moodle...</p>
+                    </section>
+                </section>
+            )}
+
             <main className="p-settings" aria-labelledby="settings-title">
                 <header className="p-settings__page-header" aria-label="Cabecera de configuración">
                     <section className="p-settings__page-header-brand">
