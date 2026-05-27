@@ -1,4 +1,6 @@
-# OrganizaT
+<h1 align="center">Organiza<span style="color:#6a1cf6">T</span></h1>
+
+![OrganizaT](/PFF_TFG/resources/imgs/OrganizaT_IMG.png)
 
 **Trabajo de Fin de Grado — DAW**
 

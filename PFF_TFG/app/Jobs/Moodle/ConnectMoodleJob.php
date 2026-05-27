@@ -72,6 +72,7 @@ class ConnectMoodleJob implements ShouldQueue
 
         $user->update(['moodle_username' => $this->moodleUsername]);
         $academicCache->clearForUser($user);
+        $academicCache->getForUser($user);
 
         $asyncCache->markDone('moodle-connect', $user->id, ['message' => 'Cuenta Moodle conectada correctamente.']);
     }
