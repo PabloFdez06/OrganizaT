@@ -180,9 +180,9 @@ export default function TwoFactorChallenge() {
                     </section>
 
                     <footer className="c-two-factor-auth__footer" aria-label="Indicadores de estado tecnico">
-                        <span className="c-two-factor-auth__footer-item">SECURE_ACCESS_V1.0</span>
-                        <span className="c-two-factor-auth__footer-item">ESTADO: PENDIENTE</span>
-                        <span className="c-two-factor-auth__footer-item">ENC: SHA-256</span>
+                        <span className="c-two-factor-auth__footer-item">-</span>
+                        <span className="c-two-factor-auth__footer-item">ORGANIZAT</span>
+                        <span className="c-two-factor-auth__footer-item">-</span>
                     </footer>
                 </article>
             </main>
