@@ -42,7 +42,7 @@ export default function Login({
                         '--auth-hero-image': 'url("https://www.figma.com/api/mcp/asset/09035ce8-031f-4d6a-8a86-e9e729994e2b")',
                     } as CSSProperties}
                 >
-                    <header className="c-auth-editorial__hero-top">SYSTEM_ARCHIVE_v.2.4</header>
+                    <header className="c-auth-editorial__hero-top"></header>
                     <section className="c-auth-editorial__hero-content">
                         <h1 className="c-auth-editorial__hero-title">PRECISION ACADEMICA</h1>
                         <p className="c-auth-editorial__hero-description">

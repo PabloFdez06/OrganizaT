@@ -32,7 +32,6 @@ export default function Register() {
                         '--auth-hero-image': 'url("https://www.figma.com/api/mcp/asset/a1bb3190-6197-477b-b50f-66bef91760b5")',
                     } as CSSProperties}
                 >
-                    <header className="c-auth-editorial__hero-pill">Ecosistema V2.4</header>
                     <section className="c-auth-editorial__hero-content">
                         <h1 className="c-auth-editorial__hero-title">PRECISION ACADEMICA.</h1>
                         <p className="c-auth-editorial__hero-description">
@@ -43,7 +42,7 @@ export default function Register() {
                     </section>
 
                     <footer className="c-auth-editorial__hero-footer">
-                        <span>OrganizaT Excellence</span>
+                        <span>OrganizaT</span>
                     </footer>
                 </section>
 
@@ -156,9 +155,7 @@ export default function Register() {
                         </Form>
 
                         <footer className="c-auth-editorial__legal">
-                            <span>Terminos de servicio</span>
-                            <span>Privacidad</span>
-                            <span>Soporte tecnico</span>
+                            <span>OrganizaT</span>
                         </footer>
                     </article>
                 </section>

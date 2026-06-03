@@ -235,7 +235,6 @@ export default function Welcome() {
                         <ul className="nav-right">
                             <li><a href="#feat" className="nav-link">Funciones</a></li>
                             <li><a href="#how" className="nav-link">Cómo funciona</a></li>
-                            <li><a href="#dl" className="nav-link">Descargar</a></li>
                             <li>
                                 <Link href={accessHref} className="nav-btn">Acceder</Link>
                             </li>
@@ -461,15 +460,15 @@ export default function Welcome() {
                             <section className="access-block">
                                 <h3 className="access-label">Acceso web directo</h3>
                                 <article className="url-field" aria-label="Ejemplo de URL Moodle">
-                                    <span className="url-mini">URL de tu Moodle institucional</span>
-                                    <p className="url-val">https://<em>campus.tuuniversidad.es</em></p>
+                                    <span className="url-mini">Tus credenciales de la moodle</span>
+                                    <p className="url-val">username-<em>password</em></p>
                                 </article>
                                 <Link href={accessHref} className="access-btn">
                                     Conectar y acceder
                                     <ArrowRightIcon width={14} height={14} stroke="white" />
                                 </Link>
                                 <p className="access-note">
-                                    Sin instalación de plugins en el servidor. <strong>Compatible con cualquier instancia Moodle 3.x y 4.x.</strong>
+                                    Sin instalación de plugins en el servidor.
                                     {' '}Totalmente gratuito y sin límites de uso.
                                 </p>
                             </section>
@@ -479,12 +478,7 @@ export default function Welcome() {
 
                 <footer>
                     <p className="f-logo">Organiza<em>T</em></p>
-                    <ul className="f-nav">
-                        <li><a href="#">Privacidad</a></li>
-                        <li><a href="#">Términos</a></li>
-                        <li><a href="#">Soporte</a></li>
-                        <li><a href="#">Contacto</a></li>
-                    </ul>
+
                     <p className="f-copy">2026 OrganizaT. Todos los derechos reservados.</p>
                 </footer>
             </main>
