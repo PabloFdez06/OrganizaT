@@ -66,5 +66,4 @@ class MoodleConnectionController extends Controller
             ], 422);
         }
     }
-
 }

@@ -177,7 +177,7 @@ class MoodleEphemeralSessionService
         return $username !== '' ? $username : null;
     }
 
-    /** 
+    /**
      * @param  array<string, mixed>  $payload
      */
     private function persistPayload(int $userId, array $payload): void

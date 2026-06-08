@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AsignaturasController;
 use App\Http\Controllers\CalificacionesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ErrorReportController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Moodle\MoodleConnectionController;
 use App\Http\Controllers\Moodle\MoodleConsoleController;
 use App\Http\Controllers\Moodle\MoodleDataController;

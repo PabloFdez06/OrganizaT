@@ -874,5 +874,4 @@ class MoodleNotificationCenter
 
         return (bool) ($preferences[$key] ?? true);
     }
-
 }
