@@ -4,6 +4,24 @@
 	<img src="resources/imgs/OrganizaT_sinfondo.png" width="360" alt="OrganizaT" />
 </p>
 
+<p align="center">
+	<a href="https://github.com/PabloFdez06/OrganizaT/actions/workflows/deploy.yml">
+		<img alt="CI/CD" src="https://img.shields.io/github/actions/workflow/status/PabloFdez06/OrganizaT/deploy.yml?branch=main&label=CI%2FCD" />
+	</a>
+	<a href="https://laravel.com">
+		<img alt="Backend" src="https://img.shields.io/badge/backend-Laravel%2012%20%7C%20PHP%208.2%2B-FF2D20?logo=laravel&logoColor=white" />
+	</a>
+	<a href="https://react.dev">
+		<img alt="Frontend" src="https://img.shields.io/badge/frontend-React%2019%20%7C%20TypeScript-149ECA?logo=react&logoColor=white" />
+	</a>
+	<a href="https://www.docker.com/">
+		<img alt="Infraestructura" src="https://img.shields.io/badge/infra-Docker%20%7C%20GHCR%20%7C%20Actions-2496ED?logo=docker&logoColor=white" />
+	</a>
+	<a href="LICENSE">
+		<img alt="Licencia MIT" src="https://img.shields.io/badge/license-MIT-2ea44f" />
+	</a>
+</p>
+
 Aplicación web para alumnado de FP que centraliza información académica de Moodle en un único panel de organización: tareas, calificaciones, recursos, recordatorios y prioridades.
 
 ## Índice
@@ -19,7 +37,8 @@ Aplicación web para alumnado de FP que centraliza información académica de Mo
 - [9. Variables de entorno](#9-variables-de-entorno)
 - [10. Verificación post-despliegue](#10-verificación-post-despliegue)
 - [11. Enlaces útiles](#11-enlaces-útiles)
-- [12. Autor](#12-autor)
+- [12. Licencia](#12-licencia)
+- [13. Autor](#13-autor)
 
 ## 1. Resumen
 
@@ -217,7 +236,11 @@ Correo para login como admin y asi visualizar panel:
 
 admin@example.com - Admin123498765@
 
-## 12. Autor
+## 12. Licencia
+
+Este proyecto se distribuye bajo la licencia MIT. Consulta el fichero [LICENSE](LICENSE).
+
+## 13. Autor
 
 **Pablo Fernández**  
 2º DAW — IES Rafael Alberti, Cádiz
