@@ -207,9 +207,15 @@ Checklist:
 
 - Credenciales para testeo del profesorado:
 
+Si se testea con correo electronico real, recibiras los mails que no se hayan recibido antes en tu bandeja de entrada. Recomiendo testear con correo electronico real para experiencia real.
+
 	- username: pferfer650b
 
 	- password: XSCUXT
+
+Correo para login como admin y asi visualizar panel:
+
+admin@example.com - Admin123498765@
 
 ## 12. Autor
 
