@@ -263,78 +263,32 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          script_stop: true
+          script_stop: false
           envs: APP_IMAGE,NGINX_IMAGE,IMAGE_TAG,GH_ACTOR,GH_TOKEN,REPO_NAME,DEFAULT_BRANCH
           script: |
             set -eu
 
-            BASE_DEPLOY_PATH="$HOME/apps/$REPO_NAME"
+            DEPLOY_PATH="$HOME/apps/$REPO_NAME"
 
-            if [ ! -d "$BASE_DEPLOY_PATH" ]; then
-              echo "No existe el directorio de despliegue en $BASE_DEPLOY_PATH"
-              exit 1
-            fi
-
-            resolve_checkout_path() {
-              for candidate in \
-                "$BASE_DEPLOY_PATH" \
-                "$BASE_DEPLOY_PATH/PFF_TFG"
-              do
-                if [ -d "$candidate/.git" ] || [ -f "$candidate/.git" ]; then
-                  printf '%s\n' "$candidate"
-                  return 0
-                fi
-              done
-
-              return 1
-            }
-
-            DEPLOY_PATH="$(resolve_checkout_path || true)"
-
-            if [ -z "$DEPLOY_PATH" ]; then
-              echo "No se encontró un checkout Git válido en $BASE_DEPLOY_PATH"
-              exit 1
-            fi
+            [ -d "$DEPLOY_PATH" ] || { echo "No existe el directorio de despliegue en $DEPLOY_PATH"; exit 1; }
+            [ -d "$DEPLOY_PATH/.git" ] || [ -f "$DEPLOY_PATH/.git" ] || { echo "No existe un checkout Git válido en $DEPLOY_PATH"; exit 1; }
 
             cd "$DEPLOY_PATH"
 
             git fetch --all --prune
             git switch "$DEFAULT_BRANCH"
-            git pull origin "$DEFAULT_BRANCH"
+            git pull --ff-only origin "$DEFAULT_BRANCH"
+            git log -1 --oneline
 
-            if [ ! -f docker-compose.prod.yml ]; then
-              echo "Falta docker-compose.prod.yml en $DEPLOY_PATH tras actualizar el checkout"
-              exit 1
-            fi
-
-            if [ ! -f .env ] && [ "$DEPLOY_PATH" = "$BASE_DEPLOY_PATH" ] && [ -f "$BASE_DEPLOY_PATH/PFF_TFG/.env" ]; then
-              cp "$BASE_DEPLOY_PATH/PFF_TFG/.env" .env
-            fi
-
-            if [ ! -f .env ]; then
-              echo ".env no existe en el servidor. Aborto para no romper la configuración actual."
-              exit 1
-            fi
+            [ -f docker-compose.prod.yml ] || { echo "Falta docker-compose.prod.yml en $DEPLOY_PATH tras actualizar el checkout"; exit 1; }
+            if [ ! -f .env ] && [ -f PFF_TFG/.env ]; then cp PFF_TFG/.env .env; fi
+            [ -f .env ] || { echo ".env no existe en el servidor. Aborto para no romper la configuración actual."; exit 1; }
 
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
-            if grep -q '^APP_IMAGE=' .env; then
-              sed -i "s|^APP_IMAGE=.*|APP_IMAGE=$APP_IMAGE|" .env
-            else
-              echo "APP_IMAGE=$APP_IMAGE" >> .env
-            fi
-
-            if grep -q '^NGINX_IMAGE=' .env; then
-              sed -i "s|^NGINX_IMAGE=.*|NGINX_IMAGE=$NGINX_IMAGE|" .env
-            else
-              echo "NGINX_IMAGE=$NGINX_IMAGE" >> .env
-            fi
-
-            if grep -q '^IMAGE_TAG=' .env; then
-              sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$IMAGE_TAG|" .env
-            else
-              echo "IMAGE_TAG=$IMAGE_TAG" >> .env
-            fi
+            if grep -q '^APP_IMAGE=' .env; then sed -i "s|^APP_IMAGE=.*|APP_IMAGE=$APP_IMAGE|" .env; else echo "APP_IMAGE=$APP_IMAGE" >> .env; fi
+            if grep -q '^NGINX_IMAGE=' .env; then sed -i "s|^NGINX_IMAGE=.*|NGINX_IMAGE=$NGINX_IMAGE|" .env; else echo "NGINX_IMAGE=$NGINX_IMAGE" >> .env; fi
+            if grep -q '^IMAGE_TAG=' .env; then sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$IMAGE_TAG|" .env; else echo "IMAGE_TAG=$IMAGE_TAG" >> .env; fi
 
             docker compose -f docker-compose.prod.yml config >/dev/null
             docker compose -f docker-compose.prod.yml pull app worker scheduler nginx
