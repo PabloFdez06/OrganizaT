@@ -268,23 +268,53 @@ jobs:
           script: |
             set -eu
 
-            DEPLOY_PATH="$HOME/apps/$REPO_NAME"
+            BASE_DEPLOY_PATH="$HOME/apps/$REPO_NAME"
 
-            if [ ! -d "$DEPLOY_PATH" ] || [ ! -f "$DEPLOY_PATH/docker-compose.prod.yml" ]; then
-              echo "No existe un checkout válido en $DEPLOY_PATH"
+            if [ ! -d "$BASE_DEPLOY_PATH" ]; then
+              echo "No existe el directorio de despliegue en $BASE_DEPLOY_PATH"
+              exit 1
+            fi
+
+            resolve_checkout_path() {
+              for candidate in \
+                "$BASE_DEPLOY_PATH" \
+                "$BASE_DEPLOY_PATH/PFF_TFG"
+              do
+                if [ -d "$candidate/.git" ] || [ -f "$candidate/.git" ]; then
+                  printf '%s\n' "$candidate"
+                  return 0
+                fi
+              done
+
+              return 1
+            }
+
+            DEPLOY_PATH="$(resolve_checkout_path || true)"
+
+            if [ -z "$DEPLOY_PATH" ]; then
+              echo "No se encontró un checkout Git válido en $BASE_DEPLOY_PATH"
               exit 1
             fi
 
             cd "$DEPLOY_PATH"
 
+            git fetch --all --prune
+            git switch "$DEFAULT_BRANCH"
+            git pull origin "$DEFAULT_BRANCH"
+
+            if [ ! -f docker-compose.prod.yml ]; then
+              echo "Falta docker-compose.prod.yml en $DEPLOY_PATH tras actualizar el checkout"
+              exit 1
+            fi
+
+            if [ ! -f .env ] && [ "$DEPLOY_PATH" = "$BASE_DEPLOY_PATH" ] && [ -f "$BASE_DEPLOY_PATH/PFF_TFG/.env" ]; then
+              cp "$BASE_DEPLOY_PATH/PFF_TFG/.env" .env
+            fi
+
             if [ ! -f .env ]; then
               echo ".env no existe en el servidor. Aborto para no romper la configuración actual."
               exit 1
             fi
-
-            git fetch --all --prune
-            git switch "$DEFAULT_BRANCH"
-            git pull origin "$DEFAULT_BRANCH"
 
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
