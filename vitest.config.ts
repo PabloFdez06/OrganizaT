@@ -1,13 +1,15 @@
-import viteConfig from './vite.config';
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from 'vitest/config';
 
-export default mergeConfig(
-    viteConfig,
-    defineConfig({
-        test: {
-            environment: 'jsdom',
-            setupFiles: ['resources/js/tests/setup.ts'],
-            include: ['resources/js/**/*.test.{ts,tsx}'],
+export default defineConfig({
+    resolve: {
+        alias: {
+            '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
         },
-    }),
-);
+    },
+    test: {
+        environment: 'jsdom',
+        setupFiles: ['resources/js/tests/setup.ts'],
+        include: ['resources/js/**/*.test.{ts,tsx}'],
+    },
+});
