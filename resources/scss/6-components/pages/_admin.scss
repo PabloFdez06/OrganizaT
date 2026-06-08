@@ -1,0 +1,330 @@
+// Admin panel — sigue el lenguaje visual del dashboard (purple brand, radius 4px)
+
+// ── Page wrapper ──────────────────────────────────────────────────────────────
+
+.p-admin {
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+// ── Page header (espeja .p-settings__page-header, sin botón de cierre) ────────
+
+.p-admin__page-header {
+    padding: 1rem 1.75rem;
+    border-bottom: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.p-admin__page-header-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background: var(--color-brand);
+    color: var(--color-brand-contrast);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.p-admin__page-header-title {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 1.875rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+// ── Body ─────────────────────────────────────────────────────────────────────
+
+.p-admin__body {
+    padding: 2rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+// ── Section label (estilo dashboard: eyebrow morado + línea) ──────────────────
+
+.p-admin__section-label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.p-admin__section-label-text {
+    color: var(--color-token-4f06f9);
+    text-transform: uppercase;
+    letter-spacing: 3.2px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.p-admin__section-label-line {
+    flex: 1;
+    height: 1px;
+    background: var(--color-token-rgba-79-6-249-0-1);
+}
+
+// ── Stats grid ────────────────────────────────────────────────────────────────
+
+.p-admin__stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+
+    @media (min-width: 64rem) {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.p-admin__stat {
+    border: 1px solid var(--color-token-rgba-79-6-249-0-1);
+    border-radius: 4px;
+    background: var(--color-surface);
+    padding: 1.25rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.p-admin__stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.p-admin__stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+}
+
+.p-admin__stat-icon {
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--color-brand);
+    opacity: 0.45;
+    flex-shrink: 0;
+}
+
+.p-admin__stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+}
+
+// ── Table card wrapper ────────────────────────────────────────────────────────
+
+.p-admin__table-card {
+    border: 1px solid var(--color-token-rgba-79-6-249-0-1);
+    border-radius: 4px;
+    background: var(--color-surface);
+    overflow: hidden;
+}
+
+.p-admin__table-wrapper {
+    overflow-x: auto;
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+.p-admin__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    color: var(--color-text);
+}
+
+.p-admin__table thead {
+    background: color-mix(in srgb, var(--color-brand) 3%, transparent);
+    border-bottom: 1px solid var(--color-token-rgba-79-6-249-0-1);
+}
+
+.p-admin__table th {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-token-4f06f9);
+    white-space: nowrap;
+}
+
+.p-admin__table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+    transition: background-color 100ms ease;
+}
+
+.p-admin__table tbody tr:last-child {
+    border-bottom: 0;
+}
+
+.p-admin__table tbody tr:hover {
+    background: var(--color-token-rgba-79-6-249-0-1);
+}
+
+.p-admin__table td {
+    padding: 0.7rem 1rem;
+}
+
+.p-admin__table-cell--name {
+    font-weight: 600;
+}
+
+.p-admin__table-cell--muted {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+
+.p-admin__table-cell--mono {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.72rem;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.p-admin__table-cell--truncate {
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+.p-admin__table-cell--empty {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 2.5rem 1rem;
+    font-size: 0.82rem;
+}
+
+.p-admin__table-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+// ── Status icons (Moodle / 2FA) ───────────────────────────────────────────────
+
+.p-admin__status-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.p-admin__status-icon--ok {
+    color: var(--color-token-16a34a);
+}
+
+.p-admin__status-icon--off {
+    color: var(--color-border);
+}
+
+// ── Inline badges ─────────────────────────────────────────────────────────────
+
+.p-admin__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1.4;
+}
+
+.p-admin__badge--resolved {
+    background: color-mix(in srgb, var(--color-token-16a34a) 12%, transparent);
+    color: var(--color-token-16a34a);
+}
+
+.p-admin__badge--pending {
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    color: var(--color-danger);
+}
+
+// ── Delete icon button ───────────────────────────────────────────────────────────────
+
+.p-admin__delete-btn {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    border-radius: 2px !important;
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+}
+
+// ── Native role select ────────────────────────────────────────────────────────
+
+.p-admin__role-select {
+    width: 5.5rem;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.78rem;
+    border-radius: 2px;
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+.p-admin__pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.75rem;
+    padding: 0 0.25rem;
+}
+
+.p-admin__pagination-btn {
+    appearance: none;
+    border: 1px solid var(--color-token-rgba-79-6-249-0-1);
+    border-radius: 2px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    transition:
+        background-color 100ms ease,
+        color 100ms ease,
+        border-color 100ms ease;
+    font-weight: 500;
+}
+
+.p-admin__pagination-btn:hover:not(:disabled) {
+    background: var(--color-token-rgba-79-6-249-0-1);
+    border-color: var(--color-brand);
+    color: var(--color-token-4f06f9);
+}
+
+.p-admin__pagination-btn--active {
+    background: var(--color-brand);
+    color: var(--color-brand-contrast);
+    border-color: var(--color-brand);
+    font-weight: 700;
+}
+
+.p-admin__pagination-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
